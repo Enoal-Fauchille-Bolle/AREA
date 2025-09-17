@@ -96,7 +96,6 @@ function FetchDemo() {
 }
 
 function ComputationDemo({ items }: { items: number[] }) {
-  // memoize an expensive calculation
   const sum = useMemo(() => items.reduce((a, b) => a + b, 0), [items])
   return (
     <div style={{ marginBottom: '0.75rem' }}>
