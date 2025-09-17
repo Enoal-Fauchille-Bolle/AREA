@@ -1,0 +1,21 @@
+build/
+CMakeCache.txt
+CMakeFiles/
+*.user
+*.swp
+*.swo
+*.o
+*.obj
+*.exe
+*.log
+*.pyc
+*.pyo
+*.class
+
+# Flutter/Dart
+.dart_tool/
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+.idea/
+.vscode/
