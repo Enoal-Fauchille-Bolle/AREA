@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Minute WebSocket Demo</title>
+  <style>
+    #minute {
+      color: red;
+      font-size: 2em;
+      margin-top: 20px;
+    }
+    button {
+      font-size: 1.2em;
+      padding: 10px 20px;
+    }
+  </style>
+</head>
+<body>
+  <button id="startBtn">Wait for next minute</button>
+  <div id="minute"></div>
+  <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+  <script>
+    const btn = document.getElementById('startBtn');
+    const minuteDiv = document.getElementById('minute');
+    let socket;
+    let started = false;
+
+    btn.onclick = () => {
+      if (started) return;
+      started = true;
+      btn.disabled = true;
+      minuteDiv.textContent = 'Waiting for next minute...';
+      socket = io('http://localhost:3000');
+      let initialMinute = new Date().getMinutes();
+      const handler = (min) => {
+        if (min !== initialMinute) {
+          minuteDiv.textContent = `Minute: ${min}`;
+          socket.off('minute', handler);
+        }
+      };
+      socket.on('minute', handler);
+    };
+  </script>
+</body>
+</html>
