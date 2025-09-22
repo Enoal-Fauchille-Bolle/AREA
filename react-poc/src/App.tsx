@@ -34,8 +34,8 @@ function Counter() {
     <div style={{ marginBottom: '0.75rem' }}>
       <div>Simple state demo (Counter): <strong>{n}</strong></div>
       <div style={{ marginTop: '0.4rem' }}>
-        <button onClick={() => setN((s) => s + 1)}>+1</button>{' '}
-        <button onClick={() => setN((s) => s - 1)}>-1</button>
+        <button onClick={() => setN((s) => s + 1)} className="primary">+1</button>{' '}
+        <button onClick={() => setN((s) => s - 1)} className="primary">-1</button>
       </div>
     </div>
   )
@@ -57,7 +57,7 @@ function Todos() {
       <div><strong>List & controlled input</strong></div>
       <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.4rem' }}>
         <input ref={inputRef} placeholder="Add todo..." />
-        <button onClick={add}>Add</button>
+        <button onClick={add} className="primary">Add</button>
       </div>
       <ul style={{ marginTop: '0.5rem' }}>
         {items.map((it, i) => (
@@ -119,36 +119,53 @@ function ThemeToggle() {
 
 function App() {
   const [dark, setDark] = useState(true)
+  useEffect(() => {
+    const root = document.documentElement
+    if (dark) {
+      root.classList.add('dark')
+      root.classList.remove('light')
+    } else {
+      root.classList.add('light')
+      root.classList.remove('dark')
+    }
+  }, [dark])
+
   const theme = { dark, toggle: () => setDark((s) => !s) }
 
   return (
     <ThemeContext.Provider value={theme}>
-      <>
-        <div>
-          <a href="https://vite.dev" target="_blank">
-            <img src={viteLogo} className="logo" alt="Vite logo" />
-          </a>
-          <a href="https://react.dev" target="_blank">
-            <img src={reactLogo} className="logo react" alt="React logo" />
-          </a>
-        </div>
-        <h1>Vite + React — POC demo</h1>
-
-        <div className="card" style={{ maxWidth: 760, margin: '0 auto', textAlign: 'left' }}>
-          <ThemeToggle />
-          <Counter />
-          <Todos />
-          <FetchDemo />
-          <ComputationDemo items={[10, 20, 30, 40]} />
-
-          <div style={{ marginTop: '0.5rem' }}>
-            <div><strong>Lazy loading</strong></div>
-            <Suspense fallback={<div>Loading details...</div>}>
-              <LazyDetails />
-            </Suspense>
+      <div className="app-container">
+        <header className="app-header">
+          <div className="app-brand" aria-hidden>
+            <a href="https://vite.dev" target="_blank" rel="noreferrer">
+              <img src={viteLogo} className="logo" alt="Vite logo" />
+            </a>
+            <a href="https://react.dev" target="_blank" rel="noreferrer">
+              <img src={reactLogo} className="logo react" alt="React logo" />
+            </a>
           </div>
-        </div>
-      </>
+          <div style={{ textAlign: 'center' }}>
+            <h1>Vite + React — POC demo</h1>
+          </div>
+        </header>
+
+        <main>
+          <div className="card">
+            <ThemeToggle />
+            <Counter />
+            <Todos />
+            <FetchDemo />
+            <ComputationDemo items={[10, 20, 30, 40]} />
+
+            <div style={{ marginTop: '0.5rem' }}>
+              <div><strong>Lazy loading</strong></div>
+              <Suspense fallback={<div>Loading details...</div>}>
+                <LazyDetails />
+              </Suspense>
+            </div>
+          </div>
+        </main>
+      </div>
     </ThemeContext.Provider>
   )
 }
