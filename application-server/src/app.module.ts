@@ -5,8 +5,10 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { ServicesModule } from './services/services.module';
+import { UserServicesModule } from './user-services/user-services.module';
 import { User } from './users/entities/user.entity';
 import { Service } from './services/entities/service.entity';
+import { UserService } from './user-services/entities/user-service.entity';
 
 @Module({
   imports: [
@@ -22,7 +24,7 @@ import { Service } from './services/entities/service.entity';
         username: configService.get('DB_USERNAME'),
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_DATABASE'),
-        entities: [User, Service],
+        entities: [User, Service, UserService],
         synchronize: true, // creates tables automatically
         logging: true,
       }),
@@ -30,6 +32,7 @@ import { Service } from './services/entities/service.entity';
     }),
     UsersModule,
     ServicesModule,
+    UserServicesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
