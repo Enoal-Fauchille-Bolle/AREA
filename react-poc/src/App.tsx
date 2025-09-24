@@ -163,6 +163,14 @@ function App() {
                 <LazyDetails />
               </Suspense>
             </div>
+            <button
+              className="primary"
+              onClick={() => {
+                window.location.href = '/next.html'
+              }}
+            >
+              Next page
+            </button>
           </div>
         </main>
       </div>

@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Next — Tailwind Demo</title>
+
+    <script>
+      window.tailwind = {
+        config: {
+          darkMode: 'class',
+          theme: {
+            extend: {
+              colors: {
+                primary: '#7c5cff',
+                accent: '#61dafb'
+              },
+              spacing: { 18: '4.5rem' }
+            }
+          }
+        }
+      }
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+      body { margin: 0; }
+    </style>
+  </head>
+  <body class="bg-[#071026] text-slate-100 min-h-screen antialiased">
+    <div class="max-w-5xl mx-auto p-6">
+      <header class="flex items-center justify-between gap-4 mb-8">
+        <div class="flex items-center gap-4">
+          <img src="/vite.svg" alt="Vite" class="h-10 w-10 rounded-md bg-white/5 p-2 shadow-sm" />
+          <div>
+            <h1 class="text-lg font-semibold">Tailwind demo — Next page</h1>
+            <p class="text-sm text-slate-300">Composants réutilisables et palette fixe</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <a href="/" class="text-sm px-3 py-2 rounded-md bg-white/5 hover:bg-white/10">Retour</a>
+          <div class="text-sm px-3 py-2 rounded-md bg-primary text-black font-semibold">Tailwind • POC</div>
+        </div>
+      </header>
+
+      <section class="rounded-2xl overflow-hidden mb-8 shadow-2xl ring-1 ring-white/6">
+        <div class="bg-gradient-to-r from-primary to-accent p-8 text-white">
+          <h2 class="text-2xl font-bold">POC Tailwind</h2>
+          <p class="mt-2 text-sm opacity-90">Exemples de boutons, cartes, formulaire et responsive </p>
+        </div>
+
+        <div class="bg-slate-900 p-6">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="p-4 rounded-lg border border-slate-700 bg-slate-800">
+              <h3 class="font-semibold mb-2 text-slate-100">Boutons</h3>
+              <div class="flex flex-wrap gap-3">
+                <button class="px-3 py-2 rounded-md bg-primary text-black font-medium">Primary</button>
+                <button class="px-3 py-2 rounded-md border border-slate-700 text-slate-100">Ghost</button>
+                <button class="px-3 py-2 rounded-md bg-emerald-400 text-slate-900">Success</button>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-lg border border-slate-700 bg-slate-800">
+              <h3 class="font-semibold mb-2 text-slate-100">Formulaire</h3>
+              <form class="flex flex-col gap-3">
+                <input class="px-3 py-2 rounded-md border border-slate-700 bg-slate-900 text-slate-100" placeholder="Votre nom" />
+                <input class="px-3 py-2 rounded-md border border-slate-700 bg-slate-900 text-slate-100" placeholder="Email" />
+                <div class="flex gap-2">
+                  <button type="button" class="px-3 py-2 rounded-md bg-primary text-black font-medium">Envoyer</button>
+                  <button type="reset" class="px-3 py-2 rounded-md border border-slate-700 text-slate-100">Réinitialiser</button>
+                </div>
+              </form>
+            </div>
+
+            <div class="p-4 rounded-lg border border-slate-700 bg-slate-800">
+              <h3 class="font-semibold mb-2 text-slate-100">Liste</h3>
+              <ul class="space-y-2 text-slate-200">
+                <li class="flex items-center justify-between">
+                  <span>Item 1</span>
+                  <span class="text-sm text-slate-400">meta</span>
+                </li>
+                <li class="flex items-center justify-between">
+                  <span>Item 2</span>
+                  <span class="text-sm text-slate-400">meta</span>
+                </li>
+                <li class="flex items-center justify-between">
+                  <span>Item 3</span>
+                  <span class="text-sm text-slate-400">meta</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div class="p-6 rounded-xl bg-slate-900 shadow-lg border border-slate-700">
+          <h4 class="font-semibold mb-2 text-slate-100">Carte d'information</h4>
+          <p class="text-sm text-slate-300">aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</p>
+          <div class="mt-4 flex gap-3">
+            <button class="px-3 py-2 rounded-md bg-primary text-black font-medium">Action</button>
+            <button class="px-3 py-2 rounded-md border border-slate-700 text-slate-100">Annuler</button>
+          </div>
+        </div>
+
+        <div class="p-6 rounded-xl bg-slate-900 shadow-lg border border-slate-700">
+          <h4 class="font-semibold mb-2 text-slate-100">Search bar</h4>
+          <p class="text-sm text-slate-300"></p>
+          <form class="mt-4 grid grid-cols-1 gap-3">
+            <input placeholder="Recherche..." class="px-3 py-2 rounded-md border border-slate-700 bg-slate-900 text-slate-100" />
+            <div class="flex gap-2">
+              <button class="px-3 py-2 rounded-md bg-primary text-black flex-1 font-medium">Rechercher</button>
+              <button class="px-3 py-2 rounded-md border border-slate-700 flex-1 text-slate-100">Avancé</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <footer class="text-center text-sm text-slate-400">
+      </footer>
+    </div>
+
+    <script>
+      document.body.style.backgroundColor = '#071026'
+      document.body.style.color = '#e6eef6'
+    </script>
+  </body>
+</html>
+      document.body.style.color = '#fff'
+      const label = document.getElementById('themeLabel')
+      if (label) label.textContent = 'Dark (forced)'
+    </script>
+  </body>
+</html>
