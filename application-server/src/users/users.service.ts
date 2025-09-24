@@ -19,9 +19,8 @@ export class UsersService {
     const saltRounds = 10;
     const password_hash = await bcrypt.hash(createUserDto.password, saltRounds);
 
-    // Remove password from DTO and create user with hashed password
     const { password, ...userWithoutPassword } = createUserDto;
-    
+
     const user = this.usersRepository.create({
       ...userWithoutPassword,
       password_hash,

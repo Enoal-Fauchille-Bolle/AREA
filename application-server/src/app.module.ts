@@ -4,7 +4,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
+import { ServicesModule } from './services/services.module';
 import { User } from './users/entities/user.entity';
+import { Service } from './services/entities/service.entity';
 
 @Module({
   imports: [
@@ -20,13 +22,14 @@ import { User } from './users/entities/user.entity';
         username: configService.get('DB_USERNAME'),
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_DATABASE'),
-        entities: [User],
-        synchronize: true, // Only for development - creates tables automatically
+        entities: [User, Service],
+        synchronize: true, // creates tables automatically
         logging: true,
       }),
       inject: [ConfigService],
     }),
     UsersModule,
+    ServicesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
