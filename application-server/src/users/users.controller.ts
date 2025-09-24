@@ -18,12 +18,21 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
-  create(@Body() createUserDto: CreateUserDto) {
+  async create(@Body() createUserDto: CreateUserDto) {
     // Check if user with email already exists
-    const existingUser = this.usersService.findByEmail(createUserDto.email);
-    if (existingUser) {
+    const existingUserByEmail = this.usersService.findByEmail(createUserDto.email);
+    if (existingUserByEmail) {
       throw new HttpException(
         'User with this email already exists',
+        HttpStatus.CONFLICT,
+      );
+    }
+
+    // Check if user with username already exists
+    const existingUserByUsername = this.usersService.findByUsername(createUserDto.username);
+    if (existingUserByUsername) {
+      throw new HttpException(
+        'User with this username already exists',
         HttpStatus.CONFLICT,
       );
     }
@@ -46,8 +55,26 @@ export class UsersController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    const user = this.usersService.update(+id, updateUserDto);
+  async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+    const user = await this.usersService.update(+id, updateUserDto);
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+    return user;
+  }
+
+  @Patch(':id/last-connection')
+  updateLastConnection(@Param('id') id: string) {
+    const user = this.usersService.updateLastConnection(+id);
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+    return { message: 'Last connection updated successfully', user };
+  }
+
+  @Get('by-username/:username')
+  findByUsername(@Param('username') username: string) {
+    const user = this.usersService.findByUsername(username);
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
