@@ -20,7 +20,7 @@ export class UsersController {
   @Post()
   async create(@Body() createUserDto: CreateUserDto) {
     // Check if user with email already exists
-    const existingUserByEmail = this.usersService.findByEmail(createUserDto.email);
+    const existingUserByEmail = await this.usersService.findByEmail(createUserDto.email);
     if (existingUserByEmail) {
       throw new HttpException(
         'User with this email already exists',
@@ -29,7 +29,7 @@ export class UsersController {
     }
 
     // Check if user with username already exists
-    const existingUserByUsername = this.usersService.findByUsername(createUserDto.username);
+    const existingUserByUsername = await this.usersService.findByUsername(createUserDto.username);
     if (existingUserByUsername) {
       throw new HttpException(
         'User with this username already exists',
@@ -41,13 +41,13 @@ export class UsersController {
   }
 
   @Get()
-  findAll() {
+  async findAll() {
     return this.usersService.findAll();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    const user = this.usersService.findOne(+id);
+  async findOne(@Param('id') id: string) {
+    const user = await this.usersService.findOne(+id);
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
@@ -64,8 +64,8 @@ export class UsersController {
   }
 
   @Patch(':id/last-connection')
-  updateLastConnection(@Param('id') id: string) {
-    const user = this.usersService.updateLastConnection(+id);
+  async updateLastConnection(@Param('id') id: string) {
+    const user = await this.usersService.updateLastConnection(+id);
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
@@ -73,8 +73,8 @@ export class UsersController {
   }
 
   @Get('by-username/:username')
-  findByUsername(@Param('username') username: string) {
-    const user = this.usersService.findByUsername(username);
+  async findByUsername(@Param('username') username: string) {
+    const user = await this.usersService.findByUsernamePublic(username);
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
@@ -82,8 +82,8 @@ export class UsersController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    const success = this.usersService.remove(+id);
+  async remove(@Param('id') id: string) {
+    const success = await this.usersService.remove(+id);
     if (!success) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }

@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserResponseDto } from './dto/user-response.dto';
@@ -7,8 +9,10 @@ import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
-  private users: User[] = [];
-  private nextId = 1;
+  constructor(
+    @InjectRepository(User)
+    private usersRepository: Repository<User>,
+  ) {}
 
   async create(createUserDto: CreateUserDto): Promise<UserResponseDto> {
     // Hash the password
@@ -18,50 +22,51 @@ export class UsersService {
     // Remove password from DTO and create user with hashed password
     const { password, ...userWithoutPassword } = createUserDto;
     
-    const user = new User({
-      id: this.nextId++,
+    const user = this.usersRepository.create({
       ...userWithoutPassword,
       password_hash,
       is_admin: createUserDto.is_admin ?? false,
       is_active: createUserDto.is_active ?? true,
-      created_at: new Date(),
-      updated_at: new Date(),
     });
     
-    this.users.push(user);
-    return new UserResponseDto(user);
+    const savedUser = await this.usersRepository.save(user);
+    return new UserResponseDto(savedUser);
   }
 
-  findAll(): UserResponseDto[] {
-    return this.users.map(user => new UserResponseDto(user));
+  async findAll(): Promise<UserResponseDto[]> {
+    const users = await this.usersRepository.find();
+    return users.map(user => new UserResponseDto(user));
   }
 
-  findOne(id: number): UserResponseDto | undefined {
-    const user = this.users.find((user) => user.id === id);
+  async findOne(id: number): Promise<UserResponseDto | undefined> {
+    const user = await this.usersRepository.findOne({ where: { id } });
     return user ? new UserResponseDto(user) : undefined;
   }
 
-  findByEmail(email: string): User | undefined {
-    return this.users.find((user) => user.email === email);
+  async findByEmail(email: string): Promise<User | undefined> {
+    const user = await this.usersRepository.findOne({ where: { email } });
+    return user || undefined;
   }
 
-  findByUsername(username: string): User | undefined {
-    return this.users.find((user) => user.username === username);
+  async findByUsername(username: string): Promise<User | undefined> {
+    const user = await this.usersRepository.findOne({ where: { username } });
+    return user || undefined;
   }
 
-  findByUsernamePublic(username: string): UserResponseDto | undefined {
-    const user = this.users.find((user) => user.username === username);
+  async findByUsernamePublic(username: string): Promise<UserResponseDto | undefined> {
+    const user = await this.usersRepository.findOne({ where: { username } });
     return user ? new UserResponseDto(user) : undefined;
   }
 
   // Internal method that returns full user with password hash (for authentication)
-  findUserForAuth(email: string): User | undefined {
-    return this.users.find((user) => user.email === email);
+  async findUserForAuth(email: string): Promise<User | undefined> {
+    const user = await this.usersRepository.findOne({ where: { email } });
+    return user || undefined;
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto): Promise<User | null> {
-    const userIndex = this.users.findIndex((user) => user.id === id);
-    if (userIndex === -1) {
+  async update(id: number, updateUserDto: UpdateUserDto): Promise<UserResponseDto | null> {
+    const user = await this.usersRepository.findOne({ where: { id } });
+    if (!user) {
       return null;
     }
 
@@ -74,39 +79,28 @@ export class UsersService {
       updateData = { ...dataWithoutPassword, password_hash };
     }
 
-    const updatedUser = new User({
-      ...this.users[userIndex],
-      ...updateData,
-      updated_at: new Date(),
-    });
-
-    this.users[userIndex] = updatedUser;
-    return updatedUser;
+    await this.usersRepository.update(id, updateData);
+    const updatedUser = await this.usersRepository.findOne({ where: { id } });
+    return updatedUser ? new UserResponseDto(updatedUser) : null;
   }
 
-  updateLastConnection(id: number): User | null {
-    const userIndex = this.users.findIndex((user) => user.id === id);
-    if (userIndex === -1) {
+  async updateLastConnection(id: number): Promise<UserResponseDto | null> {
+    const user = await this.usersRepository.findOne({ where: { id } });
+    if (!user) {
       return null;
     }
 
-    this.users[userIndex].last_connection_at = new Date();
-    this.users[userIndex].updated_at = new Date();
-    
-    return this.users[userIndex];
+    user.last_connection_at = new Date();
+    const updatedUser = await this.usersRepository.save(user);
+    return new UserResponseDto(updatedUser);
   }
 
   async validatePassword(user: User, password: string): Promise<boolean> {
     return bcrypt.compare(password, user.password_hash);
   }
 
-  remove(id: number): boolean {
-    const userIndex = this.users.findIndex((user) => user.id === id);
-    if (userIndex === -1) {
-      return false;
-    }
-
-    this.users.splice(userIndex, 1);
-    return true;
+  async remove(id: number): Promise<boolean> {
+    const result = await this.usersRepository.delete(id);
+    return (result.affected ?? 0) > 0;
   }
 }

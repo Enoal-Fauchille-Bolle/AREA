@@ -1,16 +1,40 @@
-export class User {
-  id: number;
-  email: string;
-  username: string;
-  password_hash: string;
-  icon_path?: string;
-  is_admin: boolean;
-  is_active: boolean;
-  created_at: Date;
-  updated_at: Date;
-  last_connection_at?: Date;
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
-  constructor(partial: Partial<User>) {
-    Object.assign(this, partial);
-  }
+@Entity('users')
+export class User {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column({ unique: true })
+  email: string;
+
+  @Column({ unique: true })
+  username: string;
+
+  @Column()
+  password_hash: string;
+
+  @Column({ nullable: true })
+  icon_path?: string;
+
+  @Column({ default: false })
+  is_admin: boolean;
+
+  @Column({ default: true })
+  is_active: boolean;
+
+  @CreateDateColumn()
+  created_at: Date;
+
+  @UpdateDateColumn()
+  updated_at: Date;
+
+  @Column({ nullable: true })
+  last_connection_at?: Date;
 }
