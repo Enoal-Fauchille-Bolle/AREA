@@ -89,6 +89,7 @@ Go back to the [Application Server Documentation](./APPLICATION_SERVER.md).
 - `200 OK`: Successful authentication.
 - `400 Bad Request`: Missing or invalid parameters.
 - `401 Unauthorized`: Invalid authorization code.
+- `500 Internal Server Error`: OAuth2 login not yet implemented.
 
 ---
 
@@ -135,7 +136,8 @@ Go back to the [Application Server Documentation](./APPLICATION_SERVER.md).
 - `400 Bad Request`: Missing or invalid parameters.
 - `401 Unauthorized`: Invalid authorization code.
 - `409 Conflict`: Email/username already in use.
-- 
+- `500 Internal Server Error`: OAuth2 registration not yet implemented.
+
 ---
 
 ### GET /auth/me
