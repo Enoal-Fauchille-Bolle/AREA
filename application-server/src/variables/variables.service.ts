@@ -132,12 +132,16 @@ export class VariablesService {
       where: { component_id: componentId },
     });
 
+    const variablesToUpdate: Variable[] = [];
     for (let i = 0; i < variableIds.length; i++) {
       const variable = variables.find(v => v.id === variableIds[i]);
       if (variable) {
         variable.display_order = i;
-        await this.variableRepository.save(variable);
+        variablesToUpdate.push(variable);
       }
+    }
+    if (variablesToUpdate.length > 0) {
+      await this.variableRepository.save(variablesToUpdate);
     }
 
     return this.findByComponent(componentId);
