@@ -72,7 +72,6 @@ export class AreaParametersService {
 
   async findTemplates(): Promise<AreaParameterResponseDto[]> {
     const areaParameters = await this.areaParameterRepository.find({
-      where: { is_template: true },
       relations: ['variable'],
       order: { area_id: 'ASC', variable_id: 'ASC' },
     });
@@ -82,7 +81,7 @@ export class AreaParametersService {
 
   async findTemplatesByArea(areaId: number): Promise<AreaParameterResponseDto[]> {
     const areaParameters = await this.areaParameterRepository.find({
-      where: { area_id: areaId, is_template: true },
+      where: { area_id: areaId },
       relations: ['variable'],
       order: { variable_id: 'ASC' },
     });
@@ -135,19 +134,9 @@ export class AreaParametersService {
 
       if (existing) {
         existing.value = param.value;
-        if (param.is_template !== undefined) {
-          existing.is_template = param.is_template;
-        }
         const updated = await this.areaParameterRepository.save(existing);
         results.push(this.toResponseDto(updated));
       } else {
-        const newParam = this.areaParameterRepository.create({
-          area_id: areaId,
-          variable_id: param.variable_id,
-          value: param.value,
-          is_template: param.is_template || false,
-        });
-        const saved = await this.areaParameterRepository.save(newParam);
         const withRelations = await this.areaParameterRepository.findOne({
           where: { area_id: areaId, variable_id: param.variable_id },
           relations: ['variable'],
@@ -196,9 +185,6 @@ export class AreaParametersService {
       area_id: areaParameter.area_id,
       variable_id: areaParameter.variable_id,
       value: areaParameter.value,
-      is_template: areaParameter.is_template,
-      created_at: areaParameter.created_at,
-      updated_at: areaParameter.updated_at,
     };
 
     if (areaParameter.variable) {
