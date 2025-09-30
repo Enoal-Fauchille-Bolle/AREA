@@ -8,33 +8,33 @@ import {
 
 @Entity('users')
 export class User {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn({ type: 'int' })
   id: number;
 
-  @Column({ unique: true })
+  @Column({ type: 'varchar', length: 255, unique: true })
   email: string;
 
-  @Column({ unique: true })
+  @Column({ type: 'varchar', length: 100, unique: true })
   username: string;
 
-  @Column()
+  @Column({ type: 'varchar', length: 255, nullable: true })
   password_hash: string;
 
-  @Column({ nullable: true })
-  icon_path?: string;
+  @Column({ type: 'text', nullable: true })
+  icon_path: string | null;
 
-  @Column({ default: false })
+  @Column({ type: 'boolean', default: false })
   is_admin: boolean;
 
-  @Column({ default: true })
+  @Column({ type: 'boolean', default: true })
   is_active: boolean;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamp with time zone' })
   created_at: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: 'timestamp with time zone' })
   updated_at: Date;
 
-  @Column({ nullable: true })
-  last_connection_at?: Date;
+  @Column({ type: 'timestamp with time zone', nullable: true })
+  last_connection_at: Date | null;
 }

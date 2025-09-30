@@ -158,8 +158,6 @@ export class HookStatesService {
       state_key: hookState.state_key,
       state_value: hookState.state_value,
       last_checked_at: hookState.last_checked_at,
-      created_at: hookState.created_at,
-      updated_at: hookState.updated_at,
     };
   }
 }

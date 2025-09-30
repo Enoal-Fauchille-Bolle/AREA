@@ -76,7 +76,6 @@ export class ServicesService {
       requires_auth: service.requires_auth,
       is_active: service.is_active,
       created_at: service.created_at,
-      updated_at: service.updated_at,
     };
   }
 }

@@ -69,11 +69,11 @@ export class VariablesService {
   }
 
   async findInputs(): Promise<VariableResponseDto[]> {
-    return this.findByKind(VariableKind.INPUT);
+    return this.findByKind(VariableKind.PARAMETER);
   }
 
   async findOutputs(): Promise<VariableResponseDto[]> {
-    return this.findByKind(VariableKind.OUTPUT);
+    return this.findByKind(VariableKind.RETURN_VALUE);
   }
 
   async findParameters(): Promise<VariableResponseDto[]> {
@@ -81,11 +81,11 @@ export class VariablesService {
   }
 
   async findInputsByComponent(componentId: number): Promise<VariableResponseDto[]> {
-    return this.findByComponentAndKind(componentId, VariableKind.INPUT);
+    return this.findByComponentAndKind(componentId, VariableKind.PARAMETER);
   }
 
   async findOutputsByComponent(componentId: number): Promise<VariableResponseDto[]> {
-    return this.findByComponentAndKind(componentId, VariableKind.OUTPUT);
+    return this.findByComponentAndKind(componentId, VariableKind.RETURN_VALUE);
   }
 
   async findParametersByComponent(componentId: number): Promise<VariableResponseDto[]> {
@@ -177,8 +177,6 @@ export class VariablesService {
       placeholder: variable.placeholder,
       validation_regex: variable.validation_regex,
       display_order: variable.display_order,
-      created_at: variable.created_at,
-      updated_at: variable.updated_at,
     };
 
     if (variable.component) {

@@ -37,14 +37,14 @@ export class UserServicesService {
     return userServices.map(userService => this.toResponseDto(userService));
   }
 
-  async findOne(id: number): Promise<UserServiceResponseDto> {
+  async findOne(user_id: number): Promise<UserServiceResponseDto> {
     const userService = await this.userServiceRepository.findOne({
-      where: { id },
+      where: { user_id },
       relations: ['user', 'service'],
     });
     
     if (!userService) {
-      throw new NotFoundException(`UserService with ID ${id} not found`);
+      throw new NotFoundException(`UserService with ID ${user_id} not found`);
     }
     
     return this.toResponseDto(userService);
@@ -79,14 +79,14 @@ export class UserServicesService {
     return userService ? this.toResponseDto(userService) : null;
   }
 
-  async update(id: number, updateUserServiceDto: UpdateUserServiceDto): Promise<UserServiceResponseDto> {
+  async update(user_id: number, updateUserServiceDto: UpdateUserServiceDto): Promise<UserServiceResponseDto> {
     const userService = await this.userServiceRepository.findOne({
-      where: { id },
+      where: { user_id },
       relations: ['user', 'service'],
     });
     
     if (!userService) {
-      throw new NotFoundException(`UserService with ID ${id} not found`);
+      throw new NotFoundException(`UserService with ID ${user_id} not found`);
     }
 
     Object.assign(userService, updateUserServiceDto);
@@ -94,14 +94,14 @@ export class UserServicesService {
     return this.toResponseDto(updatedUserService);
   }
 
-  async refreshToken(id: number, newToken: string, refreshToken?: string, expiresAt?: Date): Promise<UserServiceResponseDto> {
+  async refreshToken(user_id: number, newToken: string, refreshToken?: string, expiresAt?: Date): Promise<UserServiceResponseDto> {
     const userService = await this.userServiceRepository.findOne({
-      where: { id },
+      where: { user_id },
       relations: ['user', 'service'],
     });
     
     if (!userService) {
-      throw new NotFoundException(`UserService with ID ${id} not found`);
+      throw new NotFoundException(`UserService with ID ${user_id} not found`);
     }
 
     userService.oauth_token = newToken;
@@ -116,10 +116,10 @@ export class UserServicesService {
     return this.toResponseDto(updatedUserService);
   }
 
-  async remove(id: number): Promise<void> {
-    const userService = await this.userServiceRepository.findOne({ where: { id } });
+  async remove(user_id: number): Promise<void> {
+    const userService = await this.userServiceRepository.findOne({ where: { user_id } });
     if (!userService) {
-      throw new NotFoundException(`UserService with ID ${id} not found`);
+      throw new NotFoundException(`UserService with ID ${user_id} not found`);
     }
     await this.userServiceRepository.remove(userService);
   }
@@ -138,7 +138,6 @@ export class UserServicesService {
 
   private toResponseDto(userService: UserService): UserServiceResponseDto {
     const response: UserServiceResponseDto = {
-      id: userService.id,
       user_id: userService.user_id,
       service_id: userService.service_id,
       oauth_token: userService.oauth_token,
@@ -160,7 +159,7 @@ export class UserServicesService {
       response.service = {
         id: userService.service.id,
         name: userService.service.name,
-        description: userService.service.description,
+        description: userService.service.description ?? null,
       };
     }
 

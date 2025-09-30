@@ -16,19 +16,16 @@ export enum ComponentType {
 
 @Entity('components')
 export class Component {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn({ type: 'int' })
   id: number;
 
-  @Column()
+  @Column({ type: 'int' })
   service_id: number;
 
-  @Column({
-    type: 'enum',
-    enum: ComponentType,
-  })
+  @Column({ type: 'enum', enum: ComponentType })
   type: ComponentType;
 
-  @Column({ type: 'text' })
+  @Column({ type: 'varchar', length: 100 })
   name: string;
 
   @Column({ type: 'text', nullable: true })
@@ -37,17 +34,11 @@ export class Component {
   @Column({ type: 'boolean', default: true })
   is_active: boolean;
 
-  @Column({ type: 'varchar', nullable: true })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   webhook_endpoint: string | null;
 
   @Column({ type: 'int', nullable: true })
   polling_interval: number | null;
-
-  @CreateDateColumn()
-  created_at: Date;
-
-  @UpdateDateColumn()
-  updated_at: Date;
 
   // Relations
   @ManyToOne(() => Service, { onDelete: 'CASCADE' })

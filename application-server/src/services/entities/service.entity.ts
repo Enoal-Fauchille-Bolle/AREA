@@ -8,14 +8,14 @@ import {
 
 @Entity('services')
 export class Service {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn({ type: 'int' })
   id: number;
 
-  @Column({ type: 'varchar', length: 50, unique: true })
+  @Column({ type: 'varchar', length: 100, unique: true })
   name: string;
 
-  @Column({ type: 'text' })
-  description: string;
+  @Column({ type: 'text', nullable: true })
+  description: string | null;
 
   @Column({ type: 'text', nullable: true })
   icon_path: string | null;
@@ -25,10 +25,4 @@ export class Service {
 
   @Column({ type: 'boolean', default: true })
   is_active: boolean;
-
-  @CreateDateColumn()
-  created_at: Date;
-
-  @UpdateDateColumn()
-  updated_at: Date;
 }

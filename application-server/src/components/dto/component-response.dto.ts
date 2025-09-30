@@ -9,11 +9,9 @@ export class ComponentResponseDto {
   is_active: boolean;
   webhook_endpoint: string | null;
   polling_interval: number | null;
-  created_at: Date;
-  updated_at: Date;
   service?: {
     id: number;
     name: string;
-    description: string;
+    description: string | null;
   };
 }

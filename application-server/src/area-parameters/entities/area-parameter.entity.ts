@@ -11,23 +11,14 @@ import { Variable } from '../../variables/entities/variable.entity';
 
 @Entity('area_parameters')
 export class AreaParameter {
-  @PrimaryColumn()
+  @PrimaryColumn({ type: 'int' })
   area_id: number;
 
-  @PrimaryColumn()
+  @PrimaryColumn({ type: 'int' })
   variable_id: number;
 
   @Column({ type: 'text' })
   value: string;
-
-  @Column({ type: 'boolean', default: false })
-  is_template: boolean;
-
-  @CreateDateColumn()
-  created_at: Date;
-
-  @UpdateDateColumn()
-  updated_at: Date;
 
   // Relations
   @ManyToOne(() => Variable, { onDelete: 'CASCADE' })

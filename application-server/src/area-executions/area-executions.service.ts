@@ -23,7 +23,7 @@ export class AreaExecutionsService {
 
   async findAll(): Promise<AreaExecutionResponseDto[]> {
     const executions = await this.areaExecutionRepository.find({
-      order: { createdAt: 'DESC' },
+      order: { created_at: 'DESC' },
     });
     return executions.map(execution => new AreaExecutionResponseDto(execution));
   }
@@ -42,8 +42,8 @@ export class AreaExecutionsService {
 
   async findByAreaId(areaId: number): Promise<AreaExecutionResponseDto[]> {
     const executions = await this.areaExecutionRepository.find({
-      where: { areaId },
-      order: { createdAt: 'DESC' },
+      where: { area_id: areaId },
+      order: { created_at: 'DESC' },
     });
     return executions.map(execution => new AreaExecutionResponseDto(execution));
   }
@@ -51,14 +51,14 @@ export class AreaExecutionsService {
   async findByStatus(status: ExecutionStatus): Promise<AreaExecutionResponseDto[]> {
     const executions = await this.areaExecutionRepository.find({
       where: { status },
-      order: { createdAt: 'DESC' },
+      order: { created_at: 'DESC' },
     });
     return executions.map(execution => new AreaExecutionResponseDto(execution));
   }
 
   async findRecentExecutions(limit: number = 50): Promise<AreaExecutionResponseDto[]> {
     const executions = await this.areaExecutionRepository.find({
-      order: { createdAt: 'DESC' },
+      order: { created_at: 'DESC' },
       take: limit,
     });
     return executions.map(execution => new AreaExecutionResponseDto(execution));
@@ -84,12 +84,12 @@ export class AreaExecutionsService {
     };
 
     if (areaId) {
-      whereCondition.areaId = areaId;
+      whereCondition.area_id = areaId;
     }
 
     const executions = await this.areaExecutionRepository.find({
       where: whereCondition,
-      order: { createdAt: 'DESC' },
+      order: { created_at: 'DESC' },
     });
     return executions.map(execution => new AreaExecutionResponseDto(execution));
   }
@@ -104,9 +104,9 @@ export class AreaExecutionsService {
     }
 
     // Auto-calculate execution time if completing
-    if (updateAreaExecutionDto.status === ExecutionStatus.COMPLETED && execution.startedAt) {
+    if (updateAreaExecutionDto.status === ExecutionStatus.COMPLETED && execution.started_at) {
       const completedAt = updateAreaExecutionDto.completedAt || new Date();
-      updateAreaExecutionDto.executionTimeMs = completedAt.getTime() - execution.startedAt.getTime();
+      updateAreaExecutionDto.executionTimeMs = completedAt.getTime() - execution.started_at.getTime();
       updateAreaExecutionDto.completedAt = completedAt;
     }
 
@@ -158,7 +158,7 @@ export class AreaExecutionsService {
   }
 
   async removeByAreaId(areaId: number): Promise<void> {
-    await this.areaExecutionRepository.delete({ areaId });
+    await this.areaExecutionRepository.delete({ area_id: areaId });
   }
 
   async cleanup(olderThanDays: number = 30): Promise<number> {

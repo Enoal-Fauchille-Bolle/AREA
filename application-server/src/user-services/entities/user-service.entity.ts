@@ -1,6 +1,6 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
   Column,
   CreateDateColumn,
   UpdateDateColumn,
@@ -12,17 +12,14 @@ import { Service } from '../../services/entities/service.entity';
 
 @Entity('user_services')
 export class UserService {
-  @PrimaryGeneratedColumn()
-  id: number;
-
-  @Column()
+  @PrimaryColumn({ type: 'int' })
   user_id: number;
 
-  @Column()
+  @PrimaryColumn({ type: 'int' })
   service_id: number;
 
-  @Column({ type: 'text' })
-  oauth_token: string;
+  @Column({ type: 'text', nullable: true })
+  oauth_token: string | null;
 
   @Column({ type: 'text', nullable: true })
   refresh_token: string | null;
@@ -30,10 +27,10 @@ export class UserService {
   @Column({ type: 'timestamp', nullable: true })
   token_expires_at: Date | null;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamp with time zone' })
   created_at: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: 'timestamp with time zone' })
   updated_at: Date;
 
   // Relations

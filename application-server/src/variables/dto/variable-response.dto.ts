@@ -11,8 +11,6 @@ export class VariableResponseDto {
   placeholder: string | null;
   validation_regex: string | null;
   display_order: number;
-  created_at: Date;
-  updated_at: Date;
   component?: {
     id: number;
     name: string;

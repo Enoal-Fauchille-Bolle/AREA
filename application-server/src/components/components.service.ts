@@ -20,7 +20,6 @@ export class ComponentsService {
   async findAll(): Promise<ComponentResponseDto[]> {
     const components = await this.componentRepository.find({
       relations: ['service'],
-      order: { created_at: 'DESC' },
     });
     return components.map(component => this.toResponseDto(component));
   }
@@ -119,8 +118,6 @@ export class ComponentsService {
       is_active: component.is_active,
       webhook_endpoint: component.webhook_endpoint,
       polling_interval: component.polling_interval,
-      created_at: component.created_at,
-      updated_at: component.updated_at,
     };
 
     if (component.service) {
