@@ -18,10 +18,8 @@ export class ServicesService {
   }
 
   async findAll(): Promise<ServiceResponseDto[]> {
-    const services = await this.serviceRepository.find({
-      order: { created_at: 'DESC' },
-    });
-    return services.map(service => this.toResponseDto(service));
+    const services = await this.serviceRepository.find({});
+    return services.map((service) => this.toResponseDto(service));
   }
 
   async findOne(id: number): Promise<ServiceResponseDto> {
