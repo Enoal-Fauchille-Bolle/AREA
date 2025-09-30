@@ -8,6 +8,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { Variable } from '../../variables/entities/variable.entity';
+import { Area } from '../../areas/entities/area.entity';
 
 @Entity('area_parameters')
 export class AreaParameter {
@@ -25,5 +26,7 @@ export class AreaParameter {
   @JoinColumn({ name: 'variable_id' })
   variable: Variable;
 
-  // Note: Area relationship will be added when Areas module is created
+  @ManyToOne(() => Area, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'area_id' })
+  area: Area;
 }

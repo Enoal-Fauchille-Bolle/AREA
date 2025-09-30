@@ -11,6 +11,7 @@ import { VariablesModule } from './variables/variables.module';
 import { AreaParametersModule } from './area-parameters/area-parameters.module';
 import { HookStatesModule } from './hook-states/hook-states.module';
 import { AreaExecutionsModule } from './area-executions/area-executions.module';
+import { AreasModule } from './areas/areas.module';
 import { User } from './users/entities/user.entity';
 import { Service } from './services/entities/service.entity';
 import { UserService } from './user-services/entities/user-service.entity';
@@ -19,6 +20,7 @@ import { Variable } from './variables/entities/variable.entity';
 import { AreaParameter } from './area-parameters/entities/area-parameter.entity';
 import { HookState } from './hook-states/entities/hook-state.entity';
 import { AreaExecution } from './area-executions/entities/area-execution.entity';
+import { Area } from './areas/entities/area.entity';
 
 @Module({
   imports: [
@@ -34,7 +36,7 @@ import { AreaExecution } from './area-executions/entities/area-execution.entity'
         username: configService.get('DB_USERNAME'),
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_DATABASE'),
-        entities: [User, Service, UserService, Component, Variable, AreaParameter, HookState, AreaExecution],
+        entities: [User, Service, UserService, Component, Variable, AreaParameter, HookState, AreaExecution, Area],
         synchronize: true, // creates tables automatically
         logging: true,
       }),
@@ -48,6 +50,7 @@ import { AreaExecution } from './area-executions/entities/area-execution.entity'
     AreaParametersModule,
     HookStatesModule,
     AreaExecutionsModule,
+    AreasModule,
   ],
   controllers: [AppController],
   providers: [AppService],

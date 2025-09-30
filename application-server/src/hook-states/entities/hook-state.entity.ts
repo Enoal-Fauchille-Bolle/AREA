@@ -4,7 +4,10 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
+import { Area } from '../../areas/entities/area.entity';
 
 @Entity('hook_states')
 export class HookState {
@@ -19,4 +22,15 @@ export class HookState {
 
   @Column({ type: 'timestamp with time zone', nullable: true })
   last_checked_at: Date | null;
+
+  @CreateDateColumn()
+  created_at: Date;
+
+  @UpdateDateColumn()
+  updated_at: Date;
+
+  // Relations
+  @ManyToOne(() => Area, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'area_id' })
+  area: Area;
 }

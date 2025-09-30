@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Area } from '../../areas/entities/area.entity';
 
 export enum ExecutionStatus {
   PENDING = 'pending',
@@ -37,4 +38,15 @@ export class AreaExecution {
 
   @Column({ type: 'bigint', nullable: true })
   execution_time_ms: number | null;
+
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
+
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
+
+  // Relations
+  @ManyToOne(() => Area, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'area_id' })
+  area: Area;
 }
