@@ -206,7 +206,7 @@ export class AreaParametersService {
         id: areaParameter.variable.id,
         name: areaParameter.variable.name,
         kind: areaParameter.variable.kind,
-        type: areaParameter.variable.type || '',
+        type: areaParameter.variable.type ?? null,
       };
     }
 
