@@ -2,7 +2,7 @@ export class UserResponseDto {
   id: number;
   email: string;
   username: string;
-  icon_path?: string;
+  icon_url?: string;
   is_admin: boolean;
   is_active: boolean;
   created_at: Date;
@@ -13,7 +13,7 @@ export class UserResponseDto {
     this.id = user.id;
     this.email = user.email;
     this.username = user.username;
-    this.icon_path = user.icon_path;
+    this.icon_url = user.icon_path; // Map icon_path to icon_url for API consistency
     this.is_admin = user.is_admin;
     this.is_active = user.is_active;
     this.created_at = user.created_at;

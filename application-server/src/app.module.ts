@@ -12,6 +12,7 @@ import { AreaParametersModule } from './area-parameters/area-parameters.module';
 import { HookStatesModule } from './hook-states/hook-states.module';
 import { AreaExecutionsModule } from './area-executions/area-executions.module';
 import { AreasModule } from './areas/areas.module';
+import { AuthModule } from './auth/auth.module';
 import { User } from './users/entities/user.entity';
 import { Service } from './services/entities/service.entity';
 import { UserService } from './user-services/entities/user-service.entity';
@@ -61,8 +62,9 @@ import { Area } from './areas/entities/area.entity';
     HookStatesModule,
     AreaExecutionsModule,
     AreasModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
