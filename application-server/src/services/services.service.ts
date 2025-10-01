@@ -19,7 +19,6 @@ export class ServicesService {
 
   async findAll(): Promise<ServiceResponseDto[]> {
     const services = await this.serviceRepository.find({
-      order: { created_at: 'DESC' },
     });
     return services.map(service => this.toResponseDto(service));
   }
@@ -75,7 +74,6 @@ export class ServicesService {
       icon_path: service.icon_path,
       requires_auth: service.requires_auth,
       is_active: service.is_active,
-      created_at: service.created_at,
     };
   }
 }

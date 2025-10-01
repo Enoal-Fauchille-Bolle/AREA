@@ -22,9 +22,7 @@ export class AreaExecutionsService {
   }
 
   async findAll(): Promise<AreaExecutionResponseDto[]> {
-    const executions = await this.areaExecutionRepository.find({
-      order: { created_at: 'DESC' },
-    });
+    const executions = await this.areaExecutionRepository.find({});
     return executions.map(execution => new AreaExecutionResponseDto(execution));
   }
 
@@ -43,7 +41,6 @@ export class AreaExecutionsService {
   async findByAreaId(areaId: number): Promise<AreaExecutionResponseDto[]> {
     const executions = await this.areaExecutionRepository.find({
       where: { area_id: areaId },
-      order: { created_at: 'DESC' },
     });
     return executions.map(execution => new AreaExecutionResponseDto(execution));
   }
@@ -51,14 +48,12 @@ export class AreaExecutionsService {
   async findByStatus(status: ExecutionStatus): Promise<AreaExecutionResponseDto[]> {
     const executions = await this.areaExecutionRepository.find({
       where: { status },
-      order: { created_at: 'DESC' },
     });
     return executions.map(execution => new AreaExecutionResponseDto(execution));
   }
 
   async findRecentExecutions(limit: number = 50): Promise<AreaExecutionResponseDto[]> {
     const executions = await this.areaExecutionRepository.find({
-      order: { created_at: 'DESC' },
       take: limit,
     });
     return executions.map(execution => new AreaExecutionResponseDto(execution));
@@ -89,7 +84,6 @@ export class AreaExecutionsService {
 
     const executions = await this.areaExecutionRepository.find({
       where: whereCondition,
-      order: { created_at: 'DESC' },
     });
     return executions.map(execution => new AreaExecutionResponseDto(execution));
   }
@@ -104,7 +98,7 @@ export class AreaExecutionsService {
     }
 
     // Auto-calculate execution time if completing
-    if (updateAreaExecutionDto.status === ExecutionStatus.COMPLETED && execution.started_at) {
+    if (updateAreaExecutionDto.status === ExecutionStatus.SUCCESS && execution.started_at) {
       const completedAt = updateAreaExecutionDto.completedAt || new Date();
       updateAreaExecutionDto.executionTimeMs = completedAt.getTime() - execution.started_at.getTime();
       updateAreaExecutionDto.completedAt = completedAt;
@@ -124,7 +118,7 @@ export class AreaExecutionsService {
 
   async completeExecution(id: number, executionResult?: Record<string, any>): Promise<AreaExecutionResponseDto> {
     return this.update(id, {
-      status: ExecutionStatus.COMPLETED,
+      status: ExecutionStatus.SUCCESS,
       completedAt: new Date(),
       executionResult,
     });
@@ -169,8 +163,8 @@ export class AreaExecutionsService {
       .createQueryBuilder()
       .delete()
       .where('created_at < :cutoff', { cutoff: cutoffDate })
-      .andWhere('status IN (:...statuses)', { 
-        statuses: [ExecutionStatus.COMPLETED, ExecutionStatus.FAILED, ExecutionStatus.CANCELLED] 
+      .andWhere('status IN (:...statuses)', {
+        statuses: [ExecutionStatus.SUCCESS, ExecutionStatus.FAILED, ExecutionStatus.CANCELLED]
       })
       .execute();
 
@@ -196,7 +190,7 @@ export class AreaExecutionsService {
       query.getCount(),
       query.clone().andWhere('execution.status = :status', { status: ExecutionStatus.PENDING }).getCount(),
       query.clone().andWhere('execution.status = :status', { status: ExecutionStatus.RUNNING }).getCount(),
-      query.clone().andWhere('execution.status = :status', { status: ExecutionStatus.COMPLETED }).getCount(),
+      query.clone().andWhere('execution.status = :status', { status: ExecutionStatus.SUCCESS }).getCount(),
       query.clone().andWhere('execution.status = :status', { status: ExecutionStatus.FAILED }).getCount(),
       query.clone().andWhere('execution.status = :status', { status: ExecutionStatus.CANCELLED }).getCount(),
     ]);
@@ -205,7 +199,7 @@ export class AreaExecutionsService {
     const avgQuery = query
       .clone()
       .select('AVG(execution.execution_time_ms)', 'avg')
-      .andWhere('execution.status = :status', { status: ExecutionStatus.COMPLETED })
+      .andWhere('execution.status = :status', { status: ExecutionStatus.SUCCESS })
       .andWhere('execution.execution_time_ms IS NOT NULL');
     
     const avgResult = await avgQuery.getRawOne();
