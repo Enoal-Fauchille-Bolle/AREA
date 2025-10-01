@@ -161,34 +161,28 @@ export class AreaParametersService {
     areaId: number,
     parameters: { variable_id: number; value: string; is_template?: boolean }[],
   ): Promise<AreaParameterResponseDto[]> {
-    const results: AreaParameterResponseDto[] = [];
-
-    for (const param of parameters) {
-      const existing = await this.areaParameterRepository.findOne({
-        where: { area_id: areaId, variable_id: param.variable_id },
-        relations: ['variable'],
-      });
-
-      if (existing) {
-        existing.value = param.value;
-        const updated = await this.areaParameterRepository.save(existing);
-        results.push(this.toResponseDto(updated));
-      } else {
-        const newParam = this.areaParameterRepository.create({
-          area_id: areaId,
-          variable_id: param.variable_id,
-          value: param.value,
-        });
-        const saved = await this.areaParameterRepository.save(newParam);
-        const withRelations = await this.areaParameterRepository.findOne({
-          where: { area_id: areaId, variable_id: param.variable_id },
-          relations: ['variable'],
-        });
-        results.push(this.toResponseDto(withRelations!));
-      }
-    }
-
-    return results;
+    // Prepare entities for upsert
+    const entities = parameters.map((param) => ({
+      area_id: areaId,
+      variable_id: param.variable_id,
+      value: param.value,
+      is_template: param.is_template ?? false,
+    }));
+    // Perform upsert (insert or update) in a single batch operation
+    await this.areaParameterRepository.upsert(entities, [
+      'area_id',
+      'variable_id',
+    ]);
+    // Fetch all affected records with relations in a single query
+    const variableIds = parameters.map((param) => param.variable_id);
+    const updatedParams = await this.areaParameterRepository.find({
+      where: variableIds.map((variable_id) => ({
+        area_id: areaId,
+        variable_id,
+      })),
+      relations: ['variable'],
+    });
+    return updatedParams.map((param) => this.toResponseDto(param));
   }
 
   async remove(areaId: number, variableId: number): Promise<void> {
