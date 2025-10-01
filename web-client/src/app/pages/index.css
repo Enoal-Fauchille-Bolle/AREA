@@ -1,1 +1,7 @@
+@import url('https://fonts.googleapis.com/css2?family=Bitcount+Prop+Single+Ink:wght@100..900&family=Candal&family=Luckiest+Guy&family=Sigmar+One&display=swap');
 @import 'tailwindcss';
+
+* {
+  font-family: 'Luckiest Guy', sans-serif;
+  font-weight: 400;
+}
