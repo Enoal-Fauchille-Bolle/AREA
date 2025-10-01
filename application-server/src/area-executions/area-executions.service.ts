@@ -279,7 +279,7 @@ export class AreaExecutionsService {
       })
       .andWhere('execution.execution_time_ms IS NOT NULL');
 
-    const avgResult = await avgQuery.getRawOne();
+    const avgResult = await avgQuery.getRawOne<{ avg: string | null }>();
     const avgExecutionTimeMs = avgResult?.avg ? Number(avgResult.avg) : null;
 
     return {

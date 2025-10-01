@@ -97,7 +97,7 @@ export class AuthService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    return new UserResponseDto(user);
+    return user;
   }
 
   async updateProfile(
@@ -133,7 +133,13 @@ export class AuthService {
     }
 
     // Prepare update data
-    const updateData: any = {};
+    // Temporary created a Type based on what's below
+    const updateData: {
+      email?: string;
+      username?: string;
+      icon_path?: string;
+      password?: string;
+    } = {};
     if (updateProfileDto.email) updateData.email = updateProfileDto.email;
     if (updateProfileDto.username)
       updateData.username = updateProfileDto.username;
@@ -143,7 +149,10 @@ export class AuthService {
       updateData.password = updateProfileDto.password; // UsersService will hash this
 
     const updatedUser = await this.usersService.update(userId, updateData);
-    return new UserResponseDto(updatedUser);
+    if (!updatedUser) {
+      throw new NotFoundException('User not found after update');
+    }
+    return updatedUser;
   }
 
   async deleteProfile(userId: number): Promise<void> {

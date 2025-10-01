@@ -18,7 +18,10 @@ export class AreasController {
   constructor(private readonly areasService: AreasService) {}
 
   @Post()
-  async create(@Request() req, @Body() createAreaDto: CreateAreaDto) {
+  async create(
+    @Request() req: { user?: { id: number } },
+    @Body() createAreaDto: CreateAreaDto,
+  ) {
     try {
       // For testing without auth, use a default user ID
       const userId = req.user?.id || 1;
@@ -28,24 +31,29 @@ export class AreasController {
       return area; // Return raw area for now
     } catch (error) {
       console.error('Controller error:', error);
-      return { error: error.message, stack: error.stack };
+      const err = error as Error;
+      return { error: err.message, stack: err.stack };
     }
   }
 
   @Get()
-  async findAll(@Request() req) {
+  async findAll(@Request() req: { user?: { id: number } }) {
     try {
       const userId = req.user?.id || 1;
       const areas = await this.areasService.findAll(userId);
       return areas;
     } catch (error) {
       console.error('Controller GET error:', error);
-      return { error: error.message };
+      const err = error as Error;
+      return { error: err.message };
     }
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string, @Request() req) {
+  async findOne(
+    @Param('id') id: string,
+    @Request() req: { user?: { id: number } },
+  ) {
     try {
       const userId = req.user?.id || 1;
       const parsedId = parseInt(id, 10);
@@ -55,14 +63,15 @@ export class AreasController {
       const area = await this.areasService.findOne(parsedId, userId);
       return area;
     } catch (error) {
-      return { error: error.message };
+      const err = error as Error;
+      return { error: err.message };
     }
   }
 
   @Patch(':id')
   async update(
     @Param('id') id: string,
-    @Request() req,
+    @Request() req: { user?: { id: number } },
     @Body() updateAreaDto: UpdateAreaDto,
   ): Promise<AreaResponseDto> {
     const parsedId = parseInt(id, 10);
@@ -71,14 +80,17 @@ export class AreasController {
     }
     const area = await this.areasService.update(
       parsedId,
-      req.user.id,
+      req.user?.id || 1,
       updateAreaDto,
     );
     return new AreaResponseDto(area);
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string, @Request() req) {
+  async remove(
+    @Param('id') id: string,
+    @Request() req: { user?: { id: number } },
+  ) {
     try {
       const userId = req.user?.id || 1;
       const parsedId = parseInt(id, 10);
@@ -88,20 +100,24 @@ export class AreasController {
       await this.areasService.remove(parsedId, userId);
       return { message: 'Area deleted successfully' };
     } catch (error) {
-      return { error: error.message };
+      const err = error as Error;
+      return { error: err.message };
     }
   }
 
   @Patch(':id/toggle')
   async toggleActive(
     @Param('id') id: string,
-    @Request() req,
+    @Request() req: { user?: { id: number } },
   ): Promise<AreaResponseDto> {
     const parsedId = parseInt(id, 10);
     if (isNaN(parsedId)) {
       throw new Error('Invalid ID format');
     }
-    const area = await this.areasService.toggleActive(parsedId, req.user.id);
+    const area = await this.areasService.toggleActive(
+      parsedId,
+      req.user?.id || 1,
+    );
     return new AreaResponseDto(area);
   }
 }

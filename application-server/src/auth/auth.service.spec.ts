@@ -27,7 +27,7 @@ describe('AuthService', () => {
     email: 'test@example.com',
     username: 'testuser',
     password_hash: 'hashedPassword',
-    icon_path: undefined,
+    icon_path: null,
     is_admin: false,
     is_active: true,
     created_at: new Date(),
