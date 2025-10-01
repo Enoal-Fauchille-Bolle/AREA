@@ -7,8 +7,8 @@ import {
   Param,
   Delete,
   Request,
-  HttpCode,
-  HttpStatus,
+  // HttpCode,
+  // HttpStatus,
 } from '@nestjs/common';
 import { AreasService } from './areas.service';
 import { CreateAreaDto, UpdateAreaDto, AreaResponseDto } from './dto';

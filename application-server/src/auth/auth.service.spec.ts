@@ -7,7 +7,10 @@ import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 import { User } from '../users/entities/user.entity';
 import { UserResponseDto } from '../users/dto/user-response.dto';
-import { ConflictException, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  // UnauthorizedException,
+} from '@nestjs/common';
 
 // Mock bcrypt
 jest.mock('bcrypt');
@@ -15,9 +18,9 @@ const mockedBcrypt = bcrypt as jest.Mocked<typeof bcrypt>;
 
 describe('AuthService', () => {
   let service: AuthService;
-  let usersService: UsersService;
-  let jwtService: JwtService;
-  let userRepository: Repository<User>;
+  let _usersService: UsersService;
+  let _jwtService: JwtService;
+  let _userRepository: Repository<User>;
 
   const mockUser: User = {
     id: 1,
@@ -72,9 +75,9 @@ describe('AuthService', () => {
     }).compile();
 
     service = module.get<AuthService>(AuthService);
-    usersService = module.get<UsersService>(UsersService);
-    jwtService = module.get<JwtService>(JwtService);
-    userRepository = module.get<Repository<User>>(getRepositoryToken(User));
+    _usersService = module.get<UsersService>(UsersService);
+    _jwtService = module.get<JwtService>(JwtService);
+    _userRepository = module.get<Repository<User>>(getRepositoryToken(User));
 
     // Reset mocks
     jest.clearAllMocks();

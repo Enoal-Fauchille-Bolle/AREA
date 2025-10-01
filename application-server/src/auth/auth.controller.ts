@@ -31,7 +31,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async login(
     @Body() loginDto: LoginDto,
-    @Request() req,
+    @Request() _req: Request,
   ): Promise<AuthResponseDto> {
     // LocalAuthGuard validates credentials and attaches user to request
     return this.authService.login(loginDto);

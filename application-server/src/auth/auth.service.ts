@@ -156,10 +156,7 @@ export class AuthService {
   }
 
   // OAuth2 methods - placeholder for now
-  async loginWithOAuth2(
-    service: string,
-    code: string,
-  ): Promise<AuthResponseDto> {
+  loginWithOAuth2(_service: string, _code: string): Promise<AuthResponseDto> {
     // TODO: Implement OAuth2 login flow
     // 1. Exchange code for access token
     // 2. Fetch user info from provider
@@ -168,9 +165,9 @@ export class AuthService {
     throw new Error('OAuth2 login not yet implemented');
   }
 
-  async registerWithOAuth2(
-    service: string,
-    code: string,
+  registerWithOAuth2(
+    _service: string,
+    _code: string,
   ): Promise<AuthResponseDto> {
     // TODO: Implement OAuth2 registration flow
     // 1. Exchange code for access token
