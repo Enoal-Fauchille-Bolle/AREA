@@ -68,6 +68,34 @@ export class UsersController {
     if (isNaN(parsedId)) {
       throw new HttpException('Invalid ID format', HttpStatus.BAD_REQUEST);
     }
+
+    // If email is being updated, check for uniqueness
+    if (updateUserDto.email) {
+      const existingUserByEmail = await this.usersService.findByEmail(
+        updateUserDto.email,
+      );
+      if (existingUserByEmail && existingUserByEmail.id !== parsedId) {
+        throw new HttpException(
+          'Another user with this email already exists',
+          HttpStatus.CONFLICT,
+        );
+      }
+    }
+
+    // If username is being updated, check for uniqueness
+    if (updateUserDto.username) {
+      const existingUserByUsername = await this.usersService.findByUsername(
+        updateUserDto.username,
+      );
+      if (existingUserByUsername && existingUserByUsername.id !== parsedId) {
+        throw new HttpException(
+          'Another user with this username already exists',
+          HttpStatus.CONFLICT,
+        );
+      }
+    }
+
+    // Proceed with the update
     const user = await this.usersService.update(parsedId, updateUserDto);
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
