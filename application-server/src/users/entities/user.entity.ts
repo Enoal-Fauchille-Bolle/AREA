@@ -17,8 +17,8 @@ export class User {
   @Column({ type: 'varchar', length: 100, unique: true })
   username: string;
 
-  @Column({ type: 'varchar', length: 255 })
-  password_hash: string;
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  password_hash: string | null;
 
   @Column({ type: 'text', nullable: true })
   icon_path: string | null;
