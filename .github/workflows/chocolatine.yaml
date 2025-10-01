@@ -36,6 +36,26 @@ jobs:
         run: npm run build
         working-directory: application-server
 
+  build-web-client:
+    name: Build Web Client
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checking Out
+        uses: actions/checkout@v4
+
+      - name: Setting up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "20"
+
+      - name: Installing Dependencies
+        run: npm install
+        working-directory: web-client
+
+      - name: Building Web Client
+        run: npm run build
+        working-directory: web-client
+
   repository_mirroring:
     name: Repository Mirroring
     runs-on: ubuntu-latest
