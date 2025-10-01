@@ -51,7 +51,11 @@ export class UsersController {
 
   @Get(':id')
   async findOne(@Param('id') id: string) {
-    const user = await this.usersService.findOne(+id);
+    const parsedId = parseInt(id, 10);
+    if (isNaN(parsedId)) {
+      throw new HttpException('Invalid ID format', HttpStatus.BAD_REQUEST);
+    }
+    const user = await this.usersService.findOne(parsedId);
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
@@ -60,7 +64,11 @@ export class UsersController {
 
   @Patch(':id')
   async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    const user = await this.usersService.update(+id, updateUserDto);
+    const parsedId = parseInt(id, 10);
+    if (isNaN(parsedId)) {
+      throw new HttpException('Invalid ID format', HttpStatus.BAD_REQUEST);
+    }
+    const user = await this.usersService.update(parsedId, updateUserDto);
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
@@ -69,7 +77,11 @@ export class UsersController {
 
   @Patch(':id/last-connection')
   async updateLastConnection(@Param('id') id: string) {
-    const user = await this.usersService.updateLastConnection(+id);
+    const parsedId = parseInt(id, 10);
+    if (isNaN(parsedId)) {
+      throw new HttpException('Invalid ID format', HttpStatus.BAD_REQUEST);
+    }
+    const user = await this.usersService.updateLastConnection(parsedId);
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
@@ -87,7 +99,11 @@ export class UsersController {
 
   @Delete(':id')
   async remove(@Param('id') id: string) {
-    const success = await this.usersService.remove(+id);
+    const parsedId = parseInt(id, 10);
+    if (isNaN(parsedId)) {
+      throw new HttpException('Invalid ID format', HttpStatus.BAD_REQUEST);
+    }
+    const success = await this.usersService.remove(parsedId);
     if (!success) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }

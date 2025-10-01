@@ -36,7 +36,11 @@ export class ServicesController {
 
   @Get(':id')
   findOne(@Param('id') id: string): Promise<ServiceResponseDto> {
-    return this.servicesService.findOne(+id);
+    const parsedIntId = parseInt(id, 10);
+    if (isNaN(parsedIntId)) {
+      throw new Error('Invalid ID format');
+    }
+    return this.servicesService.findOne(parsedIntId);
   }
 
   @Get('by-name/:name')
@@ -49,12 +53,20 @@ export class ServicesController {
     @Param('id') id: string,
     @Body() updateServiceDto: UpdateServiceDto,
   ): Promise<ServiceResponseDto> {
-    return this.servicesService.update(+id, updateServiceDto);
+    const parsedIntId = parseInt(id, 10);
+    if (isNaN(parsedIntId)) {
+      throw new Error('Invalid ID format');
+    }
+    return this.servicesService.update(parsedIntId, updateServiceDto);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id') id: string): Promise<void> {
-    return this.servicesService.remove(+id);
+    const parsedIntId = parseInt(id, 10);
+    if (isNaN(parsedIntId)) {
+      throw new Error('Invalid ID format');
+    }
+    return this.servicesService.remove(parsedIntId);
   }
 }

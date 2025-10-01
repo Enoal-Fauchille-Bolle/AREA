@@ -48,7 +48,11 @@ export class AreasController {
   async findOne(@Param('id') id: string, @Request() req) {
     try {
       const userId = req.user?.id || 1;
-      const area = await this.areasService.findOne(+id, userId);
+      const parsedId = parseInt(id, 10);
+      if (isNaN(parsedId)) {
+        throw new Error('Invalid ID format');
+      }
+      const area = await this.areasService.findOne(parsedId, userId);
       return area;
     } catch (error) {
       return { error: error.message };
@@ -61,8 +65,12 @@ export class AreasController {
     @Request() req,
     @Body() updateAreaDto: UpdateAreaDto,
   ): Promise<AreaResponseDto> {
+    const parsedId = parseInt(id, 10);
+    if (isNaN(parsedId)) {
+      throw new Error('Invalid ID format');
+    }
     const area = await this.areasService.update(
-      +id,
+      parsedId,
       req.user.id,
       updateAreaDto,
     );
@@ -73,7 +81,11 @@ export class AreasController {
   async remove(@Param('id') id: string, @Request() req) {
     try {
       const userId = req.user?.id || 1;
-      await this.areasService.remove(+id, userId);
+      const parsedId = parseInt(id, 10);
+      if (isNaN(parsedId)) {
+        throw new Error('Invalid ID format');
+      }
+      await this.areasService.remove(parsedId, userId);
       return { message: 'Area deleted successfully' };
     } catch (error) {
       return { error: error.message };
@@ -85,7 +97,11 @@ export class AreasController {
     @Param('id') id: string,
     @Request() req,
   ): Promise<AreaResponseDto> {
-    const area = await this.areasService.toggleActive(+id, req.user.id);
+    const parsedId = parseInt(id, 10);
+    if (isNaN(parsedId)) {
+      throw new Error('Invalid ID format');
+    }
+    const area = await this.areasService.toggleActive(parsedId, req.user.id);
     return new AreaResponseDto(area);
   }
 }
