@@ -11,16 +11,17 @@ export class ServicesService {
     private readonly serviceRepository: Repository<Service>,
   ) {}
 
-  async create(createServiceDto: CreateServiceDto): Promise<ServiceResponseDto> {
+  async create(
+    createServiceDto: CreateServiceDto,
+  ): Promise<ServiceResponseDto> {
     const service = this.serviceRepository.create(createServiceDto);
     const savedService = await this.serviceRepository.save(service);
     return this.toResponseDto(savedService);
   }
 
   async findAll(): Promise<ServiceResponseDto[]> {
-    const services = await this.serviceRepository.find({
-    });
-    return services.map(service => this.toResponseDto(service));
+    const services = await this.serviceRepository.find({});
+    return services.map((service) => this.toResponseDto(service));
   }
 
   async findOne(id: number): Promise<ServiceResponseDto> {
@@ -44,10 +45,13 @@ export class ServicesService {
       where: { is_active: true },
       order: { name: 'ASC' },
     });
-    return services.map(service => this.toResponseDto(service));
+    return services.map((service) => this.toResponseDto(service));
   }
 
-  async update(id: number, updateServiceDto: UpdateServiceDto): Promise<ServiceResponseDto> {
+  async update(
+    id: number,
+    updateServiceDto: UpdateServiceDto,
+  ): Promise<ServiceResponseDto> {
     const service = await this.serviceRepository.findOne({ where: { id } });
     if (!service) {
       throw new NotFoundException(`Service with ID ${id} not found`);

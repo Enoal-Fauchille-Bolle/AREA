@@ -1,8 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere } from 'typeorm';
-import { AreaExecution, ExecutionStatus } from './entities/area-execution.entity';
-import { CreateAreaExecutionDto, UpdateAreaExecutionDto, AreaExecutionResponseDto } from './dto';
+import {
+  AreaExecution,
+  ExecutionStatus,
+} from './entities/area-execution.entity';
+import {
+  CreateAreaExecutionDto,
+  UpdateAreaExecutionDto,
+  AreaExecutionResponseDto,
+} from './dto';
 
 @Injectable()
 export class AreaExecutionsService {
@@ -11,19 +18,24 @@ export class AreaExecutionsService {
     private readonly areaExecutionRepository: Repository<AreaExecution>,
   ) {}
 
-  async create(createAreaExecutionDto: CreateAreaExecutionDto): Promise<AreaExecutionResponseDto> {
+  async create(
+    createAreaExecutionDto: CreateAreaExecutionDto,
+  ): Promise<AreaExecutionResponseDto> {
     const areaExecution = this.areaExecutionRepository.create({
       ...createAreaExecutionDto,
       status: createAreaExecutionDto.status || ExecutionStatus.PENDING,
     });
-    
-    const savedExecution = await this.areaExecutionRepository.save(areaExecution);
+
+    const savedExecution =
+      await this.areaExecutionRepository.save(areaExecution);
     return new AreaExecutionResponseDto(savedExecution);
   }
 
   async findAll(): Promise<AreaExecutionResponseDto[]> {
     const executions = await this.areaExecutionRepository.find({});
-    return executions.map(execution => new AreaExecutionResponseDto(execution));
+    return executions.map(
+      (execution) => new AreaExecutionResponseDto(execution),
+    );
   }
 
   async findOne(id: number): Promise<AreaExecutionResponseDto> {
@@ -42,38 +54,56 @@ export class AreaExecutionsService {
     const executions = await this.areaExecutionRepository.find({
       where: { area_id: areaId },
     });
-    return executions.map(execution => new AreaExecutionResponseDto(execution));
+    return executions.map(
+      (execution) => new AreaExecutionResponseDto(execution),
+    );
   }
 
-  async findByStatus(status: ExecutionStatus): Promise<AreaExecutionResponseDto[]> {
+  async findByStatus(
+    status: ExecutionStatus,
+  ): Promise<AreaExecutionResponseDto[]> {
     const executions = await this.areaExecutionRepository.find({
       where: { status },
     });
-    return executions.map(execution => new AreaExecutionResponseDto(execution));
+    return executions.map(
+      (execution) => new AreaExecutionResponseDto(execution),
+    );
   }
 
-  async findRecentExecutions(limit: number = 50): Promise<AreaExecutionResponseDto[]> {
+  async findRecentExecutions(
+    limit: number = 50,
+  ): Promise<AreaExecutionResponseDto[]> {
     const executions = await this.areaExecutionRepository.find({
       take: limit,
     });
-    return executions.map(execution => new AreaExecutionResponseDto(execution));
+    return executions.map(
+      (execution) => new AreaExecutionResponseDto(execution),
+    );
   }
 
-  async findLongRunningExecutions(thresholdMinutes: number = 30): Promise<AreaExecutionResponseDto[]> {
+  async findLongRunningExecutions(
+    thresholdMinutes: number = 30,
+  ): Promise<AreaExecutionResponseDto[]> {
     const thresholdDate = new Date();
     thresholdDate.setMinutes(thresholdDate.getMinutes() - thresholdMinutes);
 
     const executions = await this.areaExecutionRepository
       .createQueryBuilder('execution')
       .where('execution.status = :status', { status: ExecutionStatus.RUNNING })
-      .andWhere('execution.started_at < :threshold', { threshold: thresholdDate })
+      .andWhere('execution.started_at < :threshold', {
+        threshold: thresholdDate,
+      })
       .orderBy('execution.started_at', 'ASC')
       .getMany();
 
-    return executions.map(execution => new AreaExecutionResponseDto(execution));
+    return executions.map(
+      (execution) => new AreaExecutionResponseDto(execution),
+    );
   }
 
-  async findFailedExecutions(areaId?: number): Promise<AreaExecutionResponseDto[]> {
+  async findFailedExecutions(
+    areaId?: number,
+  ): Promise<AreaExecutionResponseDto[]> {
     const whereCondition: FindOptionsWhere<AreaExecution> = {
       status: ExecutionStatus.FAILED,
     };
@@ -85,10 +115,15 @@ export class AreaExecutionsService {
     const executions = await this.areaExecutionRepository.find({
       where: whereCondition,
     });
-    return executions.map(execution => new AreaExecutionResponseDto(execution));
+    return executions.map(
+      (execution) => new AreaExecutionResponseDto(execution),
+    );
   }
 
-  async update(id: number, updateAreaExecutionDto: UpdateAreaExecutionDto): Promise<AreaExecutionResponseDto> {
+  async update(
+    id: number,
+    updateAreaExecutionDto: UpdateAreaExecutionDto,
+  ): Promise<AreaExecutionResponseDto> {
     const execution = await this.areaExecutionRepository.findOne({
       where: { id },
     });
@@ -98,9 +133,13 @@ export class AreaExecutionsService {
     }
 
     // Auto-calculate execution time if completing
-    if (updateAreaExecutionDto.status === ExecutionStatus.SUCCESS && execution.started_at) {
+    if (
+      updateAreaExecutionDto.status === ExecutionStatus.SUCCESS &&
+      execution.started_at
+    ) {
       const completedAt = updateAreaExecutionDto.completedAt || new Date();
-      updateAreaExecutionDto.executionTimeMs = completedAt.getTime() - execution.started_at.getTime();
+      updateAreaExecutionDto.executionTimeMs =
+        completedAt.getTime() - execution.started_at.getTime();
       updateAreaExecutionDto.completedAt = completedAt;
     }
 
@@ -116,7 +155,10 @@ export class AreaExecutionsService {
     });
   }
 
-  async completeExecution(id: number, executionResult?: Record<string, any>): Promise<AreaExecutionResponseDto> {
+  async completeExecution(
+    id: number,
+    executionResult?: Record<string, any>,
+  ): Promise<AreaExecutionResponseDto> {
     return this.update(id, {
       status: ExecutionStatus.SUCCESS,
       completedAt: new Date(),
@@ -124,7 +166,10 @@ export class AreaExecutionsService {
     });
   }
 
-  async failExecution(id: number, errorMessage: string): Promise<AreaExecutionResponseDto> {
+  async failExecution(
+    id: number,
+    errorMessage: string,
+  ): Promise<AreaExecutionResponseDto> {
     return this.update(id, {
       status: ExecutionStatus.FAILED,
       completedAt: new Date(),
@@ -164,7 +209,11 @@ export class AreaExecutionsService {
       .delete()
       .where('created_at < :cutoff', { cutoff: cutoffDate })
       .andWhere('status IN (:...statuses)', {
-        statuses: [ExecutionStatus.SUCCESS, ExecutionStatus.FAILED, ExecutionStatus.CANCELLED]
+        statuses: [
+          ExecutionStatus.SUCCESS,
+          ExecutionStatus.FAILED,
+          ExecutionStatus.CANCELLED,
+        ],
       })
       .execute();
 
@@ -181,27 +230,55 @@ export class AreaExecutionsService {
     avgExecutionTimeMs: number | null;
   }> {
     let query = this.areaExecutionRepository.createQueryBuilder('execution');
-    
+
     if (areaId) {
       query = query.where('execution.area_id = :areaId', { areaId });
     }
 
-    const [total, pending, running, completed, failed, cancelled] = await Promise.all([
-      query.getCount(),
-      query.clone().andWhere('execution.status = :status', { status: ExecutionStatus.PENDING }).getCount(),
-      query.clone().andWhere('execution.status = :status', { status: ExecutionStatus.RUNNING }).getCount(),
-      query.clone().andWhere('execution.status = :status', { status: ExecutionStatus.SUCCESS }).getCount(),
-      query.clone().andWhere('execution.status = :status', { status: ExecutionStatus.FAILED }).getCount(),
-      query.clone().andWhere('execution.status = :status', { status: ExecutionStatus.CANCELLED }).getCount(),
-    ]);
+    const [total, pending, running, completed, failed, cancelled] =
+      await Promise.all([
+        query.getCount(),
+        query
+          .clone()
+          .andWhere('execution.status = :status', {
+            status: ExecutionStatus.PENDING,
+          })
+          .getCount(),
+        query
+          .clone()
+          .andWhere('execution.status = :status', {
+            status: ExecutionStatus.RUNNING,
+          })
+          .getCount(),
+        query
+          .clone()
+          .andWhere('execution.status = :status', {
+            status: ExecutionStatus.SUCCESS,
+          })
+          .getCount(),
+        query
+          .clone()
+          .andWhere('execution.status = :status', {
+            status: ExecutionStatus.FAILED,
+          })
+          .getCount(),
+        query
+          .clone()
+          .andWhere('execution.status = :status', {
+            status: ExecutionStatus.CANCELLED,
+          })
+          .getCount(),
+      ]);
 
     // Calculate average execution time for completed executions
     const avgQuery = query
       .clone()
       .select('AVG(execution.execution_time_ms)', 'avg')
-      .andWhere('execution.status = :status', { status: ExecutionStatus.SUCCESS })
+      .andWhere('execution.status = :status', {
+        status: ExecutionStatus.SUCCESS,
+      })
       .andWhere('execution.execution_time_ms IS NOT NULL');
-    
+
     const avgResult = await avgQuery.getRawOne();
     const avgExecutionTimeMs = avgResult?.avg ? Number(avgResult.avg) : null;
 

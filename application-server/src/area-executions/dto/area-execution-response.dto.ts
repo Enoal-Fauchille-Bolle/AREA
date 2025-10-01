@@ -22,7 +22,9 @@ export class AreaExecutionResponseDto {
     this.errorMessage = areaExecution.errorMessage;
     this.startedAt = areaExecution.startedAt;
     this.completedAt = areaExecution.completedAt;
-    this.executionTimeMs = areaExecution.executionTimeMs ? Number(areaExecution.executionTimeMs) : null;
+    this.executionTimeMs = areaExecution.executionTimeMs
+      ? Number(areaExecution.executionTimeMs)
+      : null;
     this.createdAt = areaExecution.createdAt;
     this.updatedAt = areaExecution.updatedAt;
   }

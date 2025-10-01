@@ -27,14 +27,14 @@ export class UsersService {
       is_admin: createUserDto.is_admin ?? false,
       is_active: createUserDto.is_active ?? true,
     });
-    
+
     const savedUser = await this.usersRepository.save(user);
     return new UserResponseDto(savedUser);
   }
 
   async findAll(): Promise<UserResponseDto[]> {
     const users = await this.usersRepository.find();
-    return users.map(user => new UserResponseDto(user));
+    return users.map((user) => new UserResponseDto(user));
   }
 
   async findOne(id: number): Promise<UserResponseDto | undefined> {
@@ -52,7 +52,9 @@ export class UsersService {
     return user || undefined;
   }
 
-  async findByUsernamePublic(username: string): Promise<UserResponseDto | undefined> {
+  async findByUsernamePublic(
+    username: string,
+  ): Promise<UserResponseDto | undefined> {
     const user = await this.usersRepository.findOne({ where: { username } });
     return user ? new UserResponseDto(user) : undefined;
   }
@@ -63,7 +65,10 @@ export class UsersService {
     return user || undefined;
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto): Promise<UserResponseDto | null> {
+  async update(
+    id: number,
+    updateUserDto: UpdateUserDto,
+  ): Promise<UserResponseDto | null> {
     const user = await this.usersRepository.findOne({ where: { id } });
     if (!user) {
       return null;
@@ -73,7 +78,10 @@ export class UsersService {
     let updateData: Partial<User> = { ...updateUserDto };
     if (updateUserDto.password) {
       const saltRounds = 10;
-      const password_hash = await bcrypt.hash(updateUserDto.password, saltRounds);
+      const password_hash = await bcrypt.hash(
+        updateUserDto.password,
+        saltRounds,
+      );
       const { password, ...dataWithoutPassword } = updateUserDto;
       updateData = { ...dataWithoutPassword, password_hash };
     }

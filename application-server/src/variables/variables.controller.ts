@@ -12,7 +12,11 @@ import {
   Query,
 } from '@nestjs/common';
 import { VariablesService } from './variables.service';
-import { CreateVariableDto, UpdateVariableDto, VariableResponseDto } from './dto';
+import {
+  CreateVariableDto,
+  UpdateVariableDto,
+  VariableResponseDto,
+} from './dto';
 import { VariableKind, VariableType } from './entities/variable.entity';
 
 @Controller('variables')
@@ -21,7 +25,9 @@ export class VariablesController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() createVariableDto: CreateVariableDto): Promise<VariableResponseDto> {
+  create(
+    @Body() createVariableDto: CreateVariableDto,
+  ): Promise<VariableResponseDto> {
     return this.variablesService.create(createVariableDto);
   }
 
@@ -36,33 +42,36 @@ export class VariablesController {
     if (required === 'true') {
       return this.variablesService.findRequired();
     }
-    
+
     if (kind && componentId) {
       const variableKind = kind as VariableKind;
-      return this.variablesService.findByComponentAndKind(parseInt(componentId), variableKind);
+      return this.variablesService.findByComponentAndKind(
+        parseInt(componentId),
+        variableKind,
+      );
     }
-    
+
     if (kind === 'input') {
       return this.variablesService.findInputs();
     }
-    
+
     if (kind === 'output') {
       return this.variablesService.findOutputs();
     }
-    
+
     if (kind === 'parameter') {
       return this.variablesService.findParameters();
     }
-    
+
     if (componentId) {
       return this.variablesService.findByComponent(parseInt(componentId));
     }
-    
+
     if (type) {
       const variableType = type as VariableType;
       return this.variablesService.findByType(variableType);
     }
-    
+
     return this.variablesService.findAll();
   }
 
@@ -87,27 +96,37 @@ export class VariablesController {
   }
 
   @Get('component/:componentId')
-  findByComponent(@Param('componentId', ParseIntPipe) componentId: number): Promise<VariableResponseDto[]> {
+  findByComponent(
+    @Param('componentId', ParseIntPipe) componentId: number,
+  ): Promise<VariableResponseDto[]> {
     return this.variablesService.findByComponent(componentId);
   }
 
   @Get('component/:componentId/inputs')
-  findInputsByComponent(@Param('componentId', ParseIntPipe) componentId: number): Promise<VariableResponseDto[]> {
+  findInputsByComponent(
+    @Param('componentId', ParseIntPipe) componentId: number,
+  ): Promise<VariableResponseDto[]> {
     return this.variablesService.findInputsByComponent(componentId);
   }
 
   @Get('component/:componentId/outputs')
-  findOutputsByComponent(@Param('componentId', ParseIntPipe) componentId: number): Promise<VariableResponseDto[]> {
+  findOutputsByComponent(
+    @Param('componentId', ParseIntPipe) componentId: number,
+  ): Promise<VariableResponseDto[]> {
     return this.variablesService.findOutputsByComponent(componentId);
   }
 
   @Get('component/:componentId/parameters')
-  findParametersByComponent(@Param('componentId', ParseIntPipe) componentId: number): Promise<VariableResponseDto[]> {
+  findParametersByComponent(
+    @Param('componentId', ParseIntPipe) componentId: number,
+  ): Promise<VariableResponseDto[]> {
     return this.variablesService.findParametersByComponent(componentId);
   }
 
   @Get('type/:type')
-  findByType(@Param('type') type: VariableType): Promise<VariableResponseDto[]> {
+  findByType(
+    @Param('type') type: VariableType,
+  ): Promise<VariableResponseDto[]> {
     return this.variablesService.findByType(type);
   }
 
@@ -129,7 +148,10 @@ export class VariablesController {
     @Param('componentId', ParseIntPipe) componentId: number,
     @Body() body: { variableIds: number[] },
   ): Promise<VariableResponseDto[]> {
-    return this.variablesService.reorderVariables(componentId, body.variableIds);
+    return this.variablesService.reorderVariables(
+      componentId,
+      body.variableIds,
+    );
   }
 
   @Delete(':id')
@@ -140,7 +162,9 @@ export class VariablesController {
 
   @Delete('component/:componentId')
   @HttpCode(HttpStatus.NO_CONTENT)
-  removeByComponent(@Param('componentId', ParseIntPipe) componentId: number): Promise<void> {
+  removeByComponent(
+    @Param('componentId', ParseIntPipe) componentId: number,
+  ): Promise<void> {
     return this.variablesService.removeByComponent(componentId);
   }
 }

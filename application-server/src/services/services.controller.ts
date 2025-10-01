@@ -18,7 +18,9 @@ export class ServicesController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() createServiceDto: CreateServiceDto): Promise<ServiceResponseDto> {
+  create(
+    @Body() createServiceDto: CreateServiceDto,
+  ): Promise<ServiceResponseDto> {
     return this.servicesService.create(createServiceDto);
   }
 

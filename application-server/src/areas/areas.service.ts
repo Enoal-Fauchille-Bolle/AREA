@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Area } from './entities/area.entity';
@@ -19,7 +23,7 @@ export class AreasService {
         user_id: userId,
       });
       console.log('Area entity created:', area);
-      
+
       const savedArea = await this.areasRepository.save(area);
       console.log('Area saved:', savedArea);
       return savedArea;
@@ -48,9 +52,13 @@ export class AreasService {
     return area;
   }
 
-  async update(id: number, userId: number, updateAreaDto: UpdateAreaDto): Promise<Area> {
+  async update(
+    id: number,
+    userId: number,
+    updateAreaDto: UpdateAreaDto,
+  ): Promise<Area> {
     const area = await this.findOne(id, userId);
-    
+
     Object.assign(area, updateAreaDto);
     return this.areasRepository.save(area);
   }

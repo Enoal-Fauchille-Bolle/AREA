@@ -12,7 +12,11 @@ import {
   Query,
 } from '@nestjs/common';
 import { AreaParametersService } from './area-parameters.service';
-import { CreateAreaParameterDto, UpdateAreaParameterDto, AreaParameterResponseDto } from './dto';
+import {
+  CreateAreaParameterDto,
+  UpdateAreaParameterDto,
+  AreaParameterResponseDto,
+} from './dto';
 
 @Controller('area-parameters')
 export class AreaParametersController {
@@ -20,7 +24,9 @@ export class AreaParametersController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() createAreaParameterDto: CreateAreaParameterDto): Promise<AreaParameterResponseDto> {
+  create(
+    @Body() createAreaParameterDto: CreateAreaParameterDto,
+  ): Promise<AreaParameterResponseDto> {
     return this.areaParametersService.create(createAreaParameterDto);
   }
 
@@ -37,15 +43,15 @@ export class AreaParametersController {
       }
       return this.areaParametersService.findTemplates();
     }
-    
+
     if (areaId) {
       return this.areaParametersService.findByArea(parseInt(areaId));
     }
-    
+
     if (variableId) {
       return this.areaParametersService.findByVariable(parseInt(variableId));
     }
-    
+
     return this.areaParametersService.findAll();
   }
 
@@ -55,17 +61,23 @@ export class AreaParametersController {
   }
 
   @Get('area/:areaId')
-  findByArea(@Param('areaId', ParseIntPipe) areaId: number): Promise<AreaParameterResponseDto[]> {
+  findByArea(
+    @Param('areaId', ParseIntPipe) areaId: number,
+  ): Promise<AreaParameterResponseDto[]> {
     return this.areaParametersService.findByArea(areaId);
   }
 
   @Get('area/:areaId/templates')
-  findTemplatesByArea(@Param('areaId', ParseIntPipe) areaId: number): Promise<AreaParameterResponseDto[]> {
+  findTemplatesByArea(
+    @Param('areaId', ParseIntPipe) areaId: number,
+  ): Promise<AreaParameterResponseDto[]> {
     return this.areaParametersService.findTemplatesByArea(areaId);
   }
 
   @Get('variable/:variableId')
-  findByVariable(@Param('variableId', ParseIntPipe) variableId: number): Promise<AreaParameterResponseDto[]> {
+  findByVariable(
+    @Param('variableId', ParseIntPipe) variableId: number,
+  ): Promise<AreaParameterResponseDto[]> {
     return this.areaParametersService.findByVariable(variableId);
   }
 
@@ -83,7 +95,11 @@ export class AreaParametersController {
     @Param('variableId', ParseIntPipe) variableId: number,
     @Body() updateAreaParameterDto: UpdateAreaParameterDto,
   ): Promise<AreaParameterResponseDto> {
-    return this.areaParametersService.update(areaId, variableId, updateAreaParameterDto);
+    return this.areaParametersService.update(
+      areaId,
+      variableId,
+      updateAreaParameterDto,
+    );
   }
 
   @Patch(':areaId/:variableId/value')
@@ -92,15 +108,29 @@ export class AreaParametersController {
     @Param('variableId', ParseIntPipe) variableId: number,
     @Body() body: { value: string },
   ): Promise<AreaParameterResponseDto> {
-    return this.areaParametersService.updateValue(areaId, variableId, body.value);
+    return this.areaParametersService.updateValue(
+      areaId,
+      variableId,
+      body.value,
+    );
   }
 
   @Post('area/:areaId/bulk')
   bulkCreateOrUpdate(
     @Param('areaId', ParseIntPipe) areaId: number,
-    @Body() body: { parameters: { variable_id: number; value: string; is_template?: boolean }[] },
+    @Body()
+    body: {
+      parameters: {
+        variable_id: number;
+        value: string;
+        is_template?: boolean;
+      }[];
+    },
   ): Promise<AreaParameterResponseDto[]> {
-    return this.areaParametersService.bulkCreateOrUpdate(areaId, body.parameters);
+    return this.areaParametersService.bulkCreateOrUpdate(
+      areaId,
+      body.parameters,
+    );
   }
 
   @Delete(':areaId/:variableId')
@@ -120,7 +150,9 @@ export class AreaParametersController {
 
   @Delete('variable/:variableId')
   @HttpCode(HttpStatus.NO_CONTENT)
-  removeByVariable(@Param('variableId', ParseIntPipe) variableId: number): Promise<void> {
+  removeByVariable(
+    @Param('variableId', ParseIntPipe) variableId: number,
+  ): Promise<void> {
     return this.areaParametersService.removeByVariable(variableId);
   }
 }

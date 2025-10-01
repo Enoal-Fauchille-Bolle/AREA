@@ -12,7 +12,11 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { AreaExecutionsService } from './area-executions.service';
-import { CreateAreaExecutionDto, UpdateAreaExecutionDto, AreaExecutionResponseDto } from './dto';
+import {
+  CreateAreaExecutionDto,
+  UpdateAreaExecutionDto,
+  AreaExecutionResponseDto,
+} from './dto';
 import { ExecutionStatus } from './entities/area-execution.entity';
 
 @Controller('area-executions')
@@ -20,7 +24,9 @@ export class AreaExecutionsController {
   constructor(private readonly areaExecutionsService: AreaExecutionsService) {}
 
   @Post()
-  async create(@Body() createAreaExecutionDto: CreateAreaExecutionDto): Promise<AreaExecutionResponseDto> {
+  async create(
+    @Body() createAreaExecutionDto: CreateAreaExecutionDto,
+  ): Promise<AreaExecutionResponseDto> {
     return this.areaExecutionsService.create(createAreaExecutionDto);
   }
 
@@ -30,12 +36,16 @@ export class AreaExecutionsController {
   }
 
   @Get('recent')
-  async findRecent(@Query('limit', ParseIntPipe) limit: number = 50): Promise<AreaExecutionResponseDto[]> {
+  async findRecent(
+    @Query('limit', ParseIntPipe) limit: number = 50,
+  ): Promise<AreaExecutionResponseDto[]> {
     return this.areaExecutionsService.findRecentExecutions(limit);
   }
 
   @Get('status/:status')
-  async findByStatus(@Param('status') status: ExecutionStatus): Promise<AreaExecutionResponseDto[]> {
+  async findByStatus(
+    @Param('status') status: ExecutionStatus,
+  ): Promise<AreaExecutionResponseDto[]> {
     return this.areaExecutionsService.findByStatus(status);
   }
 
@@ -43,16 +53,22 @@ export class AreaExecutionsController {
   async findLongRunning(
     @Query('threshold', ParseIntPipe) thresholdMinutes: number = 30,
   ): Promise<AreaExecutionResponseDto[]> {
-    return this.areaExecutionsService.findLongRunningExecutions(thresholdMinutes);
+    return this.areaExecutionsService.findLongRunningExecutions(
+      thresholdMinutes,
+    );
   }
 
   @Get('failed')
-  async findFailed(@Query('areaId', ParseIntPipe) areaId?: number): Promise<AreaExecutionResponseDto[]> {
+  async findFailed(
+    @Query('areaId', ParseIntPipe) areaId?: number,
+  ): Promise<AreaExecutionResponseDto[]> {
     return this.areaExecutionsService.findFailedExecutions(areaId);
   }
 
   @Get('area/:areaId')
-  async findByAreaId(@Param('areaId', ParseIntPipe) areaId: number): Promise<AreaExecutionResponseDto[]> {
+  async findByAreaId(
+    @Param('areaId', ParseIntPipe) areaId: number,
+  ): Promise<AreaExecutionResponseDto[]> {
     return this.areaExecutionsService.findByAreaId(areaId);
   }
 
@@ -83,7 +99,9 @@ export class AreaExecutionsController {
   }
 
   @Get(':id')
-  async findOne(@Param('id', ParseIntPipe) id: number): Promise<AreaExecutionResponseDto> {
+  async findOne(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<AreaExecutionResponseDto> {
     return this.areaExecutionsService.findOne(id);
   }
 
@@ -96,7 +114,9 @@ export class AreaExecutionsController {
   }
 
   @Patch(':id/start')
-  async startExecution(@Param('id', ParseIntPipe) id: number): Promise<AreaExecutionResponseDto> {
+  async startExecution(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<AreaExecutionResponseDto> {
     return this.areaExecutionsService.startExecution(id);
   }
 
@@ -105,7 +125,10 @@ export class AreaExecutionsController {
     @Param('id', ParseIntPipe) id: number,
     @Body() body: { executionResult?: Record<string, any> } = {},
   ): Promise<AreaExecutionResponseDto> {
-    return this.areaExecutionsService.completeExecution(id, body.executionResult);
+    return this.areaExecutionsService.completeExecution(
+      id,
+      body.executionResult,
+    );
   }
 
   @Patch(':id/fail')
@@ -117,7 +140,9 @@ export class AreaExecutionsController {
   }
 
   @Patch(':id/cancel')
-  async cancelExecution(@Param('id', ParseIntPipe) id: number): Promise<AreaExecutionResponseDto> {
+  async cancelExecution(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<AreaExecutionResponseDto> {
     return this.areaExecutionsService.cancelExecution(id);
   }
 
@@ -129,12 +154,16 @@ export class AreaExecutionsController {
 
   @Delete('area/:areaId')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async removeByAreaId(@Param('areaId', ParseIntPipe) areaId: number): Promise<void> {
+  async removeByAreaId(
+    @Param('areaId', ParseIntPipe) areaId: number,
+  ): Promise<void> {
     return this.areaExecutionsService.removeByAreaId(areaId);
   }
 
   @Delete('cleanup/old')
-  async cleanup(@Query('olderThanDays', ParseIntPipe) olderThanDays: number = 30): Promise<{ deleted: number }> {
+  async cleanup(
+    @Query('olderThanDays', ParseIntPipe) olderThanDays: number = 30,
+  ): Promise<{ deleted: number }> {
     const deleted = await this.areaExecutionsService.cleanup(olderThanDays);
     return { deleted };
   }

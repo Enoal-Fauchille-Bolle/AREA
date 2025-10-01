@@ -1,8 +1,16 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserService } from './entities/user-service.entity';
-import { CreateUserServiceDto, UpdateUserServiceDto, UserServiceResponseDto } from './dto';
+import {
+  CreateUserServiceDto,
+  UpdateUserServiceDto,
+  UserServiceResponseDto,
+} from './dto';
 
 @Injectable()
 export class UserServicesService {
@@ -11,7 +19,9 @@ export class UserServicesService {
     private readonly userServiceRepository: Repository<UserService>,
   ) {}
 
-  async create(createUserServiceDto: CreateUserServiceDto): Promise<UserServiceResponseDto> {
+  async create(
+    createUserServiceDto: CreateUserServiceDto,
+  ): Promise<UserServiceResponseDto> {
     // Check if user already has this service connected
     const existingConnection = await this.userServiceRepository.findOne({
       where: {
@@ -34,7 +44,7 @@ export class UserServicesService {
       relations: ['user', 'service'],
       order: { created_at: 'DESC' },
     });
-    return userServices.map(userService => this.toResponseDto(userService));
+    return userServices.map((userService) => this.toResponseDto(userService));
   }
 
   async findOne(user_id: number): Promise<UserServiceResponseDto> {
@@ -42,11 +52,11 @@ export class UserServicesService {
       where: { user_id },
       relations: ['user', 'service'],
     });
-    
+
     if (!userService) {
       throw new NotFoundException(`UserService with ID ${user_id} not found`);
     }
-    
+
     return this.toResponseDto(userService);
   }
 
@@ -56,8 +66,8 @@ export class UserServicesService {
       relations: ['service'],
       order: { created_at: 'DESC' },
     });
-    
-    return userServices.map(userService => this.toResponseDto(userService));
+
+    return userServices.map((userService) => this.toResponseDto(userService));
   }
 
   async findByService(serviceId: number): Promise<UserServiceResponseDto[]> {
@@ -66,40 +76,52 @@ export class UserServicesService {
       relations: ['user'],
       order: { created_at: 'DESC' },
     });
-    
-    return userServices.map(userService => this.toResponseDto(userService));
+
+    return userServices.map((userService) => this.toResponseDto(userService));
   }
 
-  async findUserServiceConnection(userId: number, serviceId: number): Promise<UserServiceResponseDto | null> {
+  async findUserServiceConnection(
+    userId: number,
+    serviceId: number,
+  ): Promise<UserServiceResponseDto | null> {
     const userService = await this.userServiceRepository.findOne({
       where: { user_id: userId, service_id: serviceId },
       relations: ['user', 'service'],
     });
-    
+
     return userService ? this.toResponseDto(userService) : null;
   }
 
-  async update(user_id: number, updateUserServiceDto: UpdateUserServiceDto): Promise<UserServiceResponseDto> {
+  async update(
+    user_id: number,
+    updateUserServiceDto: UpdateUserServiceDto,
+  ): Promise<UserServiceResponseDto> {
     const userService = await this.userServiceRepository.findOne({
       where: { user_id },
       relations: ['user', 'service'],
     });
-    
+
     if (!userService) {
       throw new NotFoundException(`UserService with ID ${user_id} not found`);
     }
 
     Object.assign(userService, updateUserServiceDto);
-    const updatedUserService = await this.userServiceRepository.save(userService);
+    const updatedUserService =
+      await this.userServiceRepository.save(userService);
     return this.toResponseDto(updatedUserService);
   }
 
-  async refreshToken(user_id: number, newToken: string, refreshToken?: string, expiresAt?: Date): Promise<UserServiceResponseDto> {
+  async refreshToken(
+    user_id: number,
+    newToken: string,
+    refreshToken?: string,
+    expiresAt?: Date,
+  ): Promise<UserServiceResponseDto> {
     const userService = await this.userServiceRepository.findOne({
       where: { user_id },
       relations: ['user', 'service'],
     });
-    
+
     if (!userService) {
       throw new NotFoundException(`UserService with ID ${user_id} not found`);
     }
@@ -112,27 +134,35 @@ export class UserServicesService {
       userService.token_expires_at = expiresAt;
     }
 
-    const updatedUserService = await this.userServiceRepository.save(userService);
+    const updatedUserService =
+      await this.userServiceRepository.save(userService);
     return this.toResponseDto(updatedUserService);
   }
 
   async remove(user_id: number): Promise<void> {
-    const userService = await this.userServiceRepository.findOne({ where: { user_id } });
+    const userService = await this.userServiceRepository.findOne({
+      where: { user_id },
+    });
     if (!userService) {
       throw new NotFoundException(`UserService with ID ${user_id} not found`);
     }
     await this.userServiceRepository.remove(userService);
   }
 
-  async removeUserServiceConnection(userId: number, serviceId: number): Promise<void> {
+  async removeUserServiceConnection(
+    userId: number,
+    serviceId: number,
+  ): Promise<void> {
     const userService = await this.userServiceRepository.findOne({
       where: { user_id: userId, service_id: serviceId },
     });
-    
+
     if (!userService) {
-      throw new NotFoundException(`Connection between user ${userId} and service ${serviceId} not found`);
+      throw new NotFoundException(
+        `Connection between user ${userId} and service ${serviceId} not found`,
+      );
     }
-    
+
     await this.userServiceRepository.remove(userService);
   }
 

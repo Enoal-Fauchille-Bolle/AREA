@@ -11,7 +11,11 @@ import {
   ParseIntPipe,
 } from '@nestjs/common';
 import { UserServicesService } from './user-services.service';
-import { CreateUserServiceDto, UpdateUserServiceDto, UserServiceResponseDto } from './dto';
+import {
+  CreateUserServiceDto,
+  UpdateUserServiceDto,
+  UserServiceResponseDto,
+} from './dto';
 
 @Controller('user-services')
 export class UserServicesController {
@@ -19,7 +23,9 @@ export class UserServicesController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() createUserServiceDto: CreateUserServiceDto): Promise<UserServiceResponseDto> {
+  create(
+    @Body() createUserServiceDto: CreateUserServiceDto,
+  ): Promise<UserServiceResponseDto> {
     return this.userServicesService.create(createUserServiceDto);
   }
 
@@ -29,17 +35,23 @@ export class UserServicesController {
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number): Promise<UserServiceResponseDto> {
+  findOne(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<UserServiceResponseDto> {
     return this.userServicesService.findOne(id);
   }
 
   @Get('user/:userId')
-  findByUser(@Param('userId', ParseIntPipe) userId: number): Promise<UserServiceResponseDto[]> {
+  findByUser(
+    @Param('userId', ParseIntPipe) userId: number,
+  ): Promise<UserServiceResponseDto[]> {
     return this.userServicesService.findByUser(userId);
   }
 
   @Get('service/:serviceId')
-  findByService(@Param('serviceId', ParseIntPipe) serviceId: number): Promise<UserServiceResponseDto[]> {
+  findByService(
+    @Param('serviceId', ParseIntPipe) serviceId: number,
+  ): Promise<UserServiceResponseDto[]> {
     return this.userServicesService.findByService(serviceId);
   }
 
@@ -48,7 +60,10 @@ export class UserServicesController {
     @Param('userId', ParseIntPipe) userId: number,
     @Param('serviceId', ParseIntPipe) serviceId: number,
   ): Promise<UserServiceResponseDto | null> {
-    return this.userServicesService.findUserServiceConnection(userId, serviceId);
+    return this.userServicesService.findUserServiceConnection(
+      userId,
+      serviceId,
+    );
   }
 
   @Patch(':id')
@@ -62,10 +77,22 @@ export class UserServicesController {
   @Patch(':id/refresh-token')
   refreshToken(
     @Param('id', ParseIntPipe) id: number,
-    @Body() body: { oauth_token: string; refresh_token?: string; token_expires_at?: string },
+    @Body()
+    body: {
+      oauth_token: string;
+      refresh_token?: string;
+      token_expires_at?: string;
+    },
   ): Promise<UserServiceResponseDto> {
-    const expiresAt = body.token_expires_at ? new Date(body.token_expires_at) : undefined;
-    return this.userServicesService.refreshToken(id, body.oauth_token, body.refresh_token, expiresAt);
+    const expiresAt = body.token_expires_at
+      ? new Date(body.token_expires_at)
+      : undefined;
+    return this.userServicesService.refreshToken(
+      id,
+      body.oauth_token,
+      body.refresh_token,
+      expiresAt,
+    );
   }
 
   @Delete(':id')
@@ -80,6 +107,9 @@ export class UserServicesController {
     @Param('userId', ParseIntPipe) userId: number,
     @Param('serviceId', ParseIntPipe) serviceId: number,
   ): Promise<void> {
-    return this.userServicesService.removeUserServiceConnection(userId, serviceId);
+    return this.userServicesService.removeUserServiceConnection(
+      userId,
+      serviceId,
+    );
   }
 }

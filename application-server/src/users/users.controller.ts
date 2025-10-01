@@ -20,7 +20,9 @@ export class UsersController {
   @Post()
   async create(@Body() createUserDto: CreateUserDto) {
     // Check if user with email already exists
-    const existingUserByEmail = await this.usersService.findByEmail(createUserDto.email);
+    const existingUserByEmail = await this.usersService.findByEmail(
+      createUserDto.email,
+    );
     if (existingUserByEmail) {
       throw new HttpException(
         'User with this email already exists',
@@ -29,7 +31,9 @@ export class UsersController {
     }
 
     // Check if user with username already exists
-    const existingUserByUsername = await this.usersService.findByUsername(createUserDto.username);
+    const existingUserByUsername = await this.usersService.findByUsername(
+      createUserDto.username,
+    );
     if (existingUserByUsername) {
       throw new HttpException(
         'User with this username already exists',

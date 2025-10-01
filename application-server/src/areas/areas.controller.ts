@@ -18,10 +18,7 @@ export class AreasController {
   constructor(private readonly areasService: AreasService) {}
 
   @Post()
-  async create(
-    @Request() req,
-    @Body() createAreaDto: CreateAreaDto,
-  ) {
+  async create(@Request() req, @Body() createAreaDto: CreateAreaDto) {
     try {
       // For testing without auth, use a default user ID
       const userId = req.user?.id || 1;
@@ -48,10 +45,7 @@ export class AreasController {
   }
 
   @Get(':id')
-  async findOne(
-    @Param('id') id: string,
-    @Request() req,
-  ) {
+  async findOne(@Param('id') id: string, @Request() req) {
     try {
       const userId = req.user?.id || 1;
       const area = await this.areasService.findOne(+id, userId);
@@ -67,7 +61,11 @@ export class AreasController {
     @Request() req,
     @Body() updateAreaDto: UpdateAreaDto,
   ): Promise<AreaResponseDto> {
-    const area = await this.areasService.update(+id, req.user.id, updateAreaDto);
+    const area = await this.areasService.update(
+      +id,
+      req.user.id,
+      updateAreaDto,
+    );
     return new AreaResponseDto(area);
   }
 

@@ -36,7 +36,17 @@ import { Area } from './areas/entities/area.entity';
         username: configService.get('DB_USERNAME'),
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_DATABASE'),
-        entities: [User, Service, UserService, Component, Variable, AreaParameter, HookState, AreaExecution, Area],
+        entities: [
+          User,
+          Service,
+          UserService,
+          Component,
+          Variable,
+          AreaParameter,
+          HookState,
+          AreaExecution,
+          Area,
+        ],
         synchronize: true, // creates tables automatically
         logging: true,
       }),

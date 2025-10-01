@@ -1,8 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Variable, VariableKind, VariableType } from './entities/variable.entity';
-import { CreateVariableDto, UpdateVariableDto, VariableResponseDto } from './dto';
+import {
+  Variable,
+  VariableKind,
+  VariableType,
+} from './entities/variable.entity';
+import {
+  CreateVariableDto,
+  UpdateVariableDto,
+  VariableResponseDto,
+} from './dto';
 
 @Injectable()
 export class VariablesService {
@@ -11,7 +19,9 @@ export class VariablesService {
     private readonly variableRepository: Repository<Variable>,
   ) {}
 
-  async create(createVariableDto: CreateVariableDto): Promise<VariableResponseDto> {
+  async create(
+    createVariableDto: CreateVariableDto,
+  ): Promise<VariableResponseDto> {
     const variable = this.variableRepository.create(createVariableDto);
     const savedVariable = await this.variableRepository.save(variable);
     return this.toResponseDto(savedVariable);
@@ -22,7 +32,7 @@ export class VariablesService {
       relations: ['component'],
       order: { component_id: 'ASC', display_order: 'ASC' },
     });
-    return variables.map(variable => this.toResponseDto(variable));
+    return variables.map((variable) => this.toResponseDto(variable));
   }
 
   async findOne(id: number): Promise<VariableResponseDto> {
@@ -30,11 +40,11 @@ export class VariablesService {
       where: { id },
       relations: ['component'],
     });
-    
+
     if (!variable) {
       throw new NotFoundException(`Variable with ID ${id} not found`);
     }
-    
+
     return this.toResponseDto(variable);
   }
 
@@ -44,8 +54,8 @@ export class VariablesService {
       relations: ['component'],
       order: { display_order: 'ASC' },
     });
-    
-    return variables.map(variable => this.toResponseDto(variable));
+
+    return variables.map((variable) => this.toResponseDto(variable));
   }
 
   async findByKind(kind: VariableKind): Promise<VariableResponseDto[]> {
@@ -54,18 +64,21 @@ export class VariablesService {
       relations: ['component'],
       order: { component_id: 'ASC', display_order: 'ASC' },
     });
-    
-    return variables.map(variable => this.toResponseDto(variable));
+
+    return variables.map((variable) => this.toResponseDto(variable));
   }
 
-  async findByComponentAndKind(componentId: number, kind: VariableKind): Promise<VariableResponseDto[]> {
+  async findByComponentAndKind(
+    componentId: number,
+    kind: VariableKind,
+  ): Promise<VariableResponseDto[]> {
     const variables = await this.variableRepository.find({
       where: { component_id: componentId, kind },
       relations: ['component'],
       order: { display_order: 'ASC' },
     });
-    
-    return variables.map(variable => this.toResponseDto(variable));
+
+    return variables.map((variable) => this.toResponseDto(variable));
   }
 
   async findInputs(): Promise<VariableResponseDto[]> {
@@ -80,15 +93,21 @@ export class VariablesService {
     return this.findByKind(VariableKind.PARAMETER);
   }
 
-  async findInputsByComponent(componentId: number): Promise<VariableResponseDto[]> {
+  async findInputsByComponent(
+    componentId: number,
+  ): Promise<VariableResponseDto[]> {
     return this.findByComponentAndKind(componentId, VariableKind.PARAMETER);
   }
 
-  async findOutputsByComponent(componentId: number): Promise<VariableResponseDto[]> {
+  async findOutputsByComponent(
+    componentId: number,
+  ): Promise<VariableResponseDto[]> {
     return this.findByComponentAndKind(componentId, VariableKind.RETURN_VALUE);
   }
 
-  async findParametersByComponent(componentId: number): Promise<VariableResponseDto[]> {
+  async findParametersByComponent(
+    componentId: number,
+  ): Promise<VariableResponseDto[]> {
     return this.findByComponentAndKind(componentId, VariableKind.PARAMETER);
   }
 
@@ -98,8 +117,8 @@ export class VariablesService {
       relations: ['component'],
       order: { component_id: 'ASC', display_order: 'ASC' },
     });
-    
-    return variables.map(variable => this.toResponseDto(variable));
+
+    return variables.map((variable) => this.toResponseDto(variable));
   }
 
   async findRequired(): Promise<VariableResponseDto[]> {
@@ -108,16 +127,19 @@ export class VariablesService {
       relations: ['component'],
       order: { component_id: 'ASC', display_order: 'ASC' },
     });
-    
-    return variables.map(variable => this.toResponseDto(variable));
+
+    return variables.map((variable) => this.toResponseDto(variable));
   }
 
-  async update(id: number, updateVariableDto: UpdateVariableDto): Promise<VariableResponseDto> {
+  async update(
+    id: number,
+    updateVariableDto: UpdateVariableDto,
+  ): Promise<VariableResponseDto> {
     const variable = await this.variableRepository.findOne({
       where: { id },
       relations: ['component'],
     });
-    
+
     if (!variable) {
       throw new NotFoundException(`Variable with ID ${id} not found`);
     }
@@ -127,14 +149,17 @@ export class VariablesService {
     return this.toResponseDto(updatedVariable);
   }
 
-  async reorderVariables(componentId: number, variableIds: number[]): Promise<VariableResponseDto[]> {
+  async reorderVariables(
+    componentId: number,
+    variableIds: number[],
+  ): Promise<VariableResponseDto[]> {
     const variables = await this.variableRepository.find({
       where: { component_id: componentId },
     });
 
     const variablesToUpdate: Variable[] = [];
     for (let i = 0; i < variableIds.length; i++) {
-      const variable = variables.find(v => v.id === variableIds[i]);
+      const variable = variables.find((v) => v.id === variableIds[i]);
       if (variable) {
         variable.display_order = i;
         variablesToUpdate.push(variable);
@@ -159,7 +184,7 @@ export class VariablesService {
     const variables = await this.variableRepository.find({
       where: { component_id: componentId },
     });
-    
+
     if (variables.length > 0) {
       await this.variableRepository.remove(variables);
     }
