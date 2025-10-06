@@ -16,6 +16,27 @@ env:
   MIRROR_URL: git@github.com:EpitechPGE3-2025/G-DEV-500-NAN-5-1-area-7.git
 
 jobs:
+  check-formatting-application-server:
+    name: Check Formatting - Application Server
+    runs-on: ubuntu-latest
+    if: ${{ github.event.repository.full_name != 'EpitechPGE3-2025/G-DEV-500-NAN-5-1-area-7' }}
+    steps:
+      - name: Checking Out
+        uses: actions/checkout@v4
+
+      - name: Setting up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "20"
+
+      - name: Install Dependencies
+        run: npm install
+        working-directory: application-server
+
+      - name: Check Formatting
+        run: npx prettier --check "src/**/*.ts" "test/**/*.ts"
+        working-directory: application-server
+
   build-application-server:
     name: Build Application Server
     runs-on: ubuntu-latest
