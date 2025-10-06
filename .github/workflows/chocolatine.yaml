@@ -475,25 +475,7 @@ jobs:
   repository_mirroring:
     name: Repository Mirroring
     runs-on: ubuntu-latest
-    needs:
-      [
-        secrets-scan,
-        security-scan-application-server,
-        security-scan-web-client,
-        security-scan-mobile-client,
-        check-formatting-application-server,
-        check-formatting-web-client,
-        check-formatting-mobile-client,
-        check-linting-application-server,
-        check-linting-web-client,
-        check-linting-mobile-client,
-        build-application-server,
-        build-web-client,
-        build-mobile-client,
-        test-application-server,
-        test-web-client,
-        test-mobile-client,
-      ]
+    needs: [test-application-server, test-web-client, test-mobile-client]
     steps:
       - name: Checking Out
         uses: actions/checkout@v4
