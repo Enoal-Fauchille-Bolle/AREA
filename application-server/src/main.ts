@@ -1,8 +1,29 @@
 import { NestFactory } from '@nestjs/core';
+import type { INestApplication } from '@nestjs/common';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
+import type { AppConfig } from './config';
 
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  await app.listen(process.env.PORT ?? 3000);
+function setupSwagger(app: INestApplication): void {
+  const config = new DocumentBuilder()
+    .setTitle('AREA API Documentation')
+    .setDescription('API description')
+    .setVersion('1.0')
+    .build();
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('docs', app, document);
 }
-bootstrap();
+
+async function bootstrap(): Promise<void> {
+  const app: INestApplication = await NestFactory.create(AppModule);
+
+  setupSwagger(app);
+
+  const configService = app.get(ConfigService);
+  const appConfig = configService.get<AppConfig>('app');
+  const port = appConfig.port;
+
+  await app.listen(port);
+}
+void bootstrap();
