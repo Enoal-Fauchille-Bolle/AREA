@@ -12,7 +12,6 @@ import {
   UpdateProfileDto,
   AuthResponseDto,
 } from './dto';
-import { User } from '../users/entities/user.entity';
 import { UserResponseDto } from '../users/dto/user-response.dto';
 import * as bcrypt from 'bcrypt';
 
@@ -23,17 +22,28 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async validateUser(email: string, password: string): Promise<any> {
+  // Replace 'UserEntity' with the actual user type used in your project
+  async validateUser(
+    email: string,
+    password: string,
+  ): Promise<UserResponseDto | null> {
     const user = await this.usersService.findByEmail(email);
-    if (user && (await bcrypt.compare(password, user.password_hash))) {
-      const { password_hash, ...result } = user;
-      return result;
+    if (
+      user &&
+      user.password_hash &&
+      (await bcrypt.compare(password, user.password_hash))
+    ) {
+      const { ...result } = user;
+      return result as UserResponseDto;
     }
     return null;
   }
 
   async login(loginDto: LoginDto): Promise<AuthResponseDto> {
-    const user = await this.validateUser(loginDto.email, loginDto.password);
+    const user: UserResponseDto | null = await this.validateUser(
+      loginDto.email,
+      loginDto.password,
+    );
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
     }
