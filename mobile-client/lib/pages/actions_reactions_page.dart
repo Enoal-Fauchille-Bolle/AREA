@@ -1,0 +1,111 @@
+import 'package:flutter/material.dart';
+import '../services/area_api_service.dart';
+import 'create_action_reaction_page.dart';
+import 'edit_action_reaction_page.dart';
+
+class ActionsReactionsPage extends StatefulWidget {
+  final bool guestMode;
+  const ActionsReactionsPage({super.key, this.guestMode = false});
+
+  @override
+  State<ActionsReactionsPage> createState() => _ActionsReactionsPageState();
+}
+
+class _ActionsReactionsPageState extends State<ActionsReactionsPage> {
+  final api = AreaApiService();
+
+  late Future<List<Map<String, dynamic>>> _areasFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _areasFuture = api.fetchAreas();
+  }
+
+  void _refreshAreas() {
+    setState(() {
+      _areasFuture = api.fetchAreas();
+    });
+  }
+
+  Future<void> _handleCreate() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const CreateActionReactionPage()),
+    );
+    _refreshAreas();
+  }
+
+  Future<void> _handleDelete(int id) async {
+    await api.deleteArea(id);
+    _refreshAreas();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Actions & Reactions')),
+      body: FutureBuilder<List<Map<String, dynamic>>>(
+        future: _areasFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+          final areas = snapshot.data ?? [];
+          if (areas.isEmpty) {
+            return const Center(child: Text('No AREAs found.'));
+          }
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: areas.length,
+            itemBuilder: (context, index) {
+              final area = areas[index];
+              return Card(
+                child: ListTile(
+                  title: Text('Action: ${area['action']}'),
+                  subtitle: Text('Reaction: ${area['reaction']}'),
+                  trailing: widget.guestMode
+                      ? null
+                      : Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit),
+                              onPressed: () {
+                                Navigator.of(context)
+                                    .push(
+                                      MaterialPageRoute(
+                                        builder: (_) => EditActionReactionPage(
+                                          areaId: area['id'],
+                                          initialAction: area['action'],
+                                          initialReaction: area['reaction'],
+                                        ),
+                                      ),
+                                    )
+                                    .then((_) => _refreshAreas());
+                              },
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete),
+                              onPressed: () => _handleDelete(area['id']),
+                            ),
+                          ],
+                        ),
+                ),
+              );
+            },
+          );
+        },
+      ),
+      floatingActionButton: widget.guestMode
+          ? null
+          : FloatingActionButton(
+              onPressed: _handleCreate,
+              tooltip: 'Add Action/Reaction',
+              child: const Icon(Icons.add),
+            ),
+    );
+  }
+}
