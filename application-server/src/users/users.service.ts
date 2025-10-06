@@ -7,17 +7,18 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { UserResponseDto } from './dto/user-response.dto';
 import { User } from './entities/user.entity';
 import * as bcrypt from 'bcrypt';
-import type { AppConfig } from 'src/config';
+import type { AppConfig } from '../config';
 
 @Injectable()
 export class UsersService {
+  private readonly appConfig: AppConfig;
+
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
     private configService: ConfigService,
-    private appConfig: AppConfig,
   ) {
-    appConfig = configService.get<AppConfig>('app');
+    this.appConfig = this.configService.get<AppConfig>('app');
   }
 
   async create(createUserDto: CreateUserDto): Promise<UserResponseDto> {
