@@ -98,7 +98,9 @@ describe('AuthService', () => {
       const result = await service.register(registerDto);
 
       expect(result).toEqual({ token: 'jwt.token.here' });
-      expect(mockUsersService.findByEmail).toHaveBeenCalledWith('test@example.com');
+      expect(mockUsersService.findByEmail).toHaveBeenCalledWith(
+        'test@example.com',
+      );
       expect(mockUsersService.findByUsername).toHaveBeenCalledWith('testuser');
       // AuthService doesn't hash password directly - UsersService does
       expect(mockUsersService.create).toHaveBeenCalledWith({
@@ -106,25 +108,31 @@ describe('AuthService', () => {
         username: registerDto.username,
         password: registerDto.password, // Raw password passed to UsersService
       });
-      expect(mockJwtService.sign).toHaveBeenCalledWith({ 
-        email: mockUser.email, 
-        sub: mockUser.id, 
-        username: mockUser.username 
+      expect(mockJwtService.sign).toHaveBeenCalledWith({
+        email: mockUser.email,
+        sub: mockUser.id,
+        username: mockUser.username,
       });
     });
 
     it('should throw ConflictException when email already exists', async () => {
       mockUsersService.findByEmail.mockResolvedValue(mockUser);
 
-      await expect(service.register(registerDto)).rejects.toThrow(ConflictException);
-      expect(mockUsersService.findByEmail).toHaveBeenCalledWith('test@example.com');
+      await expect(service.register(registerDto)).rejects.toThrow(
+        ConflictException,
+      );
+      expect(mockUsersService.findByEmail).toHaveBeenCalledWith(
+        'test@example.com',
+      );
     });
 
     it('should throw ConflictException when username already exists', async () => {
       mockUsersService.findByEmail.mockResolvedValue(null);
       mockUsersService.findByUsername.mockResolvedValue(mockUser);
 
-      await expect(service.register(registerDto)).rejects.toThrow(ConflictException);
+      await expect(service.register(registerDto)).rejects.toThrow(
+        ConflictException,
+      );
       expect(mockUsersService.findByUsername).toHaveBeenCalledWith('testuser');
     });
   });
@@ -134,31 +142,50 @@ describe('AuthService', () => {
       mockUsersService.findByEmail.mockResolvedValue(mockUser);
       mockedBcrypt.compare.mockResolvedValue(true as never);
 
-      const result = await service.validateUser('test@example.com', 'password123');
+      const result = await service.validateUser(
+        'test@example.com',
+        'password123',
+      );
 
       const { password_hash, ...expectedResult } = mockUser;
       expect(result).toEqual(expectedResult);
-      expect(mockUsersService.findByEmail).toHaveBeenCalledWith('test@example.com');
-      expect(mockedBcrypt.compare).toHaveBeenCalledWith('password123', 'hashedPassword');
+      expect(mockUsersService.findByEmail).toHaveBeenCalledWith(
+        'test@example.com',
+      );
+      expect(mockedBcrypt.compare).toHaveBeenCalledWith(
+        'password123',
+        'hashedPassword',
+      );
     });
 
     it('should return null for non-existent user', async () => {
       mockUsersService.findByEmail.mockResolvedValue(null);
 
-      const result = await service.validateUser('nonexistent@example.com', 'password');
+      const result = await service.validateUser(
+        'nonexistent@example.com',
+        'password',
+      );
 
       expect(result).toBeNull();
-      expect(mockUsersService.findByEmail).toHaveBeenCalledWith('nonexistent@example.com');
+      expect(mockUsersService.findByEmail).toHaveBeenCalledWith(
+        'nonexistent@example.com',
+      );
     });
 
     it('should return null for incorrect password', async () => {
       mockUsersService.findByEmail.mockResolvedValue(mockUser);
       mockedBcrypt.compare.mockResolvedValue(false as never);
 
-      const result = await service.validateUser('test@example.com', 'wrongpassword');
+      const result = await service.validateUser(
+        'test@example.com',
+        'wrongpassword',
+      );
 
       expect(result).toBeNull();
-      expect(mockedBcrypt.compare).toHaveBeenCalledWith('wrongpassword', 'hashedPassword');
+      expect(mockedBcrypt.compare).toHaveBeenCalledWith(
+        'wrongpassword',
+        'hashedPassword',
+      );
     });
   });
 
@@ -173,7 +200,9 @@ describe('AuthService', () => {
       const result = await service.login(loginDto);
 
       expect(result).toEqual({ token: 'jwt.token.here' });
-      expect(mockUsersService.updateLastConnection).toHaveBeenCalledWith(mockUser.id);
+      expect(mockUsersService.updateLastConnection).toHaveBeenCalledWith(
+        mockUser.id,
+      );
       expect(mockJwtService.sign).toHaveBeenCalledWith({
         email: mockUser.email,
         sub: mockUser.id,
@@ -184,9 +213,14 @@ describe('AuthService', () => {
     it('should throw UnauthorizedException for invalid credentials', async () => {
       mockUsersService.findByEmail.mockResolvedValue(null);
 
-      const loginDto = { email: 'invalid@example.com', password: 'wrongpassword' };
-      
-      await expect(service.login(loginDto)).rejects.toThrow('Invalid email or password');
+      const loginDto = {
+        email: 'invalid@example.com',
+        password: 'wrongpassword',
+      };
+
+      await expect(service.login(loginDto)).rejects.toThrow(
+        'Invalid email or password',
+      );
     });
   });
 
@@ -199,8 +233,13 @@ describe('AuthService', () => {
     };
 
     it('should update user profile successfully', async () => {
-      const updatedUser = { ...mockUser, username: 'newusername', email: 'new@example.com', icon_path: 'https://example.com/avatar.png' };
-      
+      const updatedUser = {
+        ...mockUser,
+        username: 'newusername',
+        email: 'new@example.com',
+        icon_path: 'https://example.com/avatar.png',
+      };
+
       mockUsersService.findOne.mockResolvedValue(mockUser);
       mockUsersService.findByEmail.mockResolvedValue(null);
       mockUsersService.findByUsername.mockResolvedValue(null);
@@ -210,8 +249,12 @@ describe('AuthService', () => {
 
       expect(result).toBeInstanceOf(UserResponseDto);
       expect(mockUsersService.findOne).toHaveBeenCalledWith(mockUser.id);
-      expect(mockUsersService.findByEmail).toHaveBeenCalledWith('new@example.com');
-      expect(mockUsersService.findByUsername).toHaveBeenCalledWith('newusername');
+      expect(mockUsersService.findByEmail).toHaveBeenCalledWith(
+        'new@example.com',
+      );
+      expect(mockUsersService.findByUsername).toHaveBeenCalledWith(
+        'newusername',
+      );
       expect(mockUsersService.update).toHaveBeenCalledWith(mockUser.id, {
         username: 'newusername',
         email: 'new@example.com',
@@ -223,7 +266,7 @@ describe('AuthService', () => {
     it('should update profile without password', async () => {
       const partialUpdate = { username: 'newusername' };
       const updatedUser = { ...mockUser, username: 'newusername' };
-      
+
       mockUsersService.findOne.mockResolvedValue(mockUser);
       mockUsersService.findByUsername.mockResolvedValue(null);
       mockUsersService.update.mockResolvedValue(updatedUser);
@@ -236,23 +279,23 @@ describe('AuthService', () => {
 
     it('should throw ConflictException for duplicate email', async () => {
       const otherUser = { ...mockUser, id: 2, email: 'other@example.com' };
-      
+
       mockUsersService.findOne.mockResolvedValue(mockUser);
       mockUsersService.findByEmail.mockResolvedValue(otherUser);
 
       await expect(
-        service.updateProfile(mockUser.id, { email: 'other@example.com' })
+        service.updateProfile(mockUser.id, { email: 'other@example.com' }),
       ).rejects.toThrow(ConflictException);
     });
 
     it('should throw ConflictException for duplicate username', async () => {
       const otherUser = { ...mockUser, id: 2, username: 'otherusername' };
-      
+
       mockUsersService.findOne.mockResolvedValue(mockUser);
       mockUsersService.findByUsername.mockResolvedValue(otherUser);
 
       await expect(
-        service.updateProfile(mockUser.id, { username: 'otherusername' })
+        service.updateProfile(mockUser.id, { username: 'otherusername' }),
       ).rejects.toThrow(ConflictException);
     });
 
@@ -286,15 +329,15 @@ describe('AuthService', () => {
 
   describe('OAuth2 methods', () => {
     it('should throw error for OAuth2 login (not implemented)', async () => {
-      await expect(service.loginWithOAuth2('google', 'auth_code')).rejects.toThrow(
-        'OAuth2 login not yet implemented'
-      );
+      await expect(
+        service.loginWithOAuth2('google', 'auth_code'),
+      ).rejects.toThrow('OAuth2 login not yet implemented');
     });
 
     it('should throw error for OAuth2 register (not implemented)', async () => {
-      await expect(service.registerWithOAuth2('google', 'auth_code')).rejects.toThrow(
-        'OAuth2 registration not yet implemented'
-      );
+      await expect(
+        service.registerWithOAuth2('google', 'auth_code'),
+      ).rejects.toThrow('OAuth2 registration not yet implemented');
     });
   });
 });

@@ -67,4 +67,4 @@ import { Area } from './areas/entities/area.entity';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}

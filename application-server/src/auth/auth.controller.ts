@@ -11,7 +11,13 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { LoginDto, RegisterDto, UpdateProfileDto, OAuthLoginDto, AuthResponseDto } from './dto';
+import {
+  LoginDto,
+  RegisterDto,
+  UpdateProfileDto,
+  OAuthLoginDto,
+  AuthResponseDto,
+} from './dto';
 import { UserResponseDto } from '../users/dto/user-response.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { LocalAuthGuard } from './guards/local-auth.guard';
@@ -23,7 +29,10 @@ export class AuthController {
   @UseGuards(LocalAuthGuard)
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(@Body() loginDto: LoginDto, @Request() req): Promise<AuthResponseDto> {
+  async login(
+    @Body() loginDto: LoginDto,
+    @Request() req,
+  ): Promise<AuthResponseDto> {
     // LocalAuthGuard validates credentials and attaches user to request
     return this.authService.login(loginDto);
   }
@@ -36,14 +45,24 @@ export class AuthController {
 
   @Post('login-oauth2')
   @HttpCode(HttpStatus.OK)
-  async loginOAuth2(@Body() oauthLoginDto: OAuthLoginDto): Promise<AuthResponseDto> {
-    return this.authService.loginWithOAuth2(oauthLoginDto.service, oauthLoginDto.code);
+  async loginOAuth2(
+    @Body() oauthLoginDto: OAuthLoginDto,
+  ): Promise<AuthResponseDto> {
+    return this.authService.loginWithOAuth2(
+      oauthLoginDto.service,
+      oauthLoginDto.code,
+    );
   }
 
   @Post('register-oauth2')
   @HttpCode(HttpStatus.CREATED)
-  async registerOAuth2(@Body() oauthLoginDto: OAuthLoginDto): Promise<AuthResponseDto> {
-    return this.authService.registerWithOAuth2(oauthLoginDto.service, oauthLoginDto.code);
+  async registerOAuth2(
+    @Body() oauthLoginDto: OAuthLoginDto,
+  ): Promise<AuthResponseDto> {
+    return this.authService.registerWithOAuth2(
+      oauthLoginDto.service,
+      oauthLoginDto.code,
+    );
   }
 
   @UseGuards(JwtAuthGuard)

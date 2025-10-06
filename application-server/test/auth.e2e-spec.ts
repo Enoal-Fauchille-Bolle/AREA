@@ -24,7 +24,11 @@ describe('Authentication (e2e)', () => {
 
   beforeEach(async () => {
     // Clean up test users before each test
-    const testEmails = ['test@example.com', 'other@example.com', 'different@example.com'];
+    const testEmails = [
+      'test@example.com',
+      'other@example.com',
+      'different@example.com',
+    ];
     for (const email of testEmails) {
       try {
         const user = await usersService.findByEmail(email);
@@ -184,7 +188,7 @@ describe('Authentication (e2e)', () => {
         .post('/auth/register')
         .send(userCredentials)
         .expect(201);
-      
+
       authToken = registerRes.body.token;
     });
 
@@ -246,7 +250,7 @@ describe('Authentication (e2e)', () => {
         .post('/auth/register')
         .send(userCredentials)
         .expect(201);
-      
+
       authToken = registerRes.body.token;
     });
 
@@ -341,7 +345,7 @@ describe('Authentication (e2e)', () => {
         .post('/auth/register')
         .send(userCredentials)
         .expect(201);
-      
+
       authToken = registerRes.body.token;
     });
 
@@ -353,9 +357,7 @@ describe('Authentication (e2e)', () => {
     });
 
     it('should reject unauthorized delete request', () => {
-      return request(app.getHttpServer())
-        .delete('/auth/me')
-        .expect(401);
+      return request(app.getHttpServer()).delete('/auth/me').expect(401);
     });
 
     it('should not be able to access profile after deletion', async () => {
@@ -414,12 +416,14 @@ describe('Authentication (e2e)', () => {
         .post('/auth/register')
         .send(userCredentials)
         .expect(201);
-      
+
       authToken = registerRes.body.token;
     });
 
     it('should accept valid JWT format', () => {
-      expect(authToken).toMatch(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/);
+      expect(authToken).toMatch(
+        /^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/,
+      );
     });
 
     it('should work with token from login endpoint', async () => {
@@ -447,7 +451,7 @@ describe('Authentication (e2e)', () => {
         .expect(200);
 
       // Wait a moment
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // Login again
       await request(app.getHttpServer())
@@ -464,8 +468,12 @@ describe('Authentication (e2e)', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
 
-      expect(new Date(updatedProfile.body.last_connection_at)).toBeInstanceOf(Date);
-      expect(updatedProfile.body.last_connection_at).not.toBe(initialProfile.body.last_connection_at);
+      expect(new Date(updatedProfile.body.last_connection_at)).toBeInstanceOf(
+        Date,
+      );
+      expect(updatedProfile.body.last_connection_at).not.toBe(
+        initialProfile.body.last_connection_at,
+      );
     });
   });
 });
