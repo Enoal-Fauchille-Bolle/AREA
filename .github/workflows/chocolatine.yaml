@@ -35,6 +35,7 @@ jobs:
     name: Security Scan - Application Server
     runs-on: ubuntu-latest
     needs: secrets-scan
+    if: startsWith(github.ref, 'refs/heads/application-server') || github.ref == 'refs/heads/main'
     steps:
       - name: Checking Out
         uses: actions/checkout@v4
@@ -57,6 +58,7 @@ jobs:
     name: Security Scan - Web Client
     runs-on: ubuntu-latest
     needs: secrets-scan
+    if: startsWith(github.ref, 'refs/heads/web-client') || github.ref == 'refs/heads/main'
     steps:
       - name: Checking Out
         uses: actions/checkout@v4
@@ -79,6 +81,7 @@ jobs:
     name: Security Scan - Mobile Client
     runs-on: ubuntu-latest
     needs: secrets-scan
+    if: startsWith(github.ref, 'refs/heads/mobile-client') || github.ref == 'refs/heads/main'
     steps:
       - name: Checking Out
         uses: actions/checkout@v4
@@ -101,6 +104,7 @@ jobs:
     name: Check Formatting - Application Server
     runs-on: ubuntu-latest
     needs: secrets-scan
+    if: startsWith(github.ref, 'refs/heads/application-server') || github.ref == 'refs/heads/main'
     steps:
       - name: Checking Out
         uses: actions/checkout@v4
@@ -122,6 +126,7 @@ jobs:
     name: Check Formatting - Web Client
     runs-on: ubuntu-latest
     needs: secrets-scan
+    if: startsWith(github.ref, 'refs/heads/web-client') || github.ref == 'refs/heads/main'
     steps:
       - name: Checking Out
         uses: actions/checkout@v4
@@ -143,6 +148,7 @@ jobs:
     name: Check Formatting - Mobile Client
     runs-on: ubuntu-latest
     needs: secrets-scan
+    if: startsWith(github.ref, 'refs/heads/mobile-client') || github.ref == 'refs/heads/main'
     steps:
       - name: Checking Out
         uses: actions/checkout@v4
@@ -164,6 +170,7 @@ jobs:
     name: Check Linting - Application Server
     runs-on: ubuntu-latest
     needs: secrets-scan
+    if: startsWith(github.ref, 'refs/heads/application-server') || github.ref == 'refs/heads/main'
     steps:
       - name: Checking Out
         uses: actions/checkout@v4
@@ -185,6 +192,7 @@ jobs:
     name: Check Linting - Web Client
     runs-on: ubuntu-latest
     needs: secrets-scan
+    if: startsWith(github.ref, 'refs/heads/web-client') || github.ref == 'refs/heads/main'
     steps:
       - name: Checking Out
         uses: actions/checkout@v4
@@ -206,6 +214,7 @@ jobs:
     name: Check Linting - Mobile Client
     runs-on: ubuntu-latest
     needs: secrets-scan
+    if: startsWith(github.ref, 'refs/heads/mobile-client') || github.ref == 'refs/heads/main'
     steps:
       - name: Checking Out
         uses: actions/checkout@v4
@@ -360,6 +369,7 @@ jobs:
     name: Test Application Server
     runs-on: ubuntu-latest
     needs: build-application-server
+    if: startsWith(github.ref, 'refs/heads/application-server') || github.ref == 'refs/heads/main'
     steps:
       - name: Checking Out
         uses: actions/checkout@v4
@@ -393,6 +403,7 @@ jobs:
     name: Test Web Client
     runs-on: ubuntu-latest
     needs: build-web-client
+    if: startsWith(github.ref, 'refs/heads/web-client') || github.ref == 'refs/heads/main'
     steps:
       - name: Checking Out
         uses: actions/checkout@v4
@@ -422,6 +433,7 @@ jobs:
     name: Test Mobile Client
     runs-on: ubuntu-latest
     needs: build-mobile-client
+    if: startsWith(github.ref, 'refs/heads/mobile-client') || github.ref == 'refs/heads/main'
     steps:
       - name: Checking Out
         uses: actions/checkout@v4
