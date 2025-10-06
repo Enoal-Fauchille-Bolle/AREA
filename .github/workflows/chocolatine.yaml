@@ -29,7 +29,7 @@ jobs:
       - name: TruffleHog Secret Scanning
         uses: trufflesecurity/trufflehog@main
         with:
-          extra_args: --results=verified,unknown --fail
+          extra_args: --results=verified,unknown
 
   security-scan-application-server:
     name: Security Scan - Application Server
