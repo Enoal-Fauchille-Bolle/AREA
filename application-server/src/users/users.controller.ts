@@ -12,6 +12,7 @@ import {
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { parseIdParam } from '../common/constants';
 
 @Controller('users')
 export class UsersController {
@@ -20,7 +21,9 @@ export class UsersController {
   @Post()
   async create(@Body() createUserDto: CreateUserDto) {
     // Check if user with email already exists
-    const existingUserByEmail = await this.usersService.findByEmail(createUserDto.email);
+    const existingUserByEmail = await this.usersService.findByEmail(
+      createUserDto.email,
+    );
     if (existingUserByEmail) {
       throw new HttpException(
         'User with this email already exists',
@@ -29,7 +32,9 @@ export class UsersController {
     }
 
     // Check if user with username already exists
-    const existingUserByUsername = await this.usersService.findByUsername(createUserDto.username);
+    const existingUserByUsername = await this.usersService.findByUsername(
+      createUserDto.username,
+    );
     if (existingUserByUsername) {
       throw new HttpException(
         'User with this username already exists',
@@ -47,7 +52,11 @@ export class UsersController {
 
   @Get(':id')
   async findOne(@Param('id') id: string) {
-    const user = await this.usersService.findOne(+id);
+    const parsedId = parseIdParam(id);
+    if (isNaN(parsedId)) {
+      throw new HttpException('Invalid ID format', HttpStatus.BAD_REQUEST);
+    }
+    const user = await this.usersService.findOne(parsedId);
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
@@ -56,7 +65,39 @@ export class UsersController {
 
   @Patch(':id')
   async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    const user = await this.usersService.update(+id, updateUserDto);
+    const parsedId = parseIdParam(id);
+    if (isNaN(parsedId)) {
+      throw new HttpException('Invalid ID format', HttpStatus.BAD_REQUEST);
+    }
+
+    // If email is being updated, check for uniqueness
+    if (updateUserDto.email) {
+      const existingUserByEmail = await this.usersService.findByEmail(
+        updateUserDto.email,
+      );
+      if (existingUserByEmail && existingUserByEmail.id !== parsedId) {
+        throw new HttpException(
+          'Another user with this email already exists',
+          HttpStatus.CONFLICT,
+        );
+      }
+    }
+
+    // If username is being updated, check for uniqueness
+    if (updateUserDto.username) {
+      const existingUserByUsername = await this.usersService.findByUsername(
+        updateUserDto.username,
+      );
+      if (existingUserByUsername && existingUserByUsername.id !== parsedId) {
+        throw new HttpException(
+          'Another user with this username already exists',
+          HttpStatus.CONFLICT,
+        );
+      }
+    }
+
+    // Proceed with the update
+    const user = await this.usersService.update(parsedId, updateUserDto);
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
@@ -65,7 +106,11 @@ export class UsersController {
 
   @Patch(':id/last-connection')
   async updateLastConnection(@Param('id') id: string) {
-    const user = await this.usersService.updateLastConnection(+id);
+    const parsedId = parseIdParam(id);
+    if (isNaN(parsedId)) {
+      throw new HttpException('Invalid ID format', HttpStatus.BAD_REQUEST);
+    }
+    const user = await this.usersService.updateLastConnection(parsedId);
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
@@ -83,7 +128,11 @@ export class UsersController {
 
   @Delete(':id')
   async remove(@Param('id') id: string) {
-    const success = await this.usersService.remove(+id);
+    const parsedId = parseIdParam(id);
+    if (isNaN(parsedId)) {
+      throw new HttpException('Invalid ID format', HttpStatus.BAD_REQUEST);
+    }
+    const success = await this.usersService.remove(parsedId);
     if (!success) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
