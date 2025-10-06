@@ -1,22 +1,28 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { ConfigService } from '@nestjs/config';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserResponseDto } from './dto/user-response.dto';
 import { User } from './entities/user.entity';
 import * as bcrypt from 'bcrypt';
+import type { AppConfig } from 'src/config';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
-  ) {}
+    private configService: ConfigService,
+    private appConfig: AppConfig,
+  ) {
+    appConfig = configService.get<AppConfig>('app');
+  }
 
   async create(createUserDto: CreateUserDto): Promise<UserResponseDto> {
     // Hash the password
-    const saltRounds = 10;
+    const saltRounds = this.appConfig.bcryptSaltRounds;
     const password_hash = await bcrypt.hash(createUserDto.password, saltRounds);
 
     const { password, ...userWithoutPassword } = createUserDto;
@@ -77,7 +83,7 @@ export class UsersService {
     // Handle password update if provided
     let updateData: Partial<User> = { ...updateUserDto };
     if (updateUserDto.password) {
-      const saltRounds = 10;
+      const saltRounds = this.appConfig.bcryptSaltRounds;
       const password_hash = await bcrypt.hash(
         updateUserDto.password,
         saltRounds,
