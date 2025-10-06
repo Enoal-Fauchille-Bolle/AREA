@@ -58,6 +58,27 @@ jobs:
         run: npm run format:check
         working-directory: web-client
 
+  check-formatting-mobile-client:
+    name: Check Formatting - Mobile Client
+    runs-on: ubuntu-latest
+    if: ${{ github.event.repository.full_name != 'EpitechPGE3-2025/G-DEV-500-NAN-5-1-area-7' }}
+    steps:
+      - name: Checking Out
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.35.5"
+
+      - name: Install Dependencies
+        run: flutter pub get
+        working-directory: mobile-client
+
+      - name: Check Formatting
+        run: dart format --set-exit-if-changed .
+        working-directory: mobile-client
+
   build-application-server:
     name: Build Application Server
     runs-on: ubuntu-latest
