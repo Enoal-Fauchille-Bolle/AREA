@@ -226,7 +226,13 @@ jobs:
   build-application-server:
     name: Build Application Server
     runs-on: ubuntu-latest
-    needs: [security-scan-application-server, check-formatting-application-server, check-linting-application-server]
+    needs:
+      [
+        security-scan-application-server,
+        check-formatting-application-server,
+        check-linting-application-server,
+      ]
+    if: startsWith(github.ref, 'refs/heads/application-server') || github.ref == 'refs/heads/main'
     steps:
       - name: Checking Out
         uses: actions/checkout@v4
@@ -254,7 +260,13 @@ jobs:
   build-web-client:
     name: Build Web Client
     runs-on: ubuntu-latest
-    needs: [security-scan-web-client, check-formatting-web-client, check-linting-web-client]
+    needs:
+      [
+        security-scan-web-client,
+        check-formatting-web-client,
+        check-linting-web-client,
+      ]
+    if: startsWith(github.ref, 'refs/heads/web-client') || github.ref == 'refs/heads/main'
     steps:
       - name: Checking Out
         uses: actions/checkout@v4
@@ -282,7 +294,13 @@ jobs:
   build-mobile-client:
     name: Build Mobile Client
     runs-on: ubuntu-latest
-    needs: [security-scan-mobile-client, check-formatting-mobile-client, check-linting-mobile-client]
+    needs:
+      [
+        security-scan-mobile-client,
+        check-formatting-mobile-client,
+        check-linting-mobile-client,
+      ]
+    if: startsWith(github.ref, 'refs/heads/mobile-client') || github.ref == 'refs/heads/main'
     steps:
       - name: Checking Out
         uses: actions/checkout@v4
@@ -445,7 +463,25 @@ jobs:
   repository_mirroring:
     name: Repository Mirroring
     runs-on: ubuntu-latest
-    needs: [test-application-server, test-web-client, test-mobile-client]
+    needs:
+      [
+        secrets-scan,
+        security-scan-application-server,
+        security-scan-web-client,
+        security-scan-mobile-client,
+        check-formatting-application-server,
+        check-formatting-web-client,
+        check-formatting-mobile-client,
+        check-linting-application-server,
+        check-linting-web-client,
+        check-linting-mobile-client,
+        build-application-server,
+        build-web-client,
+        build-mobile-client,
+        test-application-server,
+        test-web-client,
+        test-mobile-client,
+      ]
     steps:
       - name: Checking Out
         uses: actions/checkout@v4
