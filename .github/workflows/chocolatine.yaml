@@ -163,6 +163,13 @@ jobs:
         run: npm run build
         working-directory: application-server
 
+      - name: Upload Application Server Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: application-server-dist
+          path: application-server/dist
+          retention-days: 7
+
   build-web-client:
     name: Build Web Client
     runs-on: ubuntu-latest
@@ -183,6 +190,13 @@ jobs:
       - name: Building Web Client
         run: npm run build
         working-directory: web-client
+
+      - name: Upload Web Client Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-client-dist
+          path: web-client/dist
+          retention-days: 7
 
   build-mobile-client:
     name: Build Mobile Client
@@ -236,6 +250,13 @@ jobs:
         run: flutter build apk --release --verbose
         working-directory: mobile-client
 
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-client-apk
+          path: mobile-client/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 30
+
   test-application-server:
     name: Test Application Server
     runs-on: ubuntu-latest
@@ -261,6 +282,14 @@ jobs:
         run: npm run test:e2e
         working-directory: application-server
 
+      - name: Upload Test Coverage
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: application-server-coverage
+          path: application-server/coverage
+          retention-days: 7
+
   test-web-client:
     name: Test Web Client
     runs-on: ubuntu-latest
@@ -281,6 +310,14 @@ jobs:
       - name: Running Tests
         run: npm run test:run -- --coverage
         working-directory: web-client
+
+      - name: Upload Test Coverage
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: web-client-coverage
+          path: web-client/coverage
+          retention-days: 7
 
   test-mobile-client:
     name: Test Mobile Client
@@ -314,6 +351,14 @@ jobs:
           apt install lcov
           genhtml coverage/lcov.info -o coverage/html
         working-directory: mobile-client
+
+      - name: Upload Test Coverage
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mobile-client-coverage
+          path: mobile-client/coverage
+          retention-days: 7
 
   repository_mirroring:
     name: Repository Mirroring
