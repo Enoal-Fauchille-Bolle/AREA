@@ -1,25 +1,19 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import './index.css';
 import App from './App.tsx';
 import SignUp from './SignUp.tsx';
 import Login from './Login.tsx';
 
-function Router() {
-  const path = window.location.pathname;
-
-  switch (path) {
-    case '/signup':
-      return <SignUp />;
-    case '/login':
-      return <Login />;
-    default:
-      return <App />;
-  }
-}
-
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <Router />
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<App />} />
+        <Route path="/signup" element={<SignUp />} />
+        <Route path="/login" element={<Login />} />
+      </Routes>
+    </BrowserRouter>
   </StrictMode>,
 );

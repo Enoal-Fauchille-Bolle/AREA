@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { appIcons } from '../../lib/appIcons';
 
 function Login() {
   const [fontLoaded, setFontLoaded] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const checkFontLoaded = () => {
@@ -19,11 +21,11 @@ function Login() {
   }, []);
 
   const handleBackToHome = () => {
-    window.location.href = '/';
+    navigate('/');
   };
 
   const handleGoToSignUp = () => {
-    window.location.href = '/signup';
+    navigate('/signup');
   };
 
   return (

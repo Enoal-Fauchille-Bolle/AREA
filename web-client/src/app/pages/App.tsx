@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { appIcons } from '../../lib/appIcons';
 
 function App() {
   const [fontLoaded, setFontLoaded] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const checkFontLoaded = () => {
@@ -19,11 +21,11 @@ function App() {
   }, []);
 
   const handleGetStarted = () => {
-    window.location.href = '/signup';
+    navigate('/signup');
   };
 
   const handleLogin = () => {
-    window.location.href = '/login';
+    navigate('/login');
   };
 
   return (
@@ -56,13 +58,13 @@ function App() {
             <button className="text-white hover:text-gray-300 text-lg transition-all duration-300 hover:scale-110 transform">
               Plans
             </button>
-            <button 
+            <button
               onClick={handleLogin}
               className="text-white hover:text-gray-300 text-lg transition-all duration-300 hover:scale-110 transform"
             >
               Log in
             </button>
-            <button 
+            <button
               onClick={handleGetStarted}
               className="bg-white text-black px-8 py-3 rounded-full text-lg font-black hover:bg-gray-200 hover:scale-110 transform transition-all duration-300"
             >
@@ -77,7 +79,7 @@ function App() {
           <h1 className="text-7xl font-black text-white leading-tight max-w-4xl select-none">
             Automate all your tasks easily with AREA
           </h1>
-          <button 
+          <button
             onClick={handleGetStarted}
             className="bg-white text-black px-12 py-6 rounded-full text-2xl font-black hover:bg-gray-200 hover:scale-110 transform transition-all duration-300"
           >
