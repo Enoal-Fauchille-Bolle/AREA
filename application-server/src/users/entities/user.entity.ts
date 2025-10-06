@@ -22,7 +22,11 @@ export class User {
   @Column({ type: 'varchar', length: DB_COLUMN_LENGTHS.username, unique: true })
   username: string;
 
-  @Column({ type: 'varchar', length: DB_COLUMN_LENGTHS.passwordHash, nullable: true })
+  @Column({
+    type: 'varchar',
+    length: DB_COLUMN_LENGTHS.passwordHash,
+    nullable: true,
+  })
   password_hash: string | null;
 
   @Column({ type: 'text', nullable: true })

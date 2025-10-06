@@ -12,8 +12,6 @@ import {
   UpdateProfileDto,
   AuthResponseDto,
 } from './dto';
-import { RegisterDto, LoginDto, UpdateProfileDto, AuthResponseDto } from './dto';
-import { User } from '../users/entities/user.entity';
 import { UserResponseDto } from '../users/dto/user-response.dto';
 import * as bcrypt from 'bcrypt';
 
@@ -30,9 +28,13 @@ export class AuthService {
     password: string,
   ): Promise<UserResponseDto | null> {
     const user = await this.usersService.findByEmail(email);
-    if (user && (await bcrypt.compare(password, user.password_hash))) {
+    if (
+      user &&
+      user.password_hash &&
+      (await bcrypt.compare(password, user.password_hash))
+    ) {
       const { password_hash, ...result } = user;
-      return result;
+      return result as UserResponseDto;
     }
     return null;
   }
