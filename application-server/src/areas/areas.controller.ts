@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { AreasService } from './areas.service';
 import { CreateAreaDto, UpdateAreaDto, AreaResponseDto } from './dto';
+import { parseIdParam } from '../common/constants';
 
 @Controller('areas')
 export class AreasController {
@@ -56,7 +57,7 @@ export class AreasController {
   ) {
     try {
       const userId = req.user?.id || 1;
-      const parsedId = parseInt(id, 10);
+      const parsedId = parseIdParam(id);
       if (isNaN(parsedId)) {
         throw new Error('Invalid ID format');
       }
@@ -74,7 +75,7 @@ export class AreasController {
     @Request() req: { user?: { id: number } },
     @Body() updateAreaDto: UpdateAreaDto,
   ): Promise<AreaResponseDto> {
-    const parsedId = parseInt(id, 10);
+    const parsedId = parseIdParam(id);
     if (isNaN(parsedId)) {
       throw new Error('Invalid ID format');
     }
@@ -93,7 +94,7 @@ export class AreasController {
   ) {
     try {
       const userId = req.user?.id || 1;
-      const parsedId = parseInt(id, 10);
+      const parsedId = parseIdParam(id);
       if (isNaN(parsedId)) {
         throw new Error('Invalid ID format');
       }
@@ -110,7 +111,7 @@ export class AreasController {
     @Param('id') id: string,
     @Request() req: { user?: { id: number } },
   ): Promise<AreaResponseDto> {
-    const parsedId = parseInt(id, 10);
+    const parsedId = parseIdParam(id);
     if (isNaN(parsedId)) {
       throw new Error('Invalid ID format');
     }

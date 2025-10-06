@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { ServicesService } from './services.service';
 import { CreateServiceDto, UpdateServiceDto, ServiceResponseDto } from './dto';
+import { parseIdParam } from '../common/constants';
 
 @Controller('services')
 export class ServicesController {
@@ -36,7 +37,7 @@ export class ServicesController {
 
   @Get(':id')
   findOne(@Param('id') id: string): Promise<ServiceResponseDto> {
-    const parsedIntId = parseInt(id, 10);
+    const parsedIntId = parseIdParam(id);
     if (isNaN(parsedIntId)) {
       throw new Error('Invalid ID format');
     }
@@ -53,7 +54,7 @@ export class ServicesController {
     @Param('id') id: string,
     @Body() updateServiceDto: UpdateServiceDto,
   ): Promise<ServiceResponseDto> {
-    const parsedIntId = parseInt(id, 10);
+    const parsedIntId = parseIdParam(id);
     if (isNaN(parsedIntId)) {
       throw new Error('Invalid ID format');
     }
@@ -63,7 +64,7 @@ export class ServicesController {
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id') id: string): Promise<void> {
-    const parsedIntId = parseInt(id, 10);
+    const parsedIntId = parseIdParam(id);
     if (isNaN(parsedIntId)) {
       throw new Error('Invalid ID format');
     }

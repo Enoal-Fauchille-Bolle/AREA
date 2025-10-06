@@ -12,6 +12,7 @@ import {
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { parseIdParam } from '../common/constants';
 
 @Controller('users')
 export class UsersController {
@@ -51,7 +52,7 @@ export class UsersController {
 
   @Get(':id')
   async findOne(@Param('id') id: string) {
-    const parsedId = parseInt(id, 10);
+    const parsedId = parseIdParam(id);
     if (isNaN(parsedId)) {
       throw new HttpException('Invalid ID format', HttpStatus.BAD_REQUEST);
     }
@@ -64,7 +65,7 @@ export class UsersController {
 
   @Patch(':id')
   async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    const parsedId = parseInt(id, 10);
+    const parsedId = parseIdParam(id);
     if (isNaN(parsedId)) {
       throw new HttpException('Invalid ID format', HttpStatus.BAD_REQUEST);
     }
@@ -105,7 +106,7 @@ export class UsersController {
 
   @Patch(':id/last-connection')
   async updateLastConnection(@Param('id') id: string) {
-    const parsedId = parseInt(id, 10);
+    const parsedId = parseIdParam(id);
     if (isNaN(parsedId)) {
       throw new HttpException('Invalid ID format', HttpStatus.BAD_REQUEST);
     }
@@ -127,7 +128,7 @@ export class UsersController {
 
   @Delete(':id')
   async remove(@Param('id') id: string) {
-    const parsedId = parseInt(id, 10);
+    const parsedId = parseIdParam(id);
     if (isNaN(parsedId)) {
       throw new HttpException('Invalid ID format', HttpStatus.BAD_REQUEST);
     }
