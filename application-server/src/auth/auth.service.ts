@@ -171,7 +171,7 @@ export class AuthService {
     // 2. Fetch user info from provider
     // 3. Check if user exists, login or create account
     // 4. Generate JWT token
-    throw new Error('OAuth2 login not yet implemented');
+    return Promise.reject(new Error('OAuth2 login not yet implemented'));
   }
 
   registerWithOAuth2(
@@ -184,6 +184,6 @@ export class AuthService {
     // 3. Create new user account
     // 4. Store OAuth tokens in UserServices
     // 5. Generate JWT token
-    throw new Error('OAuth2 registration not yet implemented');
+    return Promise.reject(new Error('OAuth2 registration not yet implemented'));
   }
 }

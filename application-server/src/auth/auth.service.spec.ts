@@ -246,7 +246,9 @@ describe('AuthService', () => {
       mockUsersService.findOne.mockResolvedValue(mockUser);
       mockUsersService.findByEmail.mockResolvedValue(null);
       mockUsersService.findByUsername.mockResolvedValue(null);
-      mockUsersService.update.mockResolvedValue(updatedUser);
+      mockUsersService.update.mockResolvedValue(
+        new UserResponseDto(updatedUser),
+      );
 
       const result = await service.updateProfile(mockUser.id, updateDto);
 
@@ -272,7 +274,9 @@ describe('AuthService', () => {
 
       mockUsersService.findOne.mockResolvedValue(mockUser);
       mockUsersService.findByUsername.mockResolvedValue(null);
-      mockUsersService.update.mockResolvedValue(updatedUser);
+      mockUsersService.update.mockResolvedValue(
+        new UserResponseDto(updatedUser),
+      );
 
       const result = await service.updateProfile(mockUser.id, partialUpdate);
 
@@ -306,7 +310,7 @@ describe('AuthService', () => {
       mockUsersService.findOne.mockResolvedValue(mockUser);
       mockUsersService.findByEmail.mockResolvedValue(mockUser);
       mockUsersService.findByUsername.mockResolvedValue(mockUser);
-      mockUsersService.update.mockResolvedValue(mockUser);
+      mockUsersService.update.mockResolvedValue(new UserResponseDto(mockUser));
 
       const result = await service.updateProfile(mockUser.id, {
         email: mockUser.email,
