@@ -28,7 +28,7 @@ export class AreaExecutionResponseDto {
     this.executionTimeMs = areaExecution.execution_time_ms
       ? Number(areaExecution.execution_time_ms)
       : null;
-    this.createdAt = areaExecution.createdAt;
-    this.updatedAt = areaExecution.updatedAt;
+    this.createdAt = areaExecution.created_at;
+    this.updatedAt = areaExecution.updated_at;
   }
 }
