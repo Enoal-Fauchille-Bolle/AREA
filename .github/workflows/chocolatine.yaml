@@ -16,9 +16,25 @@ env:
   MIRROR_URL: git@github.com:EpitechPGE3-2025/G-DEV-500-NAN-5-1-area-7.git
 
 jobs:
+  secrets-scan:
+    name: Secrets Scan
+    runs-on: ubuntu-latest
+    if: ${{ github.event.repository.full_name != 'EpitechPGE3-2025/G-DEV-500-NAN-5-1-area-7' }}
+    steps:
+      - name: Checking Out
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: TruffleHog Secret Scanning
+        uses: trufflesecurity/trufflehog@main
+        with:
+          extra_args: --results=verified,unknown --fail
+
   check-formatting-application-server:
     name: Check Formatting - Application Server
     runs-on: ubuntu-latest
+    needs: secrets-scan
     if: ${{ github.event.repository.full_name != 'EpitechPGE3-2025/G-DEV-500-NAN-5-1-area-7' }}
     steps:
       - name: Checking Out
@@ -40,6 +56,7 @@ jobs:
   check-formatting-web-client:
     name: Check Formatting - Web Client
     runs-on: ubuntu-latest
+    needs: secrets-scan
     if: ${{ github.event.repository.full_name != 'EpitechPGE3-2025/G-DEV-500-NAN-5-1-area-7' }}
     steps:
       - name: Checking Out
@@ -61,6 +78,7 @@ jobs:
   check-formatting-mobile-client:
     name: Check Formatting - Mobile Client
     runs-on: ubuntu-latest
+    needs: secrets-scan
     if: ${{ github.event.repository.full_name != 'EpitechPGE3-2025/G-DEV-500-NAN-5-1-area-7' }}
     steps:
       - name: Checking Out
@@ -82,6 +100,7 @@ jobs:
   check-linting-application-server:
     name: Check Linting - Application Server
     runs-on: ubuntu-latest
+    needs: secrets-scan
     if: ${{ github.event.repository.full_name != 'EpitechPGE3-2025/G-DEV-500-NAN-5-1-area-7' }}
     steps:
       - name: Checking Out
@@ -103,6 +122,7 @@ jobs:
   check-linting-web-client:
     name: Check Linting - Web Client
     runs-on: ubuntu-latest
+    needs: secrets-scan
     if: ${{ github.event.repository.full_name != 'EpitechPGE3-2025/G-DEV-500-NAN-5-1-area-7' }}
     steps:
       - name: Checking Out
@@ -124,6 +144,7 @@ jobs:
   check-linting-mobile-client:
     name: Check Linting - Mobile Client
     runs-on: ubuntu-latest
+    needs: secrets-scan
     if: ${{ github.event.repository.full_name != 'EpitechPGE3-2025/G-DEV-500-NAN-5-1-area-7' }}
     steps:
       - name: Checking Out
