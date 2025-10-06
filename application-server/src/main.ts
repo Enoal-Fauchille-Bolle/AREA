@@ -1,7 +1,9 @@
 import { NestFactory } from '@nestjs/core';
 import type { INestApplication } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
+import type { AppConfig } from './config';
 
 function setupSwagger(app: INestApplication): void {
   const config = new DocumentBuilder()
@@ -18,6 +20,10 @@ async function bootstrap(): Promise<void> {
 
   setupSwagger(app);
 
-  await app.listen(process.env.PORT ?? 3000);
+  const configService = app.get(ConfigService);
+  const appConfig = configService.get<AppConfig>('app');
+  const port = appConfig.port;
+
+  await app.listen(port);
 }
 void bootstrap();

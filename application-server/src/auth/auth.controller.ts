@@ -31,7 +31,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async login(
     @Body() loginDto: LoginDto,
-    @Request() req,
+    @Request() _req: Request,
   ): Promise<AuthResponseDto> {
     // LocalAuthGuard validates credentials and attaches user to request
     return this.authService.login(loginDto);
@@ -67,14 +67,16 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  async getProfile(@Request() req): Promise<UserResponseDto> {
+  async getProfile(
+    @Request() req: { user: { id: number } },
+  ): Promise<UserResponseDto> {
     return this.authService.getProfile(req.user.id);
   }
 
   @UseGuards(JwtAuthGuard)
   @Patch('me')
   async updateProfile(
-    @Request() req,
+    @Request() req: { user: { id: number } },
     @Body() updateProfileDto: UpdateProfileDto,
   ): Promise<UserResponseDto> {
     return this.authService.updateProfile(req.user.id, updateProfileDto);
@@ -83,7 +85,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Delete('me')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteProfile(@Request() req): Promise<void> {
+  async deleteProfile(@Request() req: { user: { id: number } }): Promise<void> {
     return this.authService.deleteProfile(req.user.id);
   }
 }

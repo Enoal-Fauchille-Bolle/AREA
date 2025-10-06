@@ -1,9 +1,10 @@
+import { DB_COLUMN_LENGTHS, DB_DEFAULTS } from 'src/config';
 import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  CreateDateColumn,
-  UpdateDateColumn,
+  // CreateDateColumn,
+  // UpdateDateColumn,
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
@@ -25,16 +26,20 @@ export class Component {
   @Column({ type: 'enum', enum: ComponentType })
   type: ComponentType;
 
-  @Column({ type: 'varchar', length: 100 })
+  @Column({ type: 'varchar', length: DB_COLUMN_LENGTHS.componentName })
   name: string;
 
   @Column({ type: 'text', nullable: true })
   description: string | null;
 
-  @Column({ type: 'boolean', default: true })
+  @Column({ type: 'boolean', default: DB_DEFAULTS.isActive })
   is_active: boolean;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
+  @Column({
+    type: 'varchar',
+    length: DB_COLUMN_LENGTHS.webhookEndpoint,
+    nullable: true,
+  })
   webhook_endpoint: string | null;
 
   @Column({ type: 'int', nullable: true })

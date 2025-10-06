@@ -1,3 +1,4 @@
+import { DB_COLUMN_LENGTHS } from 'src/config';
 import {
   Entity,
   PrimaryColumn,
@@ -14,7 +15,7 @@ export class HookState {
   @PrimaryColumn({ type: 'int' })
   area_id: number;
 
-  @PrimaryColumn({ type: 'varchar', length: 255 })
+  @PrimaryColumn({ type: 'varchar', length: DB_COLUMN_LENGTHS.hookStateKey })
   state_key: string;
 
   @Column({ type: 'text', nullable: true })

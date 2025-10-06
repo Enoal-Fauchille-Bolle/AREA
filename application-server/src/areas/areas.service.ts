@@ -1,7 +1,7 @@
 import {
   Injectable,
   NotFoundException,
-  ForbiddenException,
+  // ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';

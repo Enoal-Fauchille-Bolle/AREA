@@ -33,7 +33,7 @@ export class AuthService {
       user.password_hash &&
       (await bcrypt.compare(password, user.password_hash))
     ) {
-      const { ...result } = user;
+      const { password_hash, ...result } = user;
       return result as UserResponseDto;
     }
     return null;
@@ -99,7 +99,7 @@ export class AuthService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    return new UserResponseDto(user);
+    return user;
   }
 
   async updateProfile(
@@ -135,7 +135,13 @@ export class AuthService {
     }
 
     // Prepare update data
-    const updateData: any = {};
+    // Temporary created a Type based on what's below
+    const updateData: {
+      email?: string;
+      username?: string;
+      icon_path?: string;
+      password?: string;
+    } = {};
     if (updateProfileDto.email) updateData.email = updateProfileDto.email;
     if (updateProfileDto.username)
       updateData.username = updateProfileDto.username;
@@ -145,7 +151,10 @@ export class AuthService {
       updateData.password = updateProfileDto.password; // UsersService will hash this
 
     const updatedUser = await this.usersService.update(userId, updateData);
-    return new UserResponseDto(updatedUser);
+    if (!updatedUser) {
+      throw new NotFoundException('User not found after update');
+    }
+    return updatedUser;
   }
 
   async deleteProfile(userId: number): Promise<void> {
@@ -158,21 +167,18 @@ export class AuthService {
   }
 
   // OAuth2 methods - placeholder for now
-  async loginWithOAuth2(
-    service: string,
-    code: string,
-  ): Promise<AuthResponseDto> {
+  loginWithOAuth2(_service: string, _code: string): Promise<AuthResponseDto> {
     // TODO: Implement OAuth2 login flow
     // 1. Exchange code for access token
     // 2. Fetch user info from provider
     // 3. Check if user exists, login or create account
     // 4. Generate JWT token
-    throw new Error('OAuth2 login not yet implemented');
+    return Promise.reject(new Error('OAuth2 login not yet implemented'));
   }
 
-  async registerWithOAuth2(
-    service: string,
-    code: string,
+  registerWithOAuth2(
+    _service: string,
+    _code: string,
   ): Promise<AuthResponseDto> {
     // TODO: Implement OAuth2 registration flow
     // 1. Exchange code for access token
@@ -180,6 +186,6 @@ export class AuthService {
     // 3. Create new user account
     // 4. Store OAuth tokens in UserServices
     // 5. Generate JWT token
-    throw new Error('OAuth2 registration not yet implemented');
+    return Promise.reject(new Error('OAuth2 registration not yet implemented'));
   }
 }
