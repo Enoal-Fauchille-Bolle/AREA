@@ -1,3 +1,4 @@
+import { DB_COLUMN_LENGTHS, DB_DEFAULTS } from 'src/config';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -32,7 +33,7 @@ export class Variable {
   @Column({ type: 'int' })
   component_id: number;
 
-  @Column({ type: 'varchar', length: 100 })
+  @Column({ type: 'varchar', length: DB_COLUMN_LENGTHS.variableName })
   name: string;
 
   @Column({ type: 'text', nullable: true })
@@ -53,7 +54,7 @@ export class Variable {
   @Column({ type: 'text', nullable: true })
   validation_regex: string | null;
 
-  @Column({ type: 'int', default: 0 })
+  @Column({ type: 'int', default: DB_DEFAULTS.displayOrder })
   display_order: number;
 
   // Relations

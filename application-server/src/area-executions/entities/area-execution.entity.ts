@@ -1,3 +1,4 @@
+import { DB_COLUMN_LENGTHS } from 'src/config';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -26,7 +27,11 @@ export class AreaExecution {
   @Column({ type: 'int' })
   area_id: number;
 
-  @Column({ type: 'varchar', length: 20, default: ExecutionStatus.PENDING })
+  @Column({
+    type: 'varchar',
+    length: DB_COLUMN_LENGTHS.executionStatus,
+    default: ExecutionStatus.PENDING,
+  })
   status: ExecutionStatus;
 
   @Column({ type: 'jsonb', nullable: true })

@@ -1,3 +1,4 @@
+import { DB_COLUMN_LENGTHS, DB_DEFAULTS } from 'src/config';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -28,13 +29,13 @@ export class Area {
   @Column()
   component_reaction_id: number;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'varchar', length: DB_COLUMN_LENGTHS.areaName })
   name: string;
 
   @Column({ type: 'text', nullable: true })
   description: string;
 
-  @Column({ type: 'boolean', default: true })
+  @Column({ type: 'boolean', default: DB_DEFAULTS.isActive })
   is_active: boolean;
 
   @CreateDateColumn()
@@ -46,7 +47,7 @@ export class Area {
   @Column({ type: 'timestamp', nullable: true })
   last_triggered_at: Date | null;
 
-  @Column({ type: 'int', default: 0 })
+  @Column({ type: 'int', default: DB_DEFAULTS.triggeredCount })
   triggered_count: number;
 
   // Relations
