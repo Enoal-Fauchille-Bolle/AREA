@@ -27,7 +27,7 @@ export function validateEnv(config: Record<string, unknown>) {
 
   const env = parsed.data;
   if (env.NODE_ENV === 'production' && !env.JWT_SECRET) {
-    throw new ConfigurationException('JWT_SECRET must be set in prodution.');
+    throw new ConfigurationException('JWT_SECRET must be set in production.');
   }
   return env;
 }
