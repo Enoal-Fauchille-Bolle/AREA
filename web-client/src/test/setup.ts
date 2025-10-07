@@ -25,30 +25,46 @@ interface MockResizeObserverEntry {
   devicePixelContentBoxSize: ReadonlyArray<ResizeObserverSize>;
 }
 
-(global as unknown as { IntersectionObserver: unknown }).IntersectionObserver = class IntersectionObserver {
-  constructor(
-    callback: (entries: MockIntersectionObserverEntry[], observer: IntersectionObserver) => void,
-    options?: IntersectionObserverInit,
-  ) {
-    this.callback = callback;
-    this.options = options;
-  }
-  callback: (entries: MockIntersectionObserverEntry[], observer: IntersectionObserver) => void;
-  options?: IntersectionObserverInit;
-  disconnect(): void {}
-  observe(): void {}
-  unobserve(): void {}
-};
+(global as unknown as { IntersectionObserver: unknown }).IntersectionObserver =
+  class IntersectionObserver {
+    constructor(
+      callback: (
+        entries: MockIntersectionObserverEntry[],
+        observer: IntersectionObserver,
+      ) => void,
+      options?: IntersectionObserverInit,
+    ) {
+      this.callback = callback;
+      this.options = options;
+    }
+    callback: (
+      entries: MockIntersectionObserverEntry[],
+      observer: IntersectionObserver,
+    ) => void;
+    options?: IntersectionObserverInit;
+    disconnect(): void {}
+    observe(): void {}
+    unobserve(): void {}
+  };
 
-(global as unknown as { ResizeObserver: unknown }).ResizeObserver = class ResizeObserver {
-  constructor(callback: (entries: MockResizeObserverEntry[], observer: ResizeObserver) => void) {
-    this.callback = callback;
-  }
-  callback: (entries: MockResizeObserverEntry[], observer: ResizeObserver) => void;
-  disconnect(): void {}
-  observe(): void {}
-  unobserve(): void {}
-};
+(global as unknown as { ResizeObserver: unknown }).ResizeObserver =
+  class ResizeObserver {
+    constructor(
+      callback: (
+        entries: MockResizeObserverEntry[],
+        observer: ResizeObserver,
+      ) => void,
+    ) {
+      this.callback = callback;
+    }
+    callback: (
+      entries: MockResizeObserverEntry[],
+      observer: ResizeObserver,
+    ) => void;
+    disconnect(): void {}
+    observe(): void {}
+    unobserve(): void {}
+  };
 
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
