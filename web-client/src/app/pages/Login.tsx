@@ -85,6 +85,7 @@ function Login() {
               </label>
               <input
                 type="email"
+                required
                 className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-black focus:outline-none transition-colors text-lg"
                 placeholder="Enter your email"
               />
@@ -96,6 +97,7 @@ function Login() {
               </label>
               <input
                 type="password"
+                required
                 className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-black focus:outline-none transition-colors text-lg"
                 placeholder="Enter your password"
               />
