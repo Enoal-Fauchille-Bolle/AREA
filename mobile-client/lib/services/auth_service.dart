@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AuthService {
-  final String baseUrl = 'http://10.84.107.120:3000';
+  final String baseUrl = dotenv.env['URL_BASE'] ?? 'http://10.84.107.120';
+  final String port = dotenv.env['PORT'] ?? '3000';
   static const String _tokenKey = 'jwt_token';
   static const String _userKey = 'user_data';
 
@@ -39,7 +41,7 @@ class AuthService {
   Future<bool> login(String email, String password) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/auth/login'),
+        Uri.parse('$baseUrl:$port/auth/login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'email': email,
@@ -66,7 +68,7 @@ class AuthService {
   Future<bool> loginOAuth2(String service, String code) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/auth/login-oauth2'),
+        Uri.parse('$baseUrl:$port/auth/login-oauth2'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'service': service,
@@ -91,7 +93,7 @@ class AuthService {
   Future<bool> register(String email, String username, String password) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/auth/register'),
+        Uri.parse('$baseUrl:$port/auth/register'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'email': email,
@@ -117,7 +119,7 @@ class AuthService {
   Future<bool> registerOAuth2(String service, String code) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/auth/register-oauth2'),
+        Uri.parse('$baseUrl:$port/auth/register-oauth2'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'service': service,
@@ -145,7 +147,7 @@ class AuthService {
       if (token == null) return null;
 
       final response = await http.get(
-        Uri.parse('$baseUrl/auth/me'),
+        Uri.parse('$baseUrl:$port/auth/me'),
         headers: {
           'Authorization': 'Bearer $token',
         },
@@ -181,7 +183,7 @@ class AuthService {
       if (iconUrl != null) body['icon_url'] = iconUrl;
 
       final response = await http.patch(
-        Uri.parse('$baseUrl/auth/me'),
+        Uri.parse('$baseUrl:$port/auth/me'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
