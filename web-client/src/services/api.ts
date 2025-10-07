@@ -145,6 +145,29 @@ export interface CreateAreaRequest {
   is_active?: boolean;
 }
 
+export interface Service {
+  id: number;
+  name: string;
+  description: string | null;
+  icon_path: string | null;
+  requires_auth: boolean;
+  is_active: boolean;
+}
+
+export type ComponentType = 'action' | 'reaction';
+
+export interface Component {
+  id: number;
+  service_id: number;
+  type: ComponentType;
+  name: string;
+  description: string | null;
+  is_active: boolean;
+  webhook_endpoint: string | null;
+  polling_interval: number | null;
+  service?: Service;
+}
+
 export interface ApiError {
   message: string;
   statusCode: number;
@@ -162,6 +185,129 @@ const handleResponse = async (response: Response) => {
     throw new Error(errorMessage);
   }
   return response.json();
+};
+
+export const servicesApi = {
+  async getServices(): Promise<Service[]> {
+    const token = tokenService.getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/services`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return handleResponse(response);
+  },
+
+  async getService(id: number): Promise<Service> {
+    const token = tokenService.getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/services/${id}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return handleResponse(response);
+  },
+};
+
+export const componentsApi = {
+  async getComponents(): Promise<Component[]> {
+    const token = tokenService.getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/components`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return handleResponse(response);
+  },
+
+  async getComponent(id: number): Promise<Component> {
+    const token = tokenService.getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/components/${id}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return handleResponse(response);
+  },
+
+  async getComponentsByService(serviceId: number): Promise<Component[]> {
+    const token = tokenService.getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/components/service/${serviceId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return handleResponse(response);
+  },
+
+  async getActionComponents(): Promise<Component[]> {
+    const token = tokenService.getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/components/actions`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return handleResponse(response);
+  },
+
+  async getReactionComponents(): Promise<Component[]> {
+    const token = tokenService.getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/components/reactions`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return handleResponse(response);
+  },
 };
 
 export const authApi = {

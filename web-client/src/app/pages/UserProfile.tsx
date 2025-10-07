@@ -25,7 +25,7 @@ function UserProfile() {
   );
 
   const handleCreateArea = () => {
-    console.log('Create new area');
+    navigate('/create');
   };
 
   const handleDeleteArea = async (id: number) => {

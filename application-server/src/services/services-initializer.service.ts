@@ -36,11 +36,11 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       console.log('Creating Clock service...');
     }
 
-    // Create Clock service
+        // Create Clock service
     const clockService = await this.servicesService.create({
       name: 'Clock',
       description: 'Time-based triggers and actions for automation workflows',
-      icon_path: '/icons/clock.svg',
+      icon_path: 'https://unpkg.com/heroicons@2.0.18/24/outline/clock.svg',
       requires_auth: false,
       is_active: true,
     });
@@ -189,11 +189,11 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       console.log('Creating Email service...');
     }
 
-    // Create Email service
+        // Create Email service
     const emailService = await this.servicesService.create({
       name: 'Email',
       description: 'Send email notifications and messages',
-      icon_path: '/icons/email.svg',
+      icon_path: 'https://unpkg.com/heroicons@2.0.18/24/outline/envelope.svg',
       requires_auth: false, // For now, no OAuth - can be changed later to support Gmail API
       is_active: true,
     });

@@ -6,6 +6,7 @@ import App from './App.tsx';
 import SignUp from './SignUp.tsx';
 import Login from './Login.tsx';
 import UserProfile from './UserProfile.tsx';
+import CreateArea from './CreateArea.tsx';
 import ProtectedRoute from '../../components/ProtectedRoute.tsx';
 
 createRoot(document.getElementById('root')!).render(
@@ -20,6 +21,14 @@ createRoot(document.getElementById('root')!).render(
           element={
             <ProtectedRoute>
               <UserProfile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/create"
+          element={
+            <ProtectedRoute>
+              <CreateArea />
             </ProtectedRoute>
           }
         />
