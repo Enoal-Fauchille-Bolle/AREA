@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'auth_service.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ServiceApiService {
-  final String baseUrl = 'http://10.84.107.120:3000';
+  final String baseUrl = dotenv.env['URL_BASE'] ?? 'http://10.84.107.120';
+  final String port = dotenv.env['PORT'] ?? '3000';
   final AuthService _authService = AuthService();
 
   // helper to normalize list responses
@@ -23,7 +25,7 @@ class ServiceApiService {
     try {
       final headers = await _authService.getAuthHeaders();
       final response = await http.get(
-        Uri.parse('$baseUrl/services'),
+        Uri.parse('$baseUrl:$port/services'),
         headers: headers,
       );
 
@@ -43,7 +45,7 @@ class ServiceApiService {
     try {
       final headers = await _authService.getAuthHeaders();
       final response = await http.get(
-        Uri.parse('$baseUrl/services/$id'),
+        Uri.parse('$baseUrl:$port/services/$id'),
         headers: headers,
       );
 
@@ -64,7 +66,7 @@ class ServiceApiService {
     try {
       final headers = await _authService.getAuthHeaders();
       final response = await http.get(
-        Uri.parse('$baseUrl/services/$serviceId/actions'),
+        Uri.parse('$baseUrl:$port/services/$serviceId/actions'),
         headers: headers,
       );
 
@@ -85,7 +87,7 @@ class ServiceApiService {
     try {
       final headers = await _authService.getAuthHeaders();
       final response = await http.get(
-        Uri.parse('$baseUrl/services/$serviceId/reactions'),
+        Uri.parse('$baseUrl:$port/services/$serviceId/reactions'),
         headers: headers,
       );
 
@@ -106,7 +108,7 @@ class ServiceApiService {
     try {
       final headers = await _authService.getAuthHeaders();
       final response = await http.get(
-        Uri.parse('$baseUrl/services/$serviceId/components'),
+        Uri.parse('$baseUrl:$port/services/$serviceId/components'),
         headers: headers,
       );
 
@@ -126,7 +128,7 @@ class ServiceApiService {
     try {
       final headers = await _authService.getAuthHeaders();
       final response = await http.get(
-        Uri.parse('$baseUrl/services/me'),
+        Uri.parse('$baseUrl:$port/services/me'),
         headers: headers,
       );
 
@@ -148,7 +150,7 @@ class ServiceApiService {
       final body = code != null ? jsonEncode({'code': code}) : null;
 
       final response = await http.post(
-        Uri.parse('$baseUrl/services/$serviceId/link'),
+        Uri.parse('$baseUrl:$port/services/$serviceId/link'),
         headers: headers,
         body: body,
       );
@@ -165,7 +167,7 @@ class ServiceApiService {
     try {
       final headers = await _authService.getAuthHeaders();
       final response = await http.delete(
-        Uri.parse('$baseUrl/services/$serviceId/unlink'),
+        Uri.parse('$baseUrl:$port/services/$serviceId/unlink'),
         headers: headers,
       );
 
