@@ -1,0 +1,19 @@
+export class UserServiceResponseDto {
+  user_id: number;
+  service_id: number;
+  oauth_token: string | null;
+  refresh_token: string | null;
+  token_expires_at: Date | null;
+  created_at: Date;
+  updated_at: Date;
+  user?: {
+    id: number;
+    username: string;
+    email: string;
+  };
+  service?: {
+    id: number;
+    name: string;
+    description: string | null;
+  };
+}
