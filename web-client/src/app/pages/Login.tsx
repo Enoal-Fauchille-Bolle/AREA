@@ -1,9 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { appIcons } from '../../lib/appIcons';
+import { authApi, tokenService } from '../../services/api';
 
 function Login() {
   const [fontLoaded, setFontLoaded] = useState(false);
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -28,8 +35,32 @@ function Login() {
     navigate('/signup');
   };
 
-  const handleLogin = () => {
-    navigate('/profile');
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    if (error) setError('');
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
+    try {
+      if (!formData.email || !formData.password) {
+        throw new Error('Please fill in all fields');
+      }
+      const response = await authApi.login(formData);
+      tokenService.setToken(response.token);
+      navigate('/profile');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -78,16 +109,26 @@ function Login() {
             </p>
           </div>
 
-          <form className="space-y-6">
+          <form className="space-y-6" onSubmit={handleLogin}>
+            {error && (
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
+                <p className="text-sm font-medium">{error}</p>
+              </div>
+            )}
+
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-2">
                 Email Address
               </label>
               <input
                 type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
                 required
                 className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-black focus:outline-none transition-colors text-lg"
                 placeholder="Enter your email"
+                disabled={isLoading}
               />
             </div>
 
@@ -97,9 +138,13 @@ function Login() {
               </label>
               <input
                 type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleInputChange}
                 required
                 className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-black focus:outline-none transition-colors text-lg"
                 placeholder="Enter your password"
+                disabled={isLoading}
               />
             </div>
 
@@ -108,6 +153,7 @@ function Login() {
                 <input
                   type="checkbox"
                   className="w-4 h-4 text-black border-gray-300 rounded focus:ring-black"
+                  disabled={isLoading}
                 />
                 <label className="ml-2 text-sm text-gray-600">
                   Remember me
@@ -115,7 +161,8 @@ function Login() {
               </div>
               <button
                 type="button"
-                className="text-sm text-black font-bold hover:underline"
+                className="text-sm text-black font-bold hover:underline disabled:opacity-50"
+                disabled={isLoading}
               >
                 Forgot password?
               </button>
@@ -123,10 +170,17 @@ function Login() {
 
             <button
               type="submit"
-              onClick={handleLogin}
-              className="w-full bg-black text-white py-4 rounded-lg text-lg font-black hover:bg-gray-800 hover:scale-105 transform transition-all duration-300"
+              disabled={isLoading}
+              className="w-full bg-black text-white py-4 rounded-lg text-lg font-black hover:bg-gray-800 hover:scale-105 transform transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
-              Sign In
+              {isLoading ? (
+                <div className="flex items-center justify-center space-x-2">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Signing In...</span>
+                </div>
+              ) : (
+                'Sign In'
+              )}
             </button>
           </form>
 

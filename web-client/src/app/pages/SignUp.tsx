@@ -1,9 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { appIcons } from '../../lib/appIcons';
+import { authApi, tokenService } from '../../services/api';
 
 function SignUp() {
   const [fontLoaded, setFontLoaded] = useState(false);
+  const [formData, setFormData] = useState({
+    email: '',
+    username: '',
+    password: ''
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -28,8 +36,37 @@ function SignUp() {
     navigate('/login');
   };
 
-  const handleSignUp = () => {
-    navigate('/profile');
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    if (error) setError('');
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
+    try {
+      if (!formData.email || !formData.username || !formData.password) {
+        throw new Error('Please fill in all fields');
+      }
+
+      if (formData.password.length < 6) {
+        throw new Error('Password must be at least 6 characters long');
+      }
+
+      const response = await authApi.register(formData);
+      tokenService.setToken(response.token);
+      navigate('/profile');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -78,16 +115,42 @@ function SignUp() {
             </p>
           </div>
 
-          <form className="space-y-6">
+          <form className="space-y-6" onSubmit={handleSignUp}>
+            {error && (
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
+                <p className="text-sm font-medium">{error}</p>
+              </div>
+            )}
+
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-2">
                 Email Address
               </label>
               <input
                 type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
                 required
                 className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-black focus:outline-none transition-colors text-lg"
                 placeholder="Enter your email"
+                disabled={isLoading}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">
+                Username
+              </label>
+              <input
+                type="text"
+                name="username"
+                value={formData.username}
+                onChange={handleInputChange}
+                required
+                className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-black focus:outline-none transition-colors text-lg"
+                placeholder="Choose a username"
+                disabled={isLoading}
               />
             </div>
 
@@ -97,18 +160,30 @@ function SignUp() {
               </label>
               <input
                 type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleInputChange}
                 required
+                minLength={6}
                 className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-black focus:outline-none transition-colors text-lg"
-                placeholder="Create a password"
+                placeholder="Create a password (min. 6 characters)"
+                disabled={isLoading}
               />
             </div>
 
             <button
               type="submit"
-              onClick={handleSignUp}
-              className="w-full bg-black text-white py-4 rounded-lg text-lg font-black hover:bg-gray-800 hover:scale-105 transform transition-all duration-300"
+              disabled={isLoading}
+              className="w-full bg-black text-white py-4 rounded-lg text-lg font-black hover:bg-gray-800 hover:scale-105 transform transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
-              Create Account
+              {isLoading ? (
+                <div className="flex items-center justify-center space-x-2">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Creating Account...</span>
+                </div>
+              ) : (
+                'Create Account'
+              )}
             </button>
           </form>
 

@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
 
 function UserProfile() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const { user, isLoading, error, logout } = useAuth();
 
   const placeholderAreas = [
     {
@@ -59,7 +61,7 @@ function UserProfile() {
   };
 
   const handleLogout = () => {
-    console.log('Logout');
+    logout();
     navigate('/');
   };
 
@@ -82,6 +84,36 @@ function UserProfile() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isProfileMenuOpen]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-white text-xl">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+            <span>Loading your profile...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-400 text-xl mb-4">Failed to load profile</div>
+          <div className="text-gray-400 mb-6">{error}</div>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-white text-black px-6 py-2 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
@@ -121,8 +153,10 @@ function UserProfile() {
               {isProfileMenuOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-lg py-2 z-50">
                   <div className="px-4 py-2 text-sm text-gray-300 border-b border-gray-700">
-                    <div className="font-semibold">John Doe</div>
-                    <div className="text-gray-400">john.doe@example.com</div>
+                    <div className="font-semibold">
+                      {user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.username : 'Loading...'}
+                    </div>
+                    <div className="text-gray-400">{user?.email || 'Loading...'}</div>
                   </div>
                   <button
                     onClick={() => {

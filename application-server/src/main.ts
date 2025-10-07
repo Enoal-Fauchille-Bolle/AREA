@@ -18,6 +18,13 @@ function setupSwagger(app: INestApplication): void {
 async function bootstrap(): Promise<void> {
   const app: INestApplication = await NestFactory.create(AppModule);
 
+  app.enableCors({
+    origin: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+  });
+
   setupSwagger(app);
 
   const configService = app.get(ConfigService);
