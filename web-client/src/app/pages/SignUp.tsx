@@ -170,7 +170,7 @@ function SignUp() {
                 required
                 minLength={6}
                 className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-black focus:outline-none transition-colors text-lg"
-                placeholder="Create a password (min. 6 characters)"
+                placeholder="Create a password"
                 disabled={isLoading}
               />
             </div>
