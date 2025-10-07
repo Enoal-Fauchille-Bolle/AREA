@@ -1,6 +1,8 @@
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
+const TOKEN_KEY = import.meta.env.VITE_TOKEN_KEY || 'auth_token';
+
 export interface RegisterRequest {
   email: string;
   username: string;
@@ -116,18 +118,37 @@ export const authApi = {
 
 export const tokenService = {
   setToken(token: string) {
-    localStorage.setItem('auth_token', token);
+    if (!token || typeof token !== 'string') {
+      throw new Error('Invalid token provided');
+    }
+    localStorage.setItem(TOKEN_KEY, token);
   },
 
   getToken(): string | null {
-    return localStorage.getItem('auth_token');
+    try {
+      return localStorage.getItem(TOKEN_KEY);
+    } catch (error) {
+      console.warn('Failed to access localStorage:', error);
+      return null;
+    }
   },
 
   removeToken() {
-    localStorage.removeItem('auth_token');
+    try {
+      localStorage.removeItem(TOKEN_KEY);
+    } catch (error) {
+      console.warn('Failed to remove token from localStorage:', error);
+    }
   },
 
   isAuthenticated(): boolean {
-    return !!this.getToken();
+    const token = this.getToken();
+    return !!(token && token.length > 0);
+  },
+
+  isValidToken(token: string | null): boolean {
+    if (!token) return false;
+    const parts = token.split('.');
+    return parts.length === 3 && parts.every((part) => part.length > 0);
   },
 };
