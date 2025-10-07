@@ -3,12 +3,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Service } from './entities/service.entity';
 import { CreateServiceDto, UpdateServiceDto, ServiceResponseDto } from './dto';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class ServicesService {
   constructor(
     @InjectRepository(Service)
     private readonly serviceRepository: Repository<Service>,
+    private readonly configService: ConfigService,
   ) {}
 
   async create(
@@ -16,12 +18,14 @@ export class ServicesService {
   ): Promise<ServiceResponseDto> {
     const service = this.serviceRepository.create(createServiceDto);
     const savedService = await this.serviceRepository.save(service);
-    return this.toResponseDto(savedService);
+    return ServiceResponseDto.fromEntity(savedService, this.configService);
   }
 
   async findAll(): Promise<ServiceResponseDto[]> {
     const services = await this.serviceRepository.find({});
-    return services.map((service) => this.toResponseDto(service));
+    return services.map((service) =>
+      ServiceResponseDto.fromEntity(service, this.configService),
+    );
   }
 
   async findOne(id: number): Promise<ServiceResponseDto> {
@@ -29,7 +33,7 @@ export class ServicesService {
     if (!service) {
       throw new NotFoundException(`Service with ID ${id} not found`);
     }
-    return this.toResponseDto(service);
+    return ServiceResponseDto.fromEntity(service, this.configService);
   }
 
   async findByName(name: string): Promise<ServiceResponseDto> {
@@ -37,7 +41,7 @@ export class ServicesService {
     if (!service) {
       throw new NotFoundException(`Service with name ${name} not found`);
     }
-    return this.toResponseDto(service);
+    return ServiceResponseDto.fromEntity(service, this.configService);
   }
 
   async findActive(): Promise<ServiceResponseDto[]> {
@@ -45,7 +49,9 @@ export class ServicesService {
       where: { is_active: true },
       order: { name: 'ASC' },
     });
-    return services.map((service) => this.toResponseDto(service));
+    return services.map((service) =>
+      ServiceResponseDto.fromEntity(service, this.configService),
+    );
   }
 
   async update(
@@ -59,7 +65,7 @@ export class ServicesService {
 
     Object.assign(service, updateServiceDto);
     const updatedService = await this.serviceRepository.save(service);
-    return this.toResponseDto(updatedService);
+    return ServiceResponseDto.fromEntity(updatedService, this.configService);
   }
 
   async remove(id: number): Promise<void> {
@@ -68,16 +74,5 @@ export class ServicesService {
       throw new NotFoundException(`Service with ID ${id} not found`);
     }
     await this.serviceRepository.remove(service);
-  }
-
-  private toResponseDto(service: Service): ServiceResponseDto {
-    return {
-      id: service.id,
-      name: service.name,
-      description: service.description,
-      icon_path: service.icon_path,
-      requires_auth: service.requires_auth,
-      is_active: service.is_active,
-    };
   }
 }
