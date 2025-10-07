@@ -28,6 +28,10 @@ function SignUp() {
     navigate('/login');
   };
 
+  const handleSignUp = () => {
+    navigate('/profile');
+  };
+
   return (
     <div className={`min-h-screen bg-gray-900 relative overflow-hidden ${fontLoaded ? 'font-loaded' : 'font-loading'}`}>
       <div className="absolute inset-0 opacity-10">
@@ -81,6 +85,7 @@ function SignUp() {
               </label>
               <input
                 type="email"
+                required
                 className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-black focus:outline-none transition-colors text-lg"
                 placeholder="Enter your email"
               />
@@ -92,6 +97,7 @@ function SignUp() {
               </label>
               <input
                 type="password"
+                required
                 className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-black focus:outline-none transition-colors text-lg"
                 placeholder="Create a password"
               />
@@ -99,6 +105,7 @@ function SignUp() {
 
             <button
               type="submit"
+              onClick={handleSignUp}
               className="w-full bg-black text-white py-4 rounded-lg text-lg font-black hover:bg-gray-800 hover:scale-105 transform transition-all duration-300"
             >
               Create Account
