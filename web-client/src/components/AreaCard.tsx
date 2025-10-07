@@ -8,7 +8,7 @@ interface AreaCardProps {
 
 export const AreaCard = ({ area, onToggleStatus, onDelete }: AreaCardProps) => {
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('fr-FR', {
+    return new Date(dateString).toLocaleDateString('en-US', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',

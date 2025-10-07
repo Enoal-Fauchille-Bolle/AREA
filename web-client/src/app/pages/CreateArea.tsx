@@ -74,7 +74,7 @@ const CreateArea: React.FC = () => {
         const servicesData = await servicesApi.getServices();
         setServices(servicesData.filter((service: Service) => service.is_active));
       } catch (err) {
-        setError('Erreur lors du chargement des services');
+        setError('Error loading services');
         console.error('Error fetching services:', err);
       } finally {
         setLoading(false);
@@ -96,7 +96,7 @@ const CreateArea: React.FC = () => {
         setReactionComponents(filteredComponents);
       }
     } catch (err) {
-      setError(`Erreur lors du chargement des composants ${type}`);
+      setError(`Error loading ${type} components`);
       console.error(`Error fetching ${type} components:`, err);
     }
   };
@@ -160,7 +160,7 @@ const CreateArea: React.FC = () => {
         navigate('/profile');
       }, 2000);
     } catch (err) {
-      setError('Erreur lors de la création de l\'AREA');
+      setError('Error creating AREA');
       console.error('Error creating area:', err);
     } finally {
       setLoading(false);
@@ -272,7 +272,7 @@ const CreateArea: React.FC = () => {
     <div className="space-y-4">
       <h3 className="text-lg font-semibold text-white">{title}</h3>
       {components.length === 0 ? (
-        <p className="text-gray-400">Aucun composant disponible pour ce service.</p>
+        <p className="text-gray-400">No components available for this service.</p>
       ) : (
         <div className="space-y-2">
           {components.map((component) => (
@@ -300,47 +300,71 @@ const CreateArea: React.FC = () => {
         return (
           <div className="space-y-8">
             {renderServiceSelection(
-              'Choisissez un service pour l\'action (déclencheur)',
+              'Choose a service for the action (trigger)',
               formData.actionService,
               handleActionServiceSelect
             )}
             {formData.actionService && (
               <div>
                 {renderComponentSelection(
-                  `Actions disponibles pour ${formData.actionService.name}`,
+                  `Available actions for ${formData.actionService.name}`,
                   actionComponents,
                   formData.actionComponent,
                   handleActionComponentSelect
                 )}
               </div>
             )}
+            <div className="flex justify-end">
+              <button
+                onClick={() => setCurrentStep('reaction')}
+                disabled={!formData.actionService || !formData.actionComponent}
+                className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Next →
+              </button>
+            </div>
           </div>
         );
 
       case 'reaction':
         return (
           <div className="space-y-8">
-            <div className="bg-green-50 p-4 rounded-lg">
-              <h3 className="font-medium text-green-900">Action sélectionnée ✓</h3>
-              <p className="text-green-700">
+            <div className="bg-green-900 bg-opacity-50 p-4 rounded-lg border border-green-500">
+              <h3 className="font-medium text-green-300">Action selected ✓</h3>
+              <p className="text-green-200">
                 {formData.actionService?.name} - {formData.actionComponent?.name}
               </p>
             </div>
             {renderServiceSelection(
-              'Choisissez un service pour la réaction',
+              'Choose a service for the reaction',
               formData.reactionService,
               handleReactionServiceSelect
             )}
             {formData.reactionService && (
               <div>
                 {renderComponentSelection(
-                  `Réactions disponibles pour ${formData.reactionService.name}`,
+                  `Available reactions for ${formData.reactionService.name}`,
                   reactionComponents,
                   formData.reactionComponent,
                   handleReactionComponentSelect
                 )}
               </div>
             )}
+            <div className="flex justify-between">
+              <button
+                onClick={() => setCurrentStep('action')}
+                className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
+              >
+                ← Back
+              </button>
+              <button
+                onClick={() => setCurrentStep('config')}
+                disabled={!formData.reactionService || !formData.reactionComponent}
+                className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Next →
+              </button>
+            </div>
           </div>
         );
 
@@ -348,14 +372,14 @@ const CreateArea: React.FC = () => {
         return (
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-blue-900 bg-opacity-50 p-4 rounded-lg border border-blue-500">
-                <h3 className="font-medium text-blue-300">Action ✓</h3>
-                <p className="text-blue-200">
+              <div className="bg-green-900 bg-opacity-50 p-4 rounded-lg border border-green-500">
+                <h3 className="font-medium text-green-300">Action ✓</h3>
+                <p className="text-green-200">
                   {formData.actionService?.name} - {formData.actionComponent?.name}
                 </p>
               </div>
               <div className="bg-green-900 bg-opacity-50 p-4 rounded-lg border border-green-500">
-                <h3 className="font-medium text-green-300">Réaction ✓</h3>
+                <h3 className="font-medium text-green-300">Reaction ✓</h3>
                 <p className="text-green-200">
                   {formData.reactionService?.name} - {formData.reactionComponent?.name}
                 </p>
@@ -364,8 +388,8 @@ const CreateArea: React.FC = () => {
 
             <div className="space-y-4">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-white mb-2">
-                  Nom de l'AREA *
+                                <label htmlFor="name" className="block text-sm font-medium text-white mb-2">
+                  AREA Name *
                 </label>
                 <input
                   type="text"
@@ -373,12 +397,13 @@ const CreateArea: React.FC = () => {
                   value={formData.name}
                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-600 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Ex: Auto-réponse email"
+                  placeholder="Area Name"
                 />
               </div>
+              
               <div>
                 <label htmlFor="description" className="block text-sm font-medium text-white mb-2">
-                  Description (optionnelle)
+                  Description (optional)
                 </label>
                 <textarea
                   id="description"
@@ -386,16 +411,17 @@ const CreateArea: React.FC = () => {
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-600 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Décrivez ce que fait votre AREA"
+                  placeholder="Describe what your AREA does"
                 />
               </div>
 
+              {/* Reserved space for future specific configurations */}
               <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center">
                 <p className="text-gray-400">
-                  Configuration avancée à venir...
+                  Advanced configuration coming soon...
                   <br />
                   <span className="text-sm">
-                    (Paramètres spécifiques à l'action/réaction sélectionnée)
+                    (Specific parameters for the selected action/reaction)
                   </span>
                 </p>
               </div>
@@ -406,14 +432,14 @@ const CreateArea: React.FC = () => {
                 onClick={() => setCurrentStep('reaction')}
                 className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
               >
-                ← Retour
+                ← Back
               </button>
               <button
                 onClick={handleCreateArea}
                 disabled={loading || !formData.name.trim()}
                 className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {loading ? 'Création...' : 'Créer l\'AREA'}
+                {loading ? 'Creating...' : 'Create AREA'}
               </button>
             </div>
           </div>
@@ -427,8 +453,8 @@ const CreateArea: React.FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-white">AREA créée avec succès !</h2>
-            <p className="text-gray-400">Redirection vers votre profil...</p>
+            <h2 className="text-2xl font-bold text-white">AREA created successfully!</h2>
+            <p className="text-gray-400">Redirecting to your profile...</p>
           </div>
         );
 
@@ -441,10 +467,10 @@ const CreateArea: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-white mb-4">Accès refusé</h1>
-          <p className="text-gray-400 mb-4">Vous devez être connecté pour créer une AREA.</p>
+          <h1 className="text-2xl font-bold text-white mb-4">Access Denied</h1>
+          <p className="text-gray-400 mb-4">You must be logged in to create an AREA.</p>
           <Link to="/login" className="text-blue-400 hover:text-blue-300">
-            Se connecter
+            Sign In
           </Link>
         </div>
       </div>
@@ -472,7 +498,7 @@ const CreateArea: React.FC = () => {
             >
               My Areas
             </button>
-            <span className="text-xl font-semibold text-black bg-white bg-opacity-10 px-4 py-2 rounded-lg">
+            <span className="bg-white text-black hover:bg-gray-200 px-4 py-2 rounded-lg text-xl font-semibold hover:scale-105 transform transition-all duration-300 cursor-pointer">
               Create
             </span>
             <div className="relative profile-menu-container">
@@ -557,9 +583,9 @@ const CreateArea: React.FC = () => {
       <main className="px-6 py-8">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-white mb-2">Créer une nouvelle AREA</h1>
+            <h1 className="text-3xl font-bold text-white mb-2">Create a new AREA</h1>
             <p className="text-gray-400">
-              Configurez une automatisation en choisissant une action déclencheuse et une réaction
+              Set up an automation by choosing a trigger action and a reaction
             </p>
           </div>
 
@@ -578,7 +604,7 @@ const CreateArea: React.FC = () => {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Chargement...
+                Loading...
               </div>
             </div>
           )}
