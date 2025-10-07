@@ -156,7 +156,9 @@ function UserProfile() {
                     <div className="font-semibold">
                       {user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.username : 'Loading...'}
                     </div>
-                    <div className="text-gray-400">{user?.email || 'Loading...'}</div>
+                    <div className="text-gray-400 text-xs truncate" title={user?.email || 'Loading...'}>
+                      {user?.email || 'Loading...'}
+                    </div>
                   </div>
                   <button
                     onClick={() => {
