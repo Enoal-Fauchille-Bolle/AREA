@@ -16,7 +16,9 @@ export const useAuth = () => {
         }
       } catch (err) {
         console.error('Auth initialization error:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load user profile');
+        setError(
+          err instanceof Error ? err.message : 'Failed to load user profile',
+        );
         tokenService.removeToken();
       } finally {
         setIsLoading(false);

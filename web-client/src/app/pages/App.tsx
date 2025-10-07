@@ -29,7 +29,9 @@ function App() {
   };
 
   return (
-    <div className={`min-h-screen bg-gray-900 relative overflow-hidden ${fontLoaded ? 'font-loaded' : 'font-loading'}`}>
+    <div
+      className={`min-h-screen bg-gray-900 relative overflow-hidden ${fontLoaded ? 'font-loaded' : 'font-loading'}`}
+    >
       <div className="absolute inset-0 opacity-10">
         <div className="grid grid-cols-8 gap-8 p-6 transform rotate-9 scale-110">
           {Array.from({ length: 64 }).map((_, i) => {
@@ -48,9 +50,7 @@ function App() {
 
       <header className="relative z-10 p-6">
         <div className="flex justify-between items-center">
-          <div className="text-6xl font-black text-white select-none">
-            AREA
-          </div>
+          <div className="text-6xl font-black text-white select-none">AREA</div>
           <div className="flex items-center space-x-8">
             <button className="text-white hover:text-gray-300 text-lg transition-all duration-300 hover:scale-110 transform">
               Explore
@@ -95,8 +95,8 @@ function App() {
               Connect your favorite apps
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Build powerful automations between the tools you already use.
-              Save time and increase productivity with seamless integrations.
+              Build powerful automations between the tools you already use. Save
+              time and increase productivity with seamless integrations.
             </p>
           </div>
         </div>

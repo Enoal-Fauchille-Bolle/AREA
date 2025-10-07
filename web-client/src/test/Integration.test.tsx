@@ -18,14 +18,16 @@ describe('Integration Tests', () => {
           <Route path="/signup" element={<SignUp />} />
           <Route path="/profile" element={<UserProfile />} />
         </Routes>
-      </BrowserRouter>
+      </BrowserRouter>,
     );
   };
 
   describe('Routing Integration', () => {
     it('renders App component on root route', () => {
       renderApp('/');
-      expect(screen.getByText('Automate all your tasks easily with AREA')).toBeInTheDocument();
+      expect(
+        screen.getByText('Automate all your tasks easily with AREA'),
+      ).toBeInTheDocument();
     });
 
     it('renders Login component on /login route', () => {
@@ -40,7 +42,9 @@ describe('Integration Tests', () => {
 
     it('renders UserProfile component on /profile route', () => {
       renderApp('/profile');
-      expect(screen.getByRole('heading', { name: 'My Areas' })).toBeInTheDocument();
+      expect(
+        screen.getByRole('heading', { name: 'My Areas' }),
+      ).toBeInTheDocument();
     });
   });
 

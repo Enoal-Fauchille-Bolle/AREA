@@ -1,4 +1,5 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
 export interface RegisterRequest {
   email: string;
@@ -51,7 +52,7 @@ export const authApi = {
       console.log('Attempting registration with:', {
         email: userData.email,
         username: userData.username,
-        password: '[HIDDEN]'
+        password: '[HIDDEN]',
       });
       console.log('API URL:', `${API_BASE_URL}/auth/register`);
       const response = await fetch(`${API_BASE_URL}/auth/register`, {
@@ -63,7 +64,10 @@ export const authApi = {
       });
 
       console.log('Response status:', response.status);
-      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+      console.log(
+        'Response headers:',
+        Object.fromEntries(response.headers.entries()),
+      );
 
       return handleResponse(response);
     } catch (error) {
@@ -97,7 +101,7 @@ export const authApi = {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 

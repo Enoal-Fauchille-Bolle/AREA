@@ -11,45 +11,46 @@ function UserProfile() {
   const placeholderAreas = [
     {
       id: 1,
-      name: "Weather Alert System",
-      description: "Get notified when weather changes",
-      logo: "🌤️"
+      name: 'Weather Alert System',
+      description: 'Get notified when weather changes',
+      logo: '🌤️',
     },
     {
       id: 2,
-      name: "Email to Discord",
-      description: "Forward important emails to Discord",
-      logo: "📧"
+      name: 'Email to Discord',
+      description: 'Forward important emails to Discord',
+      logo: '📧',
     },
     {
       id: 3,
-      name: "Stock Price Monitor",
-      description: "Track your favorite stocks",
-      logo: "📈"
+      name: 'Stock Price Monitor',
+      description: 'Track your favorite stocks',
+      logo: '📈',
     },
     {
       id: 4,
-      name: "Social Media Backup",
-      description: "Backup your social media posts",
-      logo: "💾"
+      name: 'Social Media Backup',
+      description: 'Backup your social media posts',
+      logo: '💾',
     },
     {
       id: 5,
-      name: "Smart Home Controller",
-      description: "Automate your smart home devices",
-      logo: "🏠"
+      name: 'Smart Home Controller',
+      description: 'Automate your smart home devices',
+      logo: '🏠',
     },
     {
       id: 6,
-      name: "Calendar Sync",
-      description: "Sync events across all calendars",
-      logo: "📅"
-    }
+      name: 'Calendar Sync',
+      description: 'Sync events across all calendars',
+      logo: '📅',
+    },
   ];
 
-  const filteredAreas = placeholderAreas.filter(area =>
-    area.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    area.description.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredAreas = placeholderAreas.filter(
+    (area) =>
+      area.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      area.description.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const handleCreateArea = () => {
@@ -102,7 +103,9 @@ function UserProfile() {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="text-red-400 text-xl mb-4">Failed to load profile</div>
+          <div className="text-red-400 text-xl mb-4">
+            Failed to load profile
+          </div>
           <div className="text-gray-400 mb-6">{error}</div>
           <button
             onClick={() => window.location.reload()}
@@ -130,7 +133,9 @@ function UserProfile() {
             >
               Explore
             </button>
-            <span className="text-xl font-semibold text-gray-300 hover:text-white hover:scale-105 transform transition-all duration-300 cursor-pointer">My Areas</span>
+            <span className="text-xl font-semibold text-gray-300 hover:text-white hover:scale-105 transform transition-all duration-300 cursor-pointer">
+              My Areas
+            </span>
             <button
               onClick={handleCreateArea}
               className="bg-white text-black hover:bg-gray-200 px-4 py-2 rounded-lg text-xl font-semibold hover:scale-105 transform transition-all duration-300"
@@ -147,16 +152,22 @@ function UserProfile() {
                   fill="currentColor"
                   viewBox="0 0 24 24"
                 >
-                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
                 </svg>
               </button>
               {isProfileMenuOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-lg py-2 z-50">
                   <div className="px-4 py-2 text-sm text-gray-300 border-b border-gray-700">
                     <div className="font-semibold">
-                      {user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.username : 'Loading...'}
+                      {user
+                        ? `${user.first_name || ''} ${user.last_name || ''}`.trim() ||
+                          user.username
+                        : 'Loading...'}
                     </div>
-                    <div className="text-gray-400 text-xs truncate" title={user?.email || 'Loading...'}>
+                    <div
+                      className="text-gray-400 text-xs truncate"
+                      title={user?.email || 'Loading...'}
+                    >
                       {user?.email || 'Loading...'}
                     </div>
                   </div>
@@ -167,8 +178,18 @@ function UserProfile() {
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors flex items-center"
                   >
-                    <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    <svg
+                      className="w-4 h-4 mr-3"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                      />
                     </svg>
                     Profile Settings
                   </button>
@@ -179,8 +200,18 @@ function UserProfile() {
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-700 hover:text-red-300 transition-colors flex items-center"
                   >
-                    <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    <svg
+                      className="w-4 h-4 mr-3"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                      />
                     </svg>
                     Logout
                   </button>
@@ -208,7 +239,12 @@ function UserProfile() {
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
             </svg>
           </div>
         </div>
@@ -216,7 +252,9 @@ function UserProfile() {
         {filteredAreas.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-gray-400 text-lg">
-              {searchTerm ? 'No areas found matching your search.' : 'You haven\'t created any areas yet.'}
+              {searchTerm
+                ? 'No areas found matching your search.'
+                : "You haven't created any areas yet."}
             </div>
             {!searchTerm && (
               <button
@@ -240,9 +278,7 @@ function UserProfile() {
                 <h3 className="text-lg font-semibold mb-2 group-hover:text-blue-400 transition-colors">
                   {area.name}
                 </h3>
-                <p className="text-gray-400 text-sm">
-                  {area.description}
-                </p>
+                <p className="text-gray-400 text-sm">{area.description}</p>
               </div>
             ))}
           </div>

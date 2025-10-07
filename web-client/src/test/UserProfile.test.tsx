@@ -13,11 +13,7 @@ vi.mock('react-router-dom', async () => {
 });
 
 const renderWithRouter = (component: React.ReactElement) => {
-  return render(
-    <BrowserRouter>
-      {component}
-    </BrowserRouter>
-  );
+  return render(<BrowserRouter>{component}</BrowserRouter>);
 };
 
 describe('UserProfile Page', () => {
@@ -44,13 +40,17 @@ describe('UserProfile Page', () => {
 
   it('renders profile picture placeholder', () => {
     renderWithRouter(<UserProfile />);
-    const profilePicture = document.querySelector('.w-10.h-10.bg-gray-600.rounded-full');
+    const profilePicture = document.querySelector(
+      '.w-10.h-10.bg-gray-600.rounded-full',
+    );
     expect(profilePicture).toBeInTheDocument();
   });
 
   it('renders search bar', () => {
     renderWithRouter(<UserProfile />);
-    expect(screen.getByPlaceholderText('Search your areas...')).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText('Search your areas...'),
+    ).toBeInTheDocument();
   });
 
   it('renders placeholder areas', () => {
@@ -66,7 +66,7 @@ describe('UserProfile Page', () => {
   it('filters areas based on search input', () => {
     renderWithRouter(<UserProfile />);
     const searchInput = screen.getByPlaceholderText('Search your areas...');
-    
+
     fireEvent.change(searchInput, { target: { value: 'weather' } });
     expect(screen.getByText('Weather Alert System')).toBeInTheDocument();
     expect(screen.queryByText('Email to Discord')).not.toBeInTheDocument();
@@ -75,9 +75,11 @@ describe('UserProfile Page', () => {
   it('shows no results message when search yields no matches', () => {
     renderWithRouter(<UserProfile />);
     const searchInput = screen.getByPlaceholderText('Search your areas...');
-    
+
     fireEvent.change(searchInput, { target: { value: 'nonexistent' } });
-    expect(screen.getByText('No areas found matching your search.')).toBeInTheDocument();
+    expect(
+      screen.getByText('No areas found matching your search.'),
+    ).toBeInTheDocument();
   });
 
   it('navigates to home when Explore is clicked', () => {
@@ -98,11 +100,15 @@ describe('UserProfile Page', () => {
 
   it('renders area cards with proper structure', () => {
     renderWithRouter(<UserProfile />);
-    const areaCards = document.querySelectorAll('.bg-gray-800.border.border-gray-700.rounded-lg');
+    const areaCards = document.querySelectorAll(
+      '.bg-gray-800.border.border-gray-700.rounded-lg',
+    );
     expect(areaCards.length).toBeGreaterThanOrEqual(6);
-    
+
     expect(screen.getByText('Weather Alert System')).toBeInTheDocument();
-    expect(screen.getByText('Get notified when weather changes')).toBeInTheDocument();
+    expect(
+      screen.getByText('Get notified when weather changes'),
+    ).toBeInTheDocument();
   });
 
   it('has hover effects on area cards', () => {

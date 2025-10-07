@@ -44,7 +44,7 @@ describe('App Icons Library', () => {
   });
 
   it('includes popular app icons', () => {
-    const iconTexts = appIcons.map(icon => {
+    const iconTexts = appIcons.map((icon) => {
       const { container } = render(icon);
       return container.innerHTML;
     });
@@ -60,11 +60,14 @@ describe('App Icons Library', () => {
     const { container } = render(
       <div className="grid grid-cols-8 gap-2">
         {appIcons.map((icon, index) => (
-          <div key={index} className="w-16 h-16 bg-white rounded-lg flex items-center justify-center">
+          <div
+            key={index}
+            className="w-16 h-16 bg-white rounded-lg flex items-center justify-center"
+          >
             {icon}
           </div>
         ))}
-      </div>
+      </div>,
     );
     const gridItems = container.querySelectorAll('.grid > div');
     expect(gridItems.length).toBe(appIcons.length);

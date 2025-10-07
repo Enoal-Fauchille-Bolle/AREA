@@ -7,7 +7,10 @@ afterEach(() => {
 });
 
 (global as any).IntersectionObserver = class IntersectionObserver {
-  constructor(callback: (entries: any[], observer: any) => void, options?: any) {
+  constructor(
+    callback: (entries: any[], observer: any) => void,
+    options?: any,
+  ) {
     this.callback = callback;
     this.options = options;
   }
