@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 function UserProfile() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const navigate = useNavigate();
 
   const placeholderAreas = [
@@ -57,12 +58,37 @@ function UserProfile() {
     navigate('/');
   };
 
+  const handleLogout = () => {
+    console.log('Logout');
+    navigate('/');
+  };
+
+  const toggleProfileMenu = () => {
+    setIsProfileMenuOpen(!isProfileMenuOpen);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isProfileMenuOpen) {
+        const target = event.target as Element;
+        if (!target.closest('.profile-menu-container')) {
+          setIsProfileMenuOpen(false);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isProfileMenuOpen]);
+
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       <header className="p-6">
         <div className="flex justify-between items-center">
           <div className="flex items-center">
-            <span className="text-2xl font-bold">AREA</span>
+            <span className="text-4xl font-bold">AREA</span>
           </div>
 
           <div className="flex items-center space-x-6">
@@ -79,14 +105,51 @@ function UserProfile() {
             >
               Create
             </button>
-            <div className="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center">
-              <svg
-                className="w-6 h-6 text-gray-300" 
-                fill="currentColor"
-                viewBox="0 0 24 24"
+            <div className="relative profile-menu-container">
+              <button
+                onClick={toggleProfileMenu}
+                className="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center hover:bg-gray-500 transition-colors"
               >
-                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-              </svg>
+                <svg
+                  className="w-6 h-6 text-gray-300"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
+              </button>
+              {isProfileMenuOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-lg py-2 z-50">
+                  <div className="px-4 py-2 text-sm text-gray-300 border-b border-gray-700">
+                    <div className="font-semibold">John Doe</div>
+                    <div className="text-gray-400">john.doe@example.com</div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setIsProfileMenuOpen(false);
+                      console.log('Profile settings');
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors flex items-center"
+                  >
+                    <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    Profile Settings
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsProfileMenuOpen(false);
+                      handleLogout();
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-700 hover:text-red-300 transition-colors flex items-center"
+                  >
+                    <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    Logout
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
