@@ -1,11 +1,23 @@
 import 'package:flutter/material.dart';
+import '../services/auth_service.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/info_card.dart';
 import 'login_page.dart';
 import 'actions_reactions_page.dart';
+import 'services_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
+
+  Future<void> _handleLogout(BuildContext context) async {
+    final authService = AuthService();
+    await authService.logout();
+    if (context.mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const LoginPage()),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,11 +43,7 @@ class HomePage extends StatelessWidget {
                     TextButton(
                       onPressed: () {
                         Navigator.of(context).pop();
-                        Navigator.of(context).pushReplacement(
-                          MaterialPageRoute(
-                            builder: (context) => const LoginPage(),
-                          ),
-                        );
+                        _handleLogout(context);
                       },
                       child: const Text('Logout'),
                     ),
@@ -53,7 +61,6 @@ class HomePage extends StatelessWidget {
             child: ConstrainedBox(
               constraints: BoxConstraints(
                 maxWidth: MediaQuery.of(context).size.width * 0.9,
-                // allow wide layouts on large screens
                 maxHeight: MediaQuery.of(context).size.height,
               ),
               child: Column(
@@ -67,13 +74,15 @@ class HomePage extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   const Text(
-                    'You have successfully logged in.',
+                    'Automate your tasks with Actions & Reactions',
                     style: TextStyle(fontSize: 16, color: Colors.grey),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 32),
+
+                  // My AREAs button
                   CustomButton(
-                    text: 'Actions & Réactions',
+                    text: 'My AREAs',
                     icon: Icons.flash_on,
                     width: 250,
                     onPressed: () {
@@ -84,13 +93,29 @@ class HomePage extends StatelessWidget {
                       );
                     },
                   ),
+                  const SizedBox(height: 16),
+
+                  // Services button
+                  CustomButton(
+                    text: 'Services',
+                    icon: Icons.apps,
+                    width: 250,
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const ServicesPage(),
+                        ),
+                      );
+                    },
+                  ),
                   const SizedBox(height: 32),
+
                   const InfoCard(
-                    icon: Icons.construction,
-                    iconColor: Colors.orange,
-                    title: 'App Features Coming Soon',
+                    icon: Icons.info_outline,
+                    iconColor: Colors.blue,
+                    title: 'How it works',
                     description:
-                        'This is where your main app content will go. Start building your features!',
+                        'Link your services, create AREAs by selecting actions and reactions, and automate your workflows!',
                   ),
                 ],
               ),
