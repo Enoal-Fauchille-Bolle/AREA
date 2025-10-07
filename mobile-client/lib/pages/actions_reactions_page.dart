@@ -35,9 +35,47 @@ class _ActionsReactionsPageState extends State<ActionsReactionsPage> {
     _refreshAreas();
   }
 
-  Future<void> _handleDelete(int id) async {
-    await api.deleteArea(id);
-    _refreshAreas();
+  Future<void> _handleDelete(String id) async {
+    // Show confirmation dialog
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete AREA'),
+        content: const Text('Are you sure you want to delete this AREA?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      try {
+        await api.deleteArea(id);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('AREA deleted successfully')),
+          );
+          _refreshAreas();
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error deleting AREA: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
   }
 
   @override
@@ -64,8 +102,19 @@ class _ActionsReactionsPageState extends State<ActionsReactionsPage> {
               final area = areas[index];
               return Card(
                 child: ListTile(
-                  title: Text('Action: ${area['action']}'),
-                  subtitle: Text('Reaction: ${area['reaction']}'),
+                  title: Text(area['name'] ?? 'Unnamed Area'),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                          'Description: ${area['description'] ?? 'No description'}'),
+                      Text(
+                          'Active: ${area['is_active'] ?? false ? "Yes" : "No"}'),
+                      Text(
+                          'Last Triggered: ${area['last_triggered_at'] ?? "Never"}'),
+                      Text('Triggered Count: ${area['triggered_count'] ?? 0}'),
+                    ],
+                  ),
                   trailing: widget.guestMode
                       ? null
                       : Row(
@@ -78,9 +127,10 @@ class _ActionsReactionsPageState extends State<ActionsReactionsPage> {
                                     .push(
                                       MaterialPageRoute(
                                         builder: (_) => EditActionReactionPage(
-                                          areaId: area['id'],
-                                          initialAction: area['action'],
-                                          initialReaction: area['reaction'],
+                                          areaId: area['id'].toString(),
+                                          initialAction: area['name'] ?? '',
+                                          initialReaction:
+                                              '', // Adjust if needed
                                         ),
                                       ),
                                     )
@@ -89,7 +139,8 @@ class _ActionsReactionsPageState extends State<ActionsReactionsPage> {
                             ),
                             IconButton(
                               icon: const Icon(Icons.delete),
-                              onPressed: () => _handleDelete(area['id']),
+                              onPressed: () =>
+                                  _handleDelete(area['id'].toString()),
                             ),
                           ],
                         ),

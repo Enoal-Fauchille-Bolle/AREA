@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../services/area_api_service.dart';
-import '../widgets/area_form.dart';
+import '../services/service_api_service.dart';
+import '../widgets/component_selector.dart';
+import '../widgets/custom_text_field.dart';
+import '../widgets/custom_button.dart';
 
 class CreateActionReactionPage extends StatefulWidget {
   const CreateActionReactionPage({super.key});
@@ -12,29 +15,128 @@ class CreateActionReactionPage extends StatefulWidget {
 
 class _CreateActionReactionPageState extends State<CreateActionReactionPage> {
   final _formKey = GlobalKey<FormState>();
-  final _actionController = TextEditingController();
-  final _reactionController = TextEditingController();
-  final AreaApiService api = AreaApiService();
+  final _nameController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final AreaApiService _areaApi = AreaApiService();
+  final ServiceApiService _serviceApi = ServiceApiService();
+
+  List<Map<String, dynamic>> _availableActions = [];
+  List<Map<String, dynamic>> _availableReactions = [];
+  Map<String, dynamic>? _selectedAction;
+  Map<String, dynamic>? _selectedReaction;
+  bool _isLoading = true;
+  bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadComponents();
+  }
 
   @override
   void dispose() {
-    _actionController.dispose();
-    _reactionController.dispose();
+    _nameController.dispose();
+    _descriptionController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadComponents() async {
+    try {
+      setState(() => _isLoading = true);
+
+      // Get all linked services
+      final services = await _serviceApi.fetchUserServices();
+
+      // Fetch actions and reactions for each service
+      final List<Map<String, dynamic>> actions = [];
+      final List<Map<String, dynamic>> reactions = [];
+
+      for (final service in services) {
+        try {
+          final components = await _serviceApi.fetchServiceComponents(
+            service['id'].toString(),
+          );
+
+          for (final component in components) {
+            if (component['type'] == 'action') {
+              actions.add(component);
+            } else if (component['type'] == 'reaction') {
+              reactions.add(component);
+            }
+          }
+        } catch (e) {
+          print('Error loading components for service ${service['name']}: $e');
+        }
+      }
+
+      setState(() {
+        _availableActions = actions;
+        _availableReactions = reactions;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading components: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _handleCreate() async {
     if (!_formKey.currentState!.validate()) return;
+
+    if (_selectedAction == null || _selectedReaction == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select both an action and a reaction'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+
     try {
-      await api.createArea(_actionController.text, _reactionController.text);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Action/Reaction created!')),
+      // Build components array with selected action and reaction
+      final components = [
+        {'id': _selectedAction!['id']},
+        {'id': _selectedReaction!['id']},
+      ];
+
+      await _areaApi.createArea(
+        name: _nameController.text.trim(),
+        description: _descriptionController.text.trim().isEmpty
+            ? null
+            : _descriptionController.text.trim(),
+        components: components,
+        isActive: true,
       );
-      Navigator.of(context).pop();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('AREA created successfully!')),
+        );
+        Navigator.of(context).pop(true);
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error creating AREA: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
     }
   }
 
@@ -42,14 +144,119 @@ class _CreateActionReactionPageState extends State<CreateActionReactionPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      appBar: AppBar(title: const Text('Create Action/Reaction')),
-      body: AreaForm(
-        formKey: _formKey,
-        actionController: _actionController,
-        reactionController: _reactionController,
-        submitButtonText: 'Create',
-        onSubmit: _handleCreate,
+      appBar: AppBar(
+        title: const Text('Create AREA'),
       ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _availableActions.isEmpty || _availableReactions.isEmpty
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.link_off, size: 64, color: Colors.grey[400]),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No services linked',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Please link services first to create AREAs',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.grey[600]),
+                        ),
+                        const SizedBox(height: 24),
+                        ElevatedButton.icon(
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: const Icon(Icons.arrow_back),
+                          label: const Text('Go Back'),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Name field
+                        CustomTextField(
+                          controller: _nameController,
+                          label: 'AREA Name',
+                          hint: 'e.g., Email to Discord',
+                          prefixIcon: Icons.title,
+                          validator: (v) => v == null || v.isEmpty
+                              ? 'Please enter a name'
+                              : null,
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Description field
+                        CustomTextField(
+                          controller: _descriptionController,
+                          label: 'Description (optional)',
+                          hint: 'What does this AREA do?',
+                          prefixIcon: Icons.description,
+                          maxLines: 3,
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Action selector
+                        Text(
+                          'When this happens...',
+                          style:
+                              Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                        ),
+                        const SizedBox(height: 8),
+                        ComponentSelector(
+                          label: 'Select Action (Trigger)',
+                          components: _availableActions,
+                          onChanged: (component) {
+                            setState(() => _selectedAction = component);
+                          },
+                          validator: (v) =>
+                              v == null ? 'Please select an action' : null,
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Reaction selector
+                        Text(
+                          'Do this...',
+                          style:
+                              Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                        ),
+                        const SizedBox(height: 8),
+                        ComponentSelector(
+                          label: 'Select Reaction (Task)',
+                          components: _availableReactions,
+                          onChanged: (component) {
+                            setState(() => _selectedReaction = component);
+                          },
+                          validator: (v) =>
+                              v == null ? 'Please select a reaction' : null,
+                        ),
+                        const SizedBox(height: 32),
+
+                        // Create button
+                        CustomButton(
+                          text: 'Create AREA',
+                          isLoading: _isSubmitting,
+                          onPressed: _handleCreate,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
     );
   }
 }

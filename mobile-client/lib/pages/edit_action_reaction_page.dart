@@ -3,7 +3,7 @@ import '../services/area_api_service.dart';
 import '../widgets/area_form.dart';
 
 class EditActionReactionPage extends StatefulWidget {
-  final int areaId;
+  final String areaId;
   final String initialAction;
   final String initialReaction;
   const EditActionReactionPage({
@@ -40,10 +40,10 @@ class _EditActionReactionPageState extends State<EditActionReactionPage> {
   Future<void> _handleEdit() async {
     if (!_formKey.currentState!.validate()) return;
     try {
-      await api.editArea(
-        widget.areaId,
-        _actionController.text,
-        _reactionController.text,
+      await api.updateArea(
+        id: widget.areaId,
+        name: _actionController.text,
+        description: _reactionController.text,
       );
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Action/Reaction updated!')),
