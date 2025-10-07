@@ -1,60 +1,49 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { useAreas } from '../../hooks/useAreas';
+import AreaCard from '../../components/AreaCard';
 
 function UserProfile() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const navigate = useNavigate();
-  const { user, isLoading, error, logout } = useAuth();
+  const { user, isLoading: authLoading, error: authError, logout } = useAuth();
+  const {
+    areas,
+    isLoading: areasLoading,
+    error: areasError,
+    toggleAreaStatus,
+    deleteArea,
+  } = useAreas();
 
-  const placeholderAreas = [
-    {
-      id: 1,
-      name: 'Weather Alert System',
-      description: 'Get notified when weather changes',
-      logo: '🌤️',
-    },
-    {
-      id: 2,
-      name: 'Email to Discord',
-      description: 'Forward important emails to Discord',
-      logo: '📧',
-    },
-    {
-      id: 3,
-      name: 'Stock Price Monitor',
-      description: 'Track your favorite stocks',
-      logo: '📈',
-    },
-    {
-      id: 4,
-      name: 'Social Media Backup',
-      description: 'Backup your social media posts',
-      logo: '💾',
-    },
-    {
-      id: 5,
-      name: 'Smart Home Controller',
-      description: 'Automate your smart home devices',
-      logo: '🏠',
-    },
-    {
-      id: 6,
-      name: 'Calendar Sync',
-      description: 'Sync events across all calendars',
-      logo: '📅',
-    },
-  ];
-
-  const filteredAreas = placeholderAreas.filter(
+  const filteredAreas = areas.filter(
     (area) =>
       area.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      area.description.toLowerCase().includes(searchTerm.toLowerCase()),
+      (area.description &&
+        area.description.toLowerCase().includes(searchTerm.toLowerCase())),
   );
 
   const handleCreateArea = () => {
     console.log('Create new area');
+  };
+
+  const handleDeleteArea = async (id: number) => {
+    if (window.confirm('Are you sure you want to delete this area?')) {
+      try {
+        await deleteArea(id);
+      } catch (error) {
+        console.error('Failed to delete area:', error);
+      }
+    }
+  };
+
+  const handleToggleArea = async (id: number) => {
+    try {
+      await toggleAreaStatus(id);
+    } catch (error) {
+      console.error('Failed to toggle area status:', error);
+    }
   };
 
   const handleExplore = () => {
@@ -86,7 +75,7 @@ function UserProfile() {
     };
   }, [isProfileMenuOpen]);
 
-  if (isLoading) {
+  if (authLoading || areasLoading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-white text-xl">
@@ -99,14 +88,15 @@ function UserProfile() {
     );
   }
 
-  if (error) {
+  if (authError || areasError) {
+    const errorMessage = authError || areasError;
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="text-red-400 text-xl mb-4">
             Failed to load profile
           </div>
-          <div className="text-gray-400 mb-6">{error}</div>
+          <div className="text-gray-400 mb-6">{errorMessage}</div>
           <button
             onClick={() => window.location.reload()}
             className="bg-white text-black px-6 py-2 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
@@ -266,20 +256,14 @@ function UserProfile() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredAreas.map((area) => (
-              <div
+              <AreaCard
                 key={area.id}
-                className="bg-gray-800 border border-gray-700 rounded-lg p-6 hover:border-blue-500 hover:shadow-lg hover:shadow-blue-500/10 transition-all cursor-pointer group"
-              >
-                <div className="flex items-center justify-center w-16 h-16 bg-gray-700 rounded-lg mb-4 text-2xl group-hover:bg-gray-600 transition-colors">
-                  {area.logo}
-                </div>
-                <h3 className="text-lg font-semibold mb-2 group-hover:text-blue-400 transition-colors">
-                  {area.name}
-                </h3>
-                <p className="text-gray-400 text-sm">{area.description}</p>
-              </div>
+                area={area}
+                onToggleStatus={handleToggleArea}
+                onDelete={handleDeleteArea}
+              />
             ))}
           </div>
         )}

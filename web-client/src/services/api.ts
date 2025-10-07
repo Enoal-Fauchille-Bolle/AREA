@@ -3,6 +3,100 @@ const API_BASE_URL =
 
 const TOKEN_KEY = import.meta.env.VITE_TOKEN_KEY || 'auth_token';
 
+export const areasApi = {
+  async getAreas(): Promise<Area[]> {
+    const token = tokenService.getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/areas`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return handleResponse(response);
+  },
+
+  async getArea(id: number): Promise<Area> {
+    const token = tokenService.getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/areas/${id}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return handleResponse(response);
+  },
+
+  async createArea(areaData: CreateAreaRequest): Promise<Area> {
+    const token = tokenService.getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/areas`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(areaData),
+    });
+
+    return handleResponse(response);
+  },
+
+  async updateArea(
+    id: number,
+    areaData: Partial<CreateAreaRequest>,
+  ): Promise<Area> {
+    const token = tokenService.getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/areas/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(areaData),
+    });
+
+    return handleResponse(response);
+  },
+
+  async deleteArea(id: number): Promise<void> {
+    const token = tokenService.getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/areas/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to delete area: HTTP ${response.status}`);
+    }
+  },
+};
+
 export interface RegisterRequest {
   email: string;
   username: string;
@@ -27,6 +121,28 @@ export interface UserProfile {
   created_at: string;
   updated_at: string;
   last_connection?: string;
+}
+
+export interface Area {
+  id: number;
+  user_id: number;
+  component_action_id: number;
+  component_reaction_id: number;
+  name: string;
+  description: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  last_triggered_at: string | null;
+  triggered_count: number;
+}
+
+export interface CreateAreaRequest {
+  component_action_id: number;
+  component_reaction_id: number;
+  name: string;
+  description?: string;
+  is_active?: boolean;
 }
 
 export interface ApiError {
