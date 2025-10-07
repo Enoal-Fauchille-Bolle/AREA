@@ -20,8 +20,8 @@ export function validateEnv(config: Record<string, unknown>) {
   const parsed = envValidationSchema.safeParse(config);
   if (!parsed.success) {
     throw new ConfigurationException(
-      'Invalid environment variables: ' +
-        JSON.stringify(parsed.error.format(), null, 2),
+      'Invalid environment variables:\n' +
+        JSON.stringify(z.treeifyError(parsed.error), null, 2),
     );
   }
 
