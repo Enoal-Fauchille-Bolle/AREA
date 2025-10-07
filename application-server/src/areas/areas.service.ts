@@ -80,4 +80,17 @@ export class AreasService {
       last_triggered_at: new Date(),
     });
   }
+
+  async findByActionComponent(componentName: string): Promise<Area[]> {
+    return this.areasRepository
+      .createQueryBuilder('area')
+      .innerJoin(
+        'components',
+        'action_component',
+        'action_component.id = area.component_action_id',
+      )
+      .where('action_component.name = :componentName', { componentName })
+      .andWhere('area.is_active = true')
+      .getMany();
+  }
 }
