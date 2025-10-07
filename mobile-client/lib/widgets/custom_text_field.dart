@@ -41,7 +41,7 @@ class CustomTextField extends StatelessWidget {
       validator: validator,
       onFieldSubmitted: onFieldSubmitted,
       maxLines: obscureText ? 1 : maxLines,
-      minLines: minLines,
+      minLines: obscureText ? 1 : minLines,
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
