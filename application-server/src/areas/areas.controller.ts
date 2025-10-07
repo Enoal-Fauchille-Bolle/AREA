@@ -18,18 +18,38 @@ import { parseIdParam } from '../common/constants';
 export class AreasController {
   constructor(private readonly areasService: AreasService) {}
 
+  @Post('create-with-parameters')
+  async createWithParameters(
+    @Request() req: { user?: { id: number } },
+    @Body() createAreaData: { 
+      area: CreateAreaDto; 
+      parameters: { [parameterName: string]: string } 
+    },
+  ) {
+    try {
+      const userId = req.user?.id || 1;
+      console.log('Controller: Creating area with parameters', { userId, createAreaData });
+      const area = await this.areasService.createWithParameters(userId, createAreaData.area, createAreaData.parameters);
+      console.log('Controller: Area with parameters created', area);
+      return area;
+    } catch (error) {
+      console.error('Controller create-with-parameters error:', error);
+      const err = error as Error;
+      return { error: err.message, stack: err.stack };
+    }
+  }
+
   @Post()
   async create(
     @Request() req: { user?: { id: number } },
     @Body() createAreaDto: CreateAreaDto,
   ) {
     try {
-      // For testing without auth, use a default user ID
       const userId = req.user?.id || 1;
       console.log('Controller: Creating area', { userId, createAreaDto });
       const area = await this.areasService.create(userId, createAreaDto);
       console.log('Controller: Area created', area);
-      return area; // Return raw area for now
+      return area;
     } catch (error) {
       console.error('Controller error:', error);
       const err = error as Error;

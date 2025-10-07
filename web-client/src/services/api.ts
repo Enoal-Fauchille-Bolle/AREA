@@ -38,7 +38,7 @@ export const areasApi = {
     return handleResponse(response);
   },
 
-  async createArea(areaData: CreateAreaRequest): Promise<Area> {
+  async createArea(areaData: { component_action_id: number; component_reaction_id: number; name: string; description?: string; is_active: boolean }): Promise<Area> {
     const token = tokenService.getToken();
     if (!token) {
       throw new Error('No authentication token found');
@@ -51,6 +51,27 @@ export const areasApi = {
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify(areaData),
+    });
+
+    return handleResponse(response);
+  },
+
+  async createAreaWithParameters(areaData: { component_action_id: number; component_reaction_id: number; name: string; description?: string; is_active: boolean }, parameters: { [parameterName: string]: string }): Promise<Area> {
+    const token = tokenService.getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/areas/create-with-parameters`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        area: areaData,
+        parameters: parameters
+      }),
     });
 
     return handleResponse(response);
@@ -166,6 +187,33 @@ export interface Component {
   webhook_endpoint: string | null;
   polling_interval: number | null;
   service?: Service;
+}
+
+export type VariableKind = 'parameter' | 'return_value';
+export type VariableType = 'string' | 'number' | 'boolean' | 'date' | 'email' | 'url' | 'json';
+
+export interface Variable {
+  id: number;
+  component_id: number;
+  name: string;
+  description: string | null;
+  kind: VariableKind;
+  type: VariableType;
+  nullable: boolean;
+  placeholder: string | null;
+  validation_regex: string | null;
+  display_order: number;
+  component?: {
+    id: number;
+    name: string;
+    type: string;
+  };
+}
+
+export interface AreaParameter {
+  area_id: number;
+  variable_id: number;
+  value: string;
 }
 
 export interface ApiError {
@@ -299,6 +347,84 @@ export const componentsApi = {
     }
 
     const response = await fetch(`${API_BASE_URL}/components/reactions`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return handleResponse(response);
+  },
+};
+
+export const variablesApi = {
+  async getVariablesByComponent(componentId: number): Promise<Variable[]> {
+    const token = tokenService.getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/variables/component/${componentId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return handleResponse(response);
+  },
+
+  async getInputVariablesByComponent(componentId: number): Promise<Variable[]> {
+    console.log('API: Getting input variables for component ID:', componentId);
+    const token = tokenService.getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const url = `${API_BASE_URL}/variables/component/${componentId}/inputs`;
+    console.log('API: Fetching from URL:', url);
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const result = await handleResponse(response);
+    console.log('API: Variables result:', result);
+    return result;
+  },
+};
+
+export const areaParametersApi = {
+  async createAreaParameter(parameterData: { area_id: number; variable_id: number; value: string }): Promise<AreaParameter> {
+    const token = tokenService.getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/area-parameters`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(parameterData),
+    });
+
+    return handleResponse(response);
+  },
+
+  async getParametersByArea(areaId: number): Promise<AreaParameter[]> {
+    const token = tokenService.getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/area-parameters?area_id=${areaId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

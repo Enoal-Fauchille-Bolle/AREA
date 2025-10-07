@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { servicesApi, componentsApi, areasApi } from '../../services/api';
+import { servicesApi, componentsApi, areasApi, areaParametersApi } from '../../services/api';
 import type { Service, Component, ComponentType } from '../../services/api';
+import { getRequiredParameters, type ComponentParameter } from '../../config/componentParameters';
 
 interface CreateAreaStep {
-  step: 'action' | 'reaction' | 'config' | 'complete';
+  step: 'action' | 'reaction' | 'config' | 'parameters' | 'complete';
 }
 
 interface AreaFormData {
@@ -15,6 +16,7 @@ interface AreaFormData {
   actionComponent?: Component;
   reactionService?: Service;
   reactionComponent?: Component;
+  parameters: { [parameterName: string]: string };
 }
 
 const CreateArea: React.FC = () => {
@@ -24,11 +26,13 @@ const CreateArea: React.FC = () => {
   const [formData, setFormData] = useState<AreaFormData>({
     name: '',
     description: '',
+    parameters: {},
   });
-  
+
   const [services, setServices] = useState<Service[]>([]);
   const [actionComponents, setActionComponents] = useState<Component[]>([]);
   const [reactionComponents, setReactionComponents] = useState<Component[]>([]);
+  const [requiredParameters, setRequiredParameters] = useState<ComponentParameter[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -132,29 +136,60 @@ const CreateArea: React.FC = () => {
       ...prev,
       reactionComponent: component
     }));
+    setCurrentStep('parameters');
+    updateRequiredParameters(formData.actionComponent, component);
+  };
+
+  const updateRequiredParameters = (actionComponent?: Component, reactionComponent?: Component) => {
+    if (actionComponent && reactionComponent) {
+      const parameters = getRequiredParameters(actionComponent.name, reactionComponent.name);
+      setRequiredParameters(parameters);
+      console.log('Required parameters loaded:', parameters);
+    }
+  };
+
+  const handleParametersComplete = () => {
     setCurrentStep('config');
+  };
+
+  const handleParameterChange = (parameterName: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      parameters: {
+        ...prev.parameters,
+        [parameterName]: value
+      }
+    }));
+  };
+
+  const getAllVariables = () => {
+    console.log('getAllVariables called - Required parameters:', requiredParameters.length);
+    return requiredParameters;
   };
 
   const handleCreateArea = async () => {
     if (!formData.actionComponent || !formData.reactionComponent) {
-      setError('Veuillez sélectionner une action et une réaction');
+      setError('Please select an action and a reaction');
       return;
     }
 
     if (!formData.name.trim()) {
-      setError('Veuillez entrer un nom pour votre AREA');
+      setError('Please enter a name for your AREA');
       return;
     }
 
     try {
       setLoading(true);
-      await areasApi.createArea({
+
+      const createdArea = await areasApi.createAreaWithParameters({
         component_action_id: formData.actionComponent.id,
         component_reaction_id: formData.reactionComponent.id,
         name: formData.name,
         description: formData.description || undefined,
         is_active: true
-      });
+      }, formData.parameters);
+
+      console.log('AREA created successfully with parameters:', createdArea);
       setCurrentStep('complete');
       setTimeout(() => {
         navigate('/profile');
@@ -172,20 +207,31 @@ const CreateArea: React.FC = () => {
       <div className="flex items-center space-x-4">
         <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
           currentStep === 'action' ? 'bg-blue-600 text-white' :
-          ['reaction', 'config', 'complete'].includes(currentStep) ? 'bg-green-600 text-white' : 'bg-gray-600 text-gray-300'
+          ['reaction', 'parameters', 'config', 'complete'].includes(currentStep) ? 'bg-green-600 text-white' : 'bg-gray-600 text-gray-300'
         }`}>
           1
         </div>
         <div className="w-16 h-0.5 bg-gray-600">
           <div className={`h-full transition-all duration-300 ${
-            ['reaction', 'config', 'complete'].includes(currentStep) ? 'bg-green-600 w-full' : 'bg-gray-600 w-0'
+            ['reaction', 'parameters', 'config', 'complete'].includes(currentStep) ? 'bg-green-600 w-full' : 'bg-gray-600 w-0'
           }`} />
         </div>
         <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
           currentStep === 'reaction' ? 'bg-blue-600 text-white' :
-          ['config', 'complete'].includes(currentStep) ? 'bg-green-600 text-white' : 'bg-gray-600 text-gray-300'
+          ['parameters', 'config', 'complete'].includes(currentStep) ? 'bg-green-600 text-white' : 'bg-gray-600 text-gray-300'
         }`}>
           2
+        </div>
+        <div className="w-16 h-0.5 bg-gray-600">
+          <div className={`h-full transition-all duration-300 ${
+            ['parameters', 'config', 'complete'].includes(currentStep) ? 'bg-green-600 w-full' : 'bg-gray-600 w-0'
+          }`} />
+        </div>
+        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+          currentStep === 'parameters' ? 'bg-blue-600 text-white' :
+          ['config', 'complete'].includes(currentStep) ? 'bg-green-600 text-white' : 'bg-gray-600 text-gray-300'
+        }`}>
+          3
         </div>
         <div className="w-16 h-0.5 bg-gray-600">
           <div className={`h-full transition-all duration-300 ${
@@ -196,7 +242,7 @@ const CreateArea: React.FC = () => {
           currentStep === 'config' ? 'bg-blue-600 text-white' :
           currentStep === 'complete' ? 'bg-green-600 text-white' : 'bg-gray-600 text-gray-300'
         }`}>
-          3
+          4
         </div>
       </div>
     </div>
@@ -368,6 +414,71 @@ const CreateArea: React.FC = () => {
           </div>
         );
 
+      case 'parameters':
+        const allVariables = getAllVariables();
+        console.log('Rendering parameters step with parameters:', allVariables);
+        return (
+          <div className="space-y-6">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold text-white mb-2">Configure Parameters</h2>
+              <p className="text-gray-400">Set up any required parameters for your action and reaction</p>
+            </div>
+
+            {allVariables.length === 0 ? (
+              <div className="bg-gray-800 rounded-lg p-6 text-center">
+                <p className="text-gray-400">No parameters required for the selected components.</p>
+                <p className="text-sm text-gray-500 mt-2">
+                  Action component: {formData.actionComponent?.name || 'None'} (ID: {formData.actionComponent?.id})
+                  <br />
+                  Reaction component: {formData.reactionComponent?.name || 'None'} (ID: {formData.reactionComponent?.id})
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {getAllVariables().map((parameter, index) => (
+                  <div key={`param-${index}`} className="bg-gray-800 rounded-lg p-4">
+                    <label htmlFor={`param-${parameter.name}`} className="block text-sm font-medium text-white mb-2">
+                      {parameter.name}
+                      {parameter.required && <span className="text-red-400 ml-1">*</span>}
+                    </label>
+                    {parameter.description && (
+                      <p className="text-sm text-gray-400 mb-2">{parameter.description}</p>
+                    )}
+                    <input
+                      type={parameter.type === 'number' ? 'number' : parameter.type === 'email' ? 'email' : parameter.type === 'url' ? 'url' : 'text'}
+                      id={`param-${parameter.name}`}
+                      value={formData.parameters[parameter.name] || ''}
+                      onChange={(e) => handleParameterChange(parameter.name, e.target.value)}
+                      placeholder={parameter.placeholder || `Enter ${parameter.name.toLowerCase()}`}
+                      required={parameter.required}
+                      pattern={parameter.validation}
+                      className="w-full px-3 py-2 border border-gray-600 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {parameter.type && (
+                      <p className="text-xs text-gray-500 mt-1">Type: {parameter.type}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="flex justify-between">
+              <button
+                onClick={() => setCurrentStep('reaction')}
+                className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
+              >
+                ← Back
+              </button>
+              <button
+                onClick={handleParametersComplete}
+                className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors"
+              >
+                Next →
+              </button>
+            </div>
+          </div>
+        );
+
       case 'config':
         return (
           <div className="space-y-6">
@@ -400,7 +511,6 @@ const CreateArea: React.FC = () => {
                   placeholder="Area Name"
                 />
               </div>
-              
               <div>
                 <label htmlFor="description" className="block text-sm font-medium text-white mb-2">
                   Description (optional)
@@ -415,7 +525,6 @@ const CreateArea: React.FC = () => {
                 />
               </div>
 
-              {/* Reserved space for future specific configurations */}
               <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center">
                 <p className="text-gray-400">
                   Advanced configuration coming soon...
@@ -429,7 +538,7 @@ const CreateArea: React.FC = () => {
 
             <div className="flex justify-between">
               <button
-                onClick={() => setCurrentStep('reaction')}
+                onClick={() => setCurrentStep('parameters')}
                 className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
               >
                 ← Back
