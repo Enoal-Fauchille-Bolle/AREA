@@ -5,7 +5,8 @@ export const envValidationSchema = z.object({
   NODE_ENV: z
     .enum(['development', 'production', 'test'])
     .default('development'),
-  PORT: z.string().default('3000'),
+  SERVER_URL: z.string().default('http://127.0.0.1:8080'),
+  PORT: z.string().default('8080'),
   JWT_SECRET: z.string().optional(),
   JWT_EXPIRES_IN: z.string().default('24h'),
   BCRYPT_SALT_ROUNDS: z.string().default('10'),

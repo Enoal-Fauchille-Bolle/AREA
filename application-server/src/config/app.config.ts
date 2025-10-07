@@ -13,7 +13,8 @@ export const appConfig = registerAs('app', () => {
 
   return {
     // Server Configuration
-    port: parseInt(process.env.PORT || '3000', 10),
+    serverUrl: process.env.SERVER_URL || 'http://127.0.0.1:8080',
+    port: parseInt(process.env.PORT || '8080', 10),
     nodeEnv: process.env.NODE_ENV || 'development',
 
     // Security
