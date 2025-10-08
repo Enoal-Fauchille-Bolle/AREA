@@ -494,7 +494,7 @@ const CreateArea: React.FC = () => {
           </div>
         );
 
-      case 'parameters':
+      case 'parameters': {
         const allVariables = getAllVariables();
         return (
           <div className="space-y-6">
@@ -591,6 +591,7 @@ const CreateArea: React.FC = () => {
             </div>
           </div>
         );
+      }
 
       case 'config':
         return (
