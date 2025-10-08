@@ -24,8 +24,8 @@ export class AreaExecution {
   @PrimaryGeneratedColumn({ type: 'int' })
   id: number;
 
-  @Column({ type: 'int' })
-  area_id: number;
+  @Column({ type: 'int', name: 'area_id' })
+  areaId: number;
 
   @Column({
     type: 'varchar',
@@ -34,29 +34,29 @@ export class AreaExecution {
   })
   status: ExecutionStatus;
 
-  @Column({ type: 'jsonb', nullable: true })
-  trigger_data: Record<string, any> | null;
+  @Column({ type: 'jsonb', nullable: true, name: 'trigger_data' })
+  triggerData: Record<string, any> | null;
 
-  @Column({ type: 'jsonb', nullable: true })
-  execution_result: Record<string, any> | null;
+  @Column({ type: 'jsonb', nullable: true, name: 'execution_result' })
+  executionResult: Record<string, any> | null;
 
-  @Column({ type: 'text', nullable: true })
-  error_message: string | null;
+  @Column({ type: 'text', nullable: true, name: 'error_message' })
+  errorMessage: string | null;
 
-  @Column({ type: 'timestamp' })
-  started_at: Date;
+  @Column({ type: 'timestamp', name: 'started_at' })
+  startedAt: Date;
 
-  @Column({ type: 'timestamp', nullable: true })
-  completed_at: Date | null;
+  @Column({ type: 'timestamp', nullable: true, name: 'completed_at' })
+  completedAt: Date | null;
 
-  @Column({ type: 'bigint', nullable: true })
-  execution_time_ms: number | null;
+  @Column({ type: 'bigint', nullable: true, name: 'execution_time_ms' })
+  executionTimeMs: number | null;
 
   @CreateDateColumn({ name: 'created_at' })
-  created_at: Date;
+  createdAt: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
-  updated_at: Date;
+  updatedAt: Date;
 
   // Relations
   @ManyToOne(() => Area, { onDelete: 'CASCADE' })

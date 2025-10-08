@@ -185,6 +185,40 @@ export class HookStatesService {
     return result.affected || 0;
   }
 
+  async getState(areaId: number, stateKey: string): Promise<string | null> {
+    const hookState = await this.hookStateRepository.findOne({
+      where: { area_id: areaId, state_key: stateKey },
+    });
+    return hookState?.state_value || null;
+  }
+
+  async setState(
+    areaId: number,
+    stateKey: string,
+    stateValue: string,
+    lastCheckedAt?: Date,
+  ): Promise<void> {
+    const existing = await this.hookStateRepository.findOne({
+      where: { area_id: areaId, state_key: stateKey },
+    });
+
+    if (existing) {
+      existing.state_value = stateValue;
+      if (lastCheckedAt) {
+        existing.last_checked_at = lastCheckedAt;
+      }
+      await this.hookStateRepository.save(existing);
+    } else {
+      const hookState = this.hookStateRepository.create({
+        area_id: areaId,
+        state_key: stateKey,
+        state_value: stateValue,
+        last_checked_at: lastCheckedAt || new Date(),
+      });
+      await this.hookStateRepository.save(hookState);
+    }
+  }
+
   private toResponseDto(hookState: HookState): HookStateResponseDto {
     return {
       area_id: hookState.area_id,
