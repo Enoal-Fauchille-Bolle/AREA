@@ -106,16 +106,29 @@ class ServiceApiService {
   Future<List<Map<String, dynamic>>> fetchServiceComponents(
       String serviceId) async {
     try {
+      print('Fetching components for service ID: $serviceId');
       final headers = await _authService.getAuthHeaders();
+      final url = '$baseUrl:$port/components/service/$serviceId';
+      print('Request URL: $url');
+
       final response = await http.get(
-        Uri.parse('$baseUrl:$port/components/service/$serviceId'),
+        Uri.parse(url),
         headers: headers,
       );
 
+      print('Fetch components response status: ${response.statusCode}');
+      print('Fetch components response body: ${response.body}');
+
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
+        print('Decoded body type: ${body.runtimeType}');
         // The endpoint returns an array directly
-        return _extractList(body);
+        final components = _extractList(body);
+        print('Extracted ${components.length} components');
+        for (var component in components) {
+          print('Component: ${jsonEncode(component)}');
+        }
+        return components;
       }
       throw Exception('Failed to load components: ${response.statusCode}');
     } catch (e) {
@@ -138,16 +151,28 @@ class ServiceApiService {
         throw Exception('User ID not found');
       }
 
+      print('Fetching user services for user ID: $userId');
       final headers = await _authService.getAuthHeaders();
       final response = await http.get(
         Uri.parse('$baseUrl:$port/user-services/user/$userId'),
         headers: headers,
       );
 
+      print('Fetch user services response status: ${response.statusCode}');
+      print('Fetch user services response body: ${response.body}');
+
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
         // The endpoint returns an array directly, not wrapped in an object
-        return _extractList(body);
+        final userServices = _extractList(body);
+        print('Fetched ${userServices.length} user services');
+
+        // Print each user service for debugging
+        for (var us in userServices) {
+          print('User service: ${jsonEncode(us)}');
+        }
+
+        return userServices;
       }
       throw Exception('Failed to load user services: ${response.statusCode}');
     } catch (e) {
@@ -170,6 +195,7 @@ class ServiceApiService {
         throw Exception('User ID not found');
       }
 
+      print('Linking service $serviceId for user $userId');
       final headers = await _authService.getAuthHeaders();
 
       // Create the user-service link
@@ -179,11 +205,15 @@ class ServiceApiService {
         'oauth_token': code ?? '', // Use empty string if no code provided
       };
 
+      print('Link service request body: ${jsonEncode(body)}');
       final response = await http.post(
         Uri.parse('$baseUrl:$port/user-services'),
         headers: headers,
         body: jsonEncode(body),
       );
+
+      print('Link service response status: ${response.statusCode}');
+      print('Link service response body: ${response.body}');
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         return true;

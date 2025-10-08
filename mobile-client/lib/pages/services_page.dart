@@ -55,27 +55,25 @@ class _ServicesPageState extends State<ServicesPage> {
       if (isLinked) {
         success = await _serviceApi.unlinkService(serviceId);
         if (success) {
-          setState(() {
-            _linkedServiceIds.remove(serviceId);
-          });
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Service unlinked successfully')),
             );
           }
+          // Reload services to update the UI
+          await _loadServices();
         }
       } else {
         // For services requiring OAuth2, you would need to handle the OAuth flow here
         success = await _serviceApi.linkService(serviceId);
         if (success) {
-          setState(() {
-            _linkedServiceIds.add(serviceId);
-          });
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Service linked successfully')),
             );
           }
+          // Reload services to update the UI
+          await _loadServices();
         }
       }
 

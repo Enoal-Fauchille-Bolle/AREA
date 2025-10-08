@@ -66,16 +66,22 @@ class _CreateActionReactionPageState extends State<CreateActionReactionPage> {
             serviceId.toString(),
           );
 
+          print('Got ${components.length} components for service $serviceId');
           for (final component in components) {
-            if (component['type'] == 'action') {
+            // Backend uses 'kind' field, not 'type'
+            final componentType = component['kind'] ?? component['type'];
+            print(
+                'Component kind: $componentType, id: ${component['id']}, name: ${component['name']}');
+            if (componentType == 'action') {
               actions.add(component);
-            } else if (component['type'] == 'reaction') {
+            } else if (componentType == 'reaction') {
               reactions.add(component);
             }
           }
         } catch (e) {
           print(
               'Error loading components for service ${service['service_id']}: $e');
+          // Continue to next service instead of failing completely
         }
       }
 
