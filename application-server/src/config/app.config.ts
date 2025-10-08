@@ -1,44 +1,44 @@
 import { registerAs } from '@nestjs/config';
 
-export const appConfig = registerAs('app', () => {
-  const isProduction = process.env.NODE_ENV === 'production';
-  const jwtSecret = process.env.JWT_SECRET;
+export const appConfig = registerAs('app', () => ({
+  // Server Configuration
+  serverUrl: process.env.SERVER_URL || 'http://127.0.0.1:8080',
+  port: parseInt(process.env.PORT || '8080', 10),
+  nodeEnv: process.env.NODE_ENV || 'development',
 
-  const secret =
-    jwtSecret ||
-    (() => {
-      console.warn('WARNING: Using default JWT secret for development.');
-      return 'dev-default-secret-key';
-    })();
+  // Security
+  bcryptSaltRounds: parseInt(process.env.BCRYPT_SALT_ROUNDS || '10', 10),
 
-  return {
-    // Server Configuration
-    port: parseInt(process.env.PORT || '3000', 10),
-    nodeEnv: process.env.NODE_ENV || 'development',
+  // JWT Configuration
+  jwt: {
+    secret: process.env.JWT_SECRET || 'dev-default-secret-key',
+    expiresIn: process.env.JWT_EXPIRES_IN || '24h',
+  },
 
-    // Security
-    bcryptSaltRounds: parseInt(process.env.BCRYPT_SALT_ROUNDS || '10', 10),
+  // Database Configuration
+  database: {
+    synchronize: process.env.NODE_ENV !== 'production',
+    logging: process.env.NODE_ENV !== 'production',
+  },
 
-    // JWT Configuration
-    jwt: {
-      secret,
-      expiresIn: process.env.JWT_EXPIRES_IN || '24h',
+  // Time Constants (in milliseconds)
+  time: {
+    minuteInMs: 60 * 1000,
+    hourInMs: 60 * 60 * 1000,
+    dayInMs: 24 * 60 * 60 * 1000,
+  },
+
+  // OAuth2 Configuration
+  oauth2: {
+    discord: {
+      clientId: process.env.DISCORD_CLIENT_ID,
+      clientSecret: process.env.DISCORD_CLIENT_SECRET,
+      redirectUri:
+        process.env.DISCORD_REDIRECT_URI ||
+        'http://localhost:8081/auth/discord/callback',
     },
-
-    // Database Configuration
-    database: {
-      synchronize: !isProduction,
-      logging: !isProduction,
-    },
-
-    // Time Constants (in milliseconds)
-    time: {
-      minuteInMs: 60 * 1000,
-      hourInMs: 60 * 60 * 1000,
-      dayInMs: 24 * 60 * 60 * 1000,
-    },
-  };
-});
+  },
+}));
 
 export type AppConfig = ReturnType<typeof appConfig>;
 export default appConfig;

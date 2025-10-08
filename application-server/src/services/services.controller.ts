@@ -3,71 +3,123 @@ import {
   Get,
   Post,
   Body,
-  Patch,
   Param,
   Delete,
   HttpCode,
   HttpStatus,
+  BadRequestException,
+  UseGuards,
+  Request,
 } from '@nestjs/common';
 import { ServicesService } from './services.service';
-import { CreateServiceDto, UpdateServiceDto, ServiceResponseDto } from './dto';
+import {
+  ServiceResponseDto,
+  ServiceActionsResponseDto,
+  ServiceReactionsResponseDto,
+  ServiceComponentsResponseDto,
+} from './dto';
 import { parseIdParam } from '../common/constants';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('services')
 export class ServicesController {
   constructor(private readonly servicesService: ServicesService) {}
 
-  @Post()
-  @HttpCode(HttpStatus.CREATED)
-  create(
-    @Body() createServiceDto: CreateServiceDto,
-  ): Promise<ServiceResponseDto> {
-    return this.servicesService.create(createServiceDto);
-  }
-
   @Get()
-  findAll(): Promise<ServiceResponseDto[]> {
+  async findAll(): Promise<ServiceResponseDto[]> {
     return this.servicesService.findAll();
   }
 
-  @Get('active')
-  findActive(): Promise<ServiceResponseDto[]> {
-    return this.servicesService.findActive();
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  async findMyServices(
+    @Request() req: { user: { id: number } },
+  ): Promise<ServiceResponseDto[]> {
+    return this.servicesService.findUserServices(req.user.id);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string): Promise<ServiceResponseDto> {
+  async findOne(@Param('id') id: string): Promise<ServiceResponseDto> {
     const parsedIntId = parseIdParam(id);
     if (isNaN(parsedIntId)) {
-      throw new Error('Invalid ID format');
+      throw new BadRequestException('Invalid ID format');
     }
     return this.servicesService.findOne(parsedIntId);
   }
 
-  @Get('by-name/:name')
-  findByName(@Param('name') name: string): Promise<ServiceResponseDto> {
-    return this.servicesService.findByName(name);
-  }
-
-  @Patch(':id')
-  update(
+  @Get(':id/actions')
+  async findAllActions(
     @Param('id') id: string,
-    @Body() updateServiceDto: UpdateServiceDto,
-  ): Promise<ServiceResponseDto> {
+  ): Promise<ServiceActionsResponseDto[]> {
     const parsedIntId = parseIdParam(id);
     if (isNaN(parsedIntId)) {
-      throw new Error('Invalid ID format');
+      throw new BadRequestException('Invalid ID format');
     }
-    return this.servicesService.update(parsedIntId, updateServiceDto);
+    return this.servicesService.findAllActions(parsedIntId);
   }
 
-  @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id') id: string): Promise<void> {
+  @Get(':id/reactions')
+  async findAllReactions(
+    @Param('id') id: string,
+  ): Promise<ServiceReactionsResponseDto[]> {
     const parsedIntId = parseIdParam(id);
     if (isNaN(parsedIntId)) {
-      throw new Error('Invalid ID format');
+      throw new BadRequestException('Invalid ID format');
     }
-    return this.servicesService.remove(parsedIntId);
+    return this.servicesService.findAllReactions(parsedIntId);
+  }
+
+  @Get(':id/components')
+  async findAllComponents(
+    @Param('id') id: string,
+  ): Promise<ServiceComponentsResponseDto[]> {
+    const parsedIntId = parseIdParam(id);
+    if (isNaN(parsedIntId)) {
+      throw new BadRequestException('Invalid ID format');
+    }
+    return this.servicesService.findAllComponents(parsedIntId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/link')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async linkService(
+    @Request() req: { user: { id: number } },
+    @Param('id') id: string,
+    @Body() body: { code?: string },
+  ): Promise<void> {
+    const parsedIntId = parseIdParam(id);
+    if (isNaN(parsedIntId)) {
+      throw new BadRequestException('Invalid ID format');
+    }
+    await this.servicesService.linkService(req.user.id, parsedIntId, body.code);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete(':id/unlink')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async unlinkService(
+    @Request() req: { user: { id: number } },
+    @Param('id') id: string,
+  ): Promise<void> {
+    const parsedIntId = parseIdParam(id);
+    if (isNaN(parsedIntId)) {
+      throw new BadRequestException('Invalid ID format');
+    }
+    await this.servicesService.unlinkService(req.user.id, parsedIntId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/refresh-token')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async refreshToken(
+    @Request() req: { user: { id: number } },
+    @Param('id') id: string,
+  ): Promise<void> {
+    const parsedIntId = parseIdParam(id);
+    if (isNaN(parsedIntId)) {
+      throw new BadRequestException('Invalid ID format');
+    }
+    await this.servicesService.refreshServiceToken(req.user.id, parsedIntId);
   }
 }
