@@ -19,6 +19,9 @@ export class DiscordOAuth2Service {
 
   constructor(private readonly configService: ConfigService) {
     const appConfig = this.configService.get<AppConfig>('app');
+    if (!appConfig) {
+      throw new Error('App configuration is not properly loaded');
+    }
     this.clientId = appConfig.oauth2.discord.clientId;
     this.clientSecret = appConfig.oauth2.discord.clientSecret;
     this.redirectUri = appConfig.oauth2.discord.redirectUri;

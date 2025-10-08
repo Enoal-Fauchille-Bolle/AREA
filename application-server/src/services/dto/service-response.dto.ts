@@ -57,6 +57,9 @@ export class ServiceResponseDto {
     configService: ConfigService,
   ): ServiceResponseDto {
     const appConfig = configService.get<AppConfig>('app');
+    if (!appConfig) {
+      throw new Error('App configuration is not properly loaded');
+    }
     const icon_url = service.icon_path
       ? `${appConfig.serverUrl}/${service.icon_path}`
       : null;

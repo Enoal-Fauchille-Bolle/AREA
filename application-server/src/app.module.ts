@@ -35,6 +35,9 @@ import { Area } from './areas/entities/area.entity';
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
         const appConfig = configService.get<AppConfig>('app');
+        if (!appConfig) {
+          throw new Error('App configuration is not properly loaded');
+        }
         return {
           type: 'postgres',
           host: configService.get('DB_HOST'),

@@ -18,6 +18,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     private configService: ConfigService,
   ) {
     const appConfig = configService.get<AppConfig>('app');
+    if (!appConfig) {
+      throw new Error('App configuration is not properly loaded');
+    }
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
