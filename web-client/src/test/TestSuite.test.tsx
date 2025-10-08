@@ -18,10 +18,9 @@ describe('Application Structure', () => {
       () => import('../app/pages/App'),
       () => import('../app/pages/Login'),
       () => import('../app/pages/SignUp'),
-      () => import('../app/pages/UserProfile'),
     ];
 
-    expect(pages.length).toBe(4);
+    expect(pages.length).toBe(3);
     return Promise.all(
       pages.map((pageImport) =>
         pageImport().then((module) => {

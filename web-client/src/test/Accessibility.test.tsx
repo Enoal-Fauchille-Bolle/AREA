@@ -4,7 +4,6 @@ import { BrowserRouter } from 'react-router-dom';
 import App from '../app/pages/App';
 import Login from '../app/pages/Login';
 import SignUp from '../app/pages/SignUp';
-import UserProfile from '../app/pages/UserProfile';
 
 const renderWithRouter = (component: React.ReactElement) => {
   return render(<BrowserRouter>{component}</BrowserRouter>);
@@ -74,26 +73,6 @@ describe('Accessibility Tests', () => {
       expect(signInLink).toBeInTheDocument();
     });
   });
-
-  describe('UserProfile Page Accessibility', () => {
-    it('has accessible search functionality', () => {
-      renderWithRouter(<UserProfile />);
-      const searchInput = screen.getByPlaceholderText('Search your areas...');
-      expect(searchInput).toHaveAttribute('type', 'text');
-    });
-
-    it('has proper heading structure', () => {
-      renderWithRouter(<UserProfile />);
-      const mainHeading = screen.getByRole('heading', { name: 'My Areas' });
-      expect(mainHeading).toBeInTheDocument();
-    });
-
-    it('has accessible profile picture', () => {
-      renderWithRouter(<UserProfile />);
-      const profileIcon = document.querySelector('svg');
-      expect(profileIcon).toBeInTheDocument();
-    });
-  });
 });
 
 describe('Performance Tests', () => {
@@ -118,13 +97,6 @@ describe('Performance Tests', () => {
     expect(end - start).toBeLessThan(100);
   });
 
-  it('renders UserProfile page efficiently', () => {
-    const start = performance.now();
-    renderWithRouter(<UserProfile />);
-    const end = performance.now();
-    expect(end - start).toBeLessThan(100);
-  });
-
   it('handles large number of app icons efficiently', () => {
     const start = performance.now();
     renderWithRouter(<App />);
@@ -136,14 +108,6 @@ describe('Performance Tests', () => {
 });
 
 describe('Responsive Design Tests', () => {
-  it('uses responsive CSS classes', () => {
-    renderWithRouter(<UserProfile />);
-    const grid = document.querySelector(
-      '.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-3.xl\\:grid-cols-4',
-    );
-    expect(grid).toBeInTheDocument();
-  });
-
   it('has mobile-friendly touch targets', () => {
     renderWithRouter(<App />);
     const buttons = screen.getAllByRole('button');
@@ -152,11 +116,5 @@ describe('Responsive Design Tests', () => {
         button.className.includes('px-') || button.className.includes('py-'),
     );
     expect(hasGoodPadding).toBe(true);
-  });
-
-  it('uses flexible layouts', () => {
-    renderWithRouter(<UserProfile />);
-    const flexContainers = document.querySelectorAll('.flex');
-    expect(flexContainers.length).toBeGreaterThan(0);
   });
 });

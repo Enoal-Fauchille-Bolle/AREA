@@ -22,7 +22,7 @@ async function bootstrap(): Promise<void> {
     origin: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true
+    credentials: true,
   });
 
   setupSwagger(app);
