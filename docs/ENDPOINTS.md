@@ -4,43 +4,46 @@ Go back to the [Application Server Documentation](./APPLICATION_SERVER.md).
 
 ## Table of Contents
 
-- [Authentication](#authentication)
-  - [POST /auth/login](#post-authlogin)
-  - [POST /auth/login-oauth2](#post-authlogin-oauth2)
-  - [POST /auth/register](#post-authregister)
-  - [GET /auth/me](#get-authme)
-  - [PATCH /auth/me](#patch-authme)
-  - [DELETE /auth/me](#delete-authme)
-- [Areas](#areas)
-  - [GET /areas](#get-areas)
-  - [GET /areas/:id](#get-areasid)
-  - [POST /areas](#post-areas)
-  - [PATCH /areas/:id](#patch-areasid)
-  - [DELETE /areas/:id](#delete-areasid)
-- [Services](#services)
-  - [GET /services](#get-services)
-  - [GET /services/:id](#get-servicesid)
-  - [GET /services/:id/actions](#get-servicesidactions)
-  - [GET /services/:id/reactions](#get-servicesidreactions)
-  - [GET /services/:id/components](#get-servicesidcomponents)
-  - [GET /services/me](#get-servicesme)
-  - [POST /services/:id/link](#post-servicesidlink)
-  - [DELETE /services/:id/unlink](#delete-servicesidunlink)
-- [About](#about)
-  - [GET /about.json](#get-aboutjson)
-- [Admin](#admin)
-  - [GET /admin/kpi](#get-adminkpi)
-  - [GET /admin/users](#get-adminusers)
-  - [GET /admin/users/:id](#get-adminusersid)
-  - [PATCH /admin/users/:id](#patch-adminusersid)
-  - [DELETE /admin/users/:id](#delete-adminusersid)
-  - [DELETE /admin/users/:id/services/:id](#delete-adminusersidservicesid)
-  - [GET /admin/areas](#get-adminareas)
-  - [GET /admin/areas/:id](#get-adminareasid)
-  - [PATCH /admin/areas/:id](#patch-adminareasid)
-  - [DELETE /admin/areas/:id](#delete-adminareasid)
-  - [PATCH /admin/services/:id](#patch-adminservicesid)
-  - [PATCH /admin/components/:id](#patch-admincomponentsid)
+- [AREA API Endpoints](#area-api-endpoints)
+  - [Table of Contents](#table-of-contents)
+  - [Authentication](#authentication)
+    - [POST /auth/login](#post-authlogin)
+    - [POST /auth/login-oauth2](#post-authlogin-oauth2)
+    - [POST /auth/register](#post-authregister)
+    - [POST /auth/register-oauth2](#post-authregister-oauth2)
+    - [GET /auth/me](#get-authme)
+    - [PATCH /auth/me](#patch-authme)
+    - [DELETE /auth/me](#delete-authme)
+  - [Areas](#areas)
+    - [GET /areas](#get-areas)
+    - [GET /areas/:id](#get-areasid)
+    - [POST /areas](#post-areas)
+    - [PATCH /areas/:id](#patch-areasid)
+    - [DELETE /areas/:id](#delete-areasid)
+  - [Services](#services)
+    - [GET /services](#get-services)
+    - [GET /services/:id](#get-servicesid)
+    - [GET /services/:id/actions](#get-servicesidactions)
+    - [GET /services/:id/reactions](#get-servicesidreactions)
+    - [GET /services/:id/components](#get-servicesidcomponents)
+    - [GET /services/me](#get-servicesme)
+    - [POST /services/:id/link](#post-servicesidlink)
+    - [DELETE /services/:id/unlink](#delete-servicesidunlink)
+  - [About](#about)
+    - [GET /about.json](#get-aboutjson)
+  - [Admin](#admin)
+    - [GET /admin/kpi](#get-adminkpi)
+    - [GET /admin/users](#get-adminusers)
+    - [GET /admin/users/:id](#get-adminusersid)
+    - [PATCH /admin/users/:id](#patch-adminusersid)
+    - [DELETE /admin/users/:id](#delete-adminusersid)
+    - [DELETE /admin/users/:id/services/:id](#delete-adminusersidservicesid)
+    - [GET /admin/areas](#get-adminareas)
+    - [GET /admin/areas/:id](#get-adminareasid)
+    - [PATCH /admin/areas/:id](#patch-adminareasid)
+    - [DELETE /admin/areas/:id](#delete-adminareasid)
+    - [PATCH /admin/services/:id](#patch-adminservicesid)
+    - [PATCH /admin/components/:id](#patch-admincomponentsid)
 
 ---
 
@@ -437,7 +440,7 @@ Go back to the [Application Server Documentation](./APPLICATION_SERVER.md).
 **Response:**
 
 - `services` (array): List of services.
-  - `id` (uuid): Service unique identifier.
+  - `id` (integer): Service unique identifier.
   - `name` (string): Service name.
   - `description` (string): Service description.
   - `icon_url` (string): URL to the service icon.
@@ -448,7 +451,6 @@ Go back to the [Application Server Documentation](./APPLICATION_SERVER.md).
 
 - `200 OK`: Successful retrieval of services.
 - `401 Unauthorized`: Invalid or missing JWT token.
-- `403 Forbidden`: Insufficient permissions.
 
 ---
 
@@ -460,7 +462,7 @@ Go back to the [Application Server Documentation](./APPLICATION_SERVER.md).
 
 **Response:**
 
-- `id` (uuid): Service unique identifier.
+- `id` (integer): Service unique identifier.
 - `name` (string): Service name.
 - `description` (string): Service description.
 - `icon_url` (string): URL to the service icon.
@@ -484,18 +486,18 @@ Go back to the [Application Server Documentation](./APPLICATION_SERVER.md).
 **Response:**
 
 - `actions` (array): List of available actions for the service.
-  - `id` (uuid): Action unique identifier.
+  - `id` (integer): Action unique identifier.
   - `name` (string): Action name.
-  - `description` (string): Action description.
+  - `description` (string|null): Action description.
   - `variables` (array): List of variables for the action.
-    - `id` (uuid): Variable unique identifier.
+    - `id` (integer): Variable unique identifier.
     - `name` (string): Variable name.
-    - `description` (string): Variable description.
+    - `description` (string|null): Variable description.
     - `kind` (string): Variable kind ("input" or "output").
     - `type` (string): Variable type ("string", "number", "boolean", etc.).
     - `optional` (boolean): Whether the variable is optional.
+    - `placeholder` (string|null): Placeholder text for the variable, or null if none.
     - `validation_regex` (string|null): Regex for variable validation, or null if none.
-    - `placeholder` (string): Placeholder text for the variable, or null if none.
     - `display_order` (integer): Order of display for the variable.
 
 **Status codes:**
@@ -515,18 +517,18 @@ Go back to the [Application Server Documentation](./APPLICATION_SERVER.md).
 **Response:**
 
 - `reactions` (array): List of available reactions for the service.
-  - `id` (uuid): Reaction unique identifier.
+  - `id` (integer): Reaction unique identifier.
   - `name` (string): Reaction name.
-  - `description` (string): Reaction description.
+  - `description` (string|null): Reaction description.
   - `variables` (array): List of variables for the reaction.
-    - `id` (uuid): Variable unique identifier.
+    - `id` (integer): Variable unique identifier.
     - `name` (string): Variable name.
-    - `description` (string): Variable description.
+    - `description` (string|null): Variable description.
     - `kind` (string): Variable kind ("input" or "output").
     - `type` (string): Variable type ("string", "number", "boolean", etc.).
     - `optional` (boolean): Whether the variable is optional.
+    - `placeholder` (string|null): Placeholder text for the variable, or null if none.
     - `validation_regex` (string|null): Regex for variable validation, or null if none.
-    - `placeholder` (string): Placeholder text for the variable, or null if none.
     - `display_order` (integer): Order of display for the variable.
 
 **Status codes:**
@@ -546,19 +548,19 @@ Go back to the [Application Server Documentation](./APPLICATION_SERVER.md).
 **Response:**
 
 - `components` (array): List of available components for the service.
-  - `id` (uuid): Component unique identifier.
+  - `id` (integer): Component unique identifier.
   - `name` (string): Component name.
-  - `description` (string): Component description.
+  - `description` (string|null): Component description.
   - `kind` (string): Component kind ("action" or "reaction").
   - `variables` (array): List of variables for the component.
-    - `id` (uuid): Variable unique identifier.
+    - `id` (integer): Variable unique identifier.
     - `name` (string): Variable name.
-    - `description` (string): Variable description.
+    - `description` (string|null): Variable description.
     - `kind` (string): Variable kind ("input" or "output").
     - `type` (string): Variable type ("string", "number", "boolean", etc.).
     - `optional` (boolean): Whether the variable is optional.
+    - `placeholder` (string|null): Placeholder text for the variable, or null if none.
     - `validation_regex` (string|null): Regex for variable validation, or null if none.
-    - `placeholder` (string): Placeholder text for the variable, or null if none.
     - `display_order` (integer): Order of display for the variable.
 
 **Status codes:**
@@ -578,13 +580,12 @@ Go back to the [Application Server Documentation](./APPLICATION_SERVER.md).
 **Response:**
 
 - `services` (array): List of services linked to the user.
-  - `id` (uuid): Service unique identifier.
+  - `id` (integer): Service unique identifier.
   - `name` (string): Service name.
   - `description` (string): Service description.
   - `icon_url` (string): URL to the service icon.
   - `requires_auth` (boolean): Whether the service requires OAuth2 authentication.
   - `is_active` (boolean): Whether the service is active.
-  - `created_at` (timestamp): Timestamp of when the service was linked.
 
 **Status codes:**
 
@@ -601,7 +602,7 @@ Go back to the [Application Server Documentation](./APPLICATION_SERVER.md).
 
 **Request Body:**
 
-- `code` (string, required if service requires OAuth2): Exchange code or token for service authentication.
+- `code` (string, required if service requires OAuth2, otherwise ignored): Exchange code or token for service authentication.
 
 **Response:**
 
