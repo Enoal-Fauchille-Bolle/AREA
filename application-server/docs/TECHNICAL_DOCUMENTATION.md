@@ -383,7 +383,7 @@ DB_PASSWORD=area_password
 DB_DATABASE=area_db
 
 # Application Configuration
-PORT=3000
+PORT=8080
 NODE_ENV=development
 
 # JWT Configuration
@@ -402,7 +402,7 @@ SMTP_PASS=your-app-password
 Located in `src/config/app.config.ts`:
 ```typescript
 export const appConfig = registerAs('app', () => ({
-  port: parseInt(process.env.PORT || '3000', 10),
+  port: parseInt(process.env.PORT || '8080', 10),
   jwt: {
     secret: process.env.JWT_SECRET,
     expiresIn: process.env.JWT_EXPIRES_IN || '24h',

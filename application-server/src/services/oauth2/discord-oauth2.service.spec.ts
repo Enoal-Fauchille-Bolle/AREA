@@ -15,7 +15,7 @@ describe('DiscordOAuth2Service', () => {
         discord: {
           clientId: 'test_client_id',
           clientSecret: 'test_client_secret',
-          redirectUri: 'http://localhost:3000/callback',
+          redirectUri: 'http://localhost:8080/callback',
         },
       },
     }),
@@ -91,7 +91,7 @@ describe('DiscordOAuth2Service', () => {
       expect(body.get('client_secret')).toBe('test_client_secret');
       expect(body.get('grant_type')).toBe('authorization_code');
       expect(body.get('code')).toBe('auth_code_123');
-      expect(body.get('redirect_uri')).toBe('http://localhost:3000/callback');
+      expect(body.get('redirect_uri')).toBe('http://localhost:8080/callback');
     });
 
     it('should throw BadRequestException when Discord API returns error', async () => {
@@ -124,7 +124,7 @@ describe('DiscordOAuth2Service', () => {
             discord: {
               clientId: undefined,
               clientSecret: undefined,
-              redirectUri: 'http://localhost:3000/callback',
+              redirectUri: 'http://localhost:8080/callback',
             },
           },
         }),
@@ -233,7 +233,7 @@ describe('DiscordOAuth2Service', () => {
             discord: {
               clientId: undefined,
               clientSecret: undefined,
-              redirectUri: 'http://localhost:3000/callback',
+              redirectUri: 'http://localhost:8080/callback',
             },
           },
         }),
