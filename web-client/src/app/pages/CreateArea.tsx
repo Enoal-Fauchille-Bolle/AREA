@@ -104,7 +104,7 @@ const CreateArea: React.FC = () => {
       const components = await componentsApi.getComponentsByService(serviceId);
       const filteredComponents = components.filter(
         (component: Component) =>
-          component.type === type && component.is_active,
+          component.kind === type && component.is_active,
       );
       if (type === 'action') {
         setActionComponents(filteredComponents);

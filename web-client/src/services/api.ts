@@ -198,7 +198,7 @@ export type ComponentType = 'action' | 'reaction';
 export interface Component {
   id: number;
   service_id: number;
-  type: ComponentType;
+  kind: ComponentType;
   name: string;
   description: string | null;
   is_active: boolean;
