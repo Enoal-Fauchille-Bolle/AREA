@@ -7,7 +7,7 @@ import { AuthController } from './auth.controller';
 import { UsersModule } from '../users/users.module';
 import { LocalStrategy } from './strategies/local.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
-import type { AppConfig } from 'src/config';
+import type { AppConfig } from '../config';
 
 @Module({
   imports: [

@@ -1,5 +1,5 @@
 import { ConfigService } from '@nestjs/config';
-import type { AppConfig } from '../../config';
+import { DB_COLUMN_LENGTHS, DB_DEFAULTS, type AppConfig } from '../../config';
 import { Service } from '../entities/service.entity';
 
 export class ServiceResponseDto {
