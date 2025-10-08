@@ -198,19 +198,11 @@ export class VariablesService {
       description: variable.description,
       kind: variable.kind,
       type: variable.type,
-      nullable: variable.nullable,
+      optional: variable.nullable,
       placeholder: variable.placeholder,
       validation_regex: variable.validation_regex,
       display_order: variable.display_order,
     };
-
-    if (variable.component) {
-      response.component = {
-        id: variable.component.id,
-        name: variable.component.name,
-        type: variable.component.type,
-      };
-    }
 
     return response;
   }

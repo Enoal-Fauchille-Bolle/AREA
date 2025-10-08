@@ -1,3 +1,12 @@
+// Type for component parameter configs
+interface ComponentParameter {
+  name: string;
+  description: string;
+  type: string;
+  required: boolean;
+  placeholder?: string;
+  validation?: string;
+}
 import {
   Injectable,
   NotFoundException,
@@ -10,6 +19,7 @@ import { CreateAreaDto, UpdateAreaDto } from './dto';
 import { VariablesService } from '../variables/variables.service';
 import { AreaParametersService } from '../area-parameters/area-parameters.service';
 import { ComponentsService } from '../components/components.service';
+import { ComponentResponseDto } from '../components/dto/component-response.dto';
 import {
   VariableKind,
   VariableType,
@@ -64,8 +74,8 @@ export class AreasService {
 
   private async createVariablesAndParameters(
     areaId: number,
-    actionComponent: any,
-    reactionComponent: any,
+    actionComponent: ComponentResponseDto,
+    reactionComponent: ComponentResponseDto,
     parameters: { [parameterName: string]: string },
   ): Promise<void> {
     const componentConfigs = this.getComponentParameterConfigs();
@@ -95,7 +105,7 @@ export class AreasService {
 
   private async createVariablesForComponent(
     componentId: number,
-    parameterConfigs: any[],
+    parameterConfigs: ComponentParameter[],
     areaId: number,
     userParameters: { [parameterName: string]: string },
   ): Promise<void> {

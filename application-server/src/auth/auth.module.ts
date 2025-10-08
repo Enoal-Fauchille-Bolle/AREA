@@ -7,7 +7,7 @@ import { AuthController } from './auth.controller';
 import { UsersModule } from '../users/users.module';
 import { LocalStrategy } from './strategies/local.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
-import type { AppConfig } from 'src/config';
+import type { AppConfig } from '../config';
 
 @Module({
   imports: [
@@ -17,6 +17,9 @@ import type { AppConfig } from 'src/config';
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
         const appConfig = configService.get<AppConfig>('app');
+        if (!appConfig) {
+          throw new Error('App configuration is not properly loaded');
+        }
         return {
           secret: appConfig.jwt.secret,
           signOptions: {
