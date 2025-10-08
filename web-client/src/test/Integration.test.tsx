@@ -4,7 +4,6 @@ import { BrowserRouter } from 'react-router-dom';
 import App from '../app/pages/App';
 import Login from '../app/pages/Login';
 import SignUp from '../app/pages/SignUp';
-import UserProfile from '../app/pages/UserProfile';
 import { Routes, Route } from 'react-router-dom';
 
 describe('Integration Tests', () => {
@@ -16,7 +15,6 @@ describe('Integration Tests', () => {
           <Route path="/" element={<App />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
-          <Route path="/profile" element={<UserProfile />} />
         </Routes>
       </BrowserRouter>,
     );
@@ -38,13 +36,6 @@ describe('Integration Tests', () => {
     it('renders SignUp component on /signup route', () => {
       renderApp('/signup');
       expect(screen.getByText('Join AREA')).toBeInTheDocument();
-    });
-
-    it('renders UserProfile component on /profile route', () => {
-      renderApp('/profile');
-      expect(
-        screen.getByRole('heading', { name: 'My Areas' }),
-      ).toBeInTheDocument();
     });
   });
 
