@@ -57,12 +57,12 @@ export class ServicesService {
       where: { name: name },
     });
     if (!service) {
-      throw new NotFoundException(`Service with ID ${id} not found`);
+      throw new NotFoundException(`Service with name ${name} not found`);
     }
     return ServiceResponseDto.fromEntity(service, this.configService);
   }
 
-  async findActive(): Promise<ServiceResponseDto> {
+  async findActive(): Promise<ServiceResponseDto[]> {
     const services = await this.serviceRepository.find({
       where: { is_active: true },
       order: { name: 'ASC' },
@@ -71,29 +71,6 @@ export class ServicesService {
     return services.map((service) =>
       ServiceResponseDto.fromEntity(service, this.configService),
     );
-  }
-
-  async findAllActions(id: number): Promise<ServiceActionsResponseDto[]> {
-    const service = await this.serviceRepository.findOne({ where: { id } });
-    if (!service) {
-      throw new NotFoundException(`Service with ID ${id} not found`);
-    }
-    const components = await this.componentRepository.find({
-      where: { service_id: id, type: ComponentType.ACTION },
-    });
-
-    const result: ServiceActionsResponseDto[] = [];
-
-    for (const component of components) {
-      const variables = await this.variableRepository.find({
-        where: { component_id: component.id },
-        order: { display_order: 'ASC' },
-      });
-
-      result.push(ServiceActionsResponseDto.fromEntity(component, variables));
-    }
-
-    return result;
   }
 
   async findAllActions(id: number): Promise<ServiceActionsResponseDto[]> {

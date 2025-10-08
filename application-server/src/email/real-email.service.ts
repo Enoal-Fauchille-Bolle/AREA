@@ -2,9 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { createTransport, Transporter } from 'nodemailer';
 import { AreaExecutionsService } from '../area-executions/area-executions.service';
 import { AreaParametersService } from '../area-parameters/area-parameters.service';
-import * as dotenv from 'dotenv';
-
-dotenv.config();
 
 interface EmailParams {
   to: string;

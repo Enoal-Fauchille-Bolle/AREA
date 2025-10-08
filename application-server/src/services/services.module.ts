@@ -10,10 +10,6 @@ import { UserService } from '../user-services/entities/user-service.entity';
 import { DiscordOAuth2Service } from './oauth2/discord-oauth2.service';
 import { ComponentsModule } from '../components/components.module';
 import { VariablesModule } from '../variables/variables.module';
-import { Component } from '../components/entities/component.entity';
-import { Variable } from '../variables/entities/variable.entity';
-import { UserService } from '../user-services/entities/user-service.entity';
-import { DiscordOAuth2Service } from './oauth2/discord-oauth2.service';
 
 @Module({
   imports: [
