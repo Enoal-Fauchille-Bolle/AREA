@@ -18,7 +18,11 @@ import { DiscordOAuth2Service } from './oauth2/discord-oauth2.service';
     VariablesModule,
   ],
   controllers: [ServicesController],
-  providers: [ServicesService, ServicesInitializerService, DiscordOAuth2Service],
+  providers: [
+    ServicesService,
+    ServicesInitializerService,
+    DiscordOAuth2Service,
+  ],
   exports: [ServicesService],
 })
-export class ServicesModule { }
+export class ServicesModule {}

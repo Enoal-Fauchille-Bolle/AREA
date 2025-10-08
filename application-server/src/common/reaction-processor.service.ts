@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { EmailService } from '../email/email.service';
 import { ComponentsService } from '../components/components.service';
+import { DiscordService } from '../discord/discord.service';
 
 @Injectable()
 export class ReactionProcessorService {
@@ -9,6 +10,7 @@ export class ReactionProcessorService {
   constructor(
     private readonly emailService: EmailService,
     private readonly componentsService: ComponentsService,
+    private readonly discordService: DiscordService,
   ) {}
 
   async processReaction(
@@ -33,6 +35,10 @@ export class ReactionProcessorService {
       switch (component.name) {
         case 'send_email':
           await this.emailService.processReaction(executionId, areaId);
+          break;
+
+        case 'send_message':
+          await this.discordService.processReaction(executionId, areaId);
           break;
 
         // Add more reaction types here as you create them:
