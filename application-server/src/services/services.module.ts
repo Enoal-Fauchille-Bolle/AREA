@@ -6,13 +6,14 @@ import { Service } from './entities/service.entity';
 import { Component } from '../components/entities/component.entity';
 import { Variable } from '../variables/entities/variable.entity';
 import { UserService } from '../user-services/entities/user-service.entity';
+import { DiscordOAuth2Service } from './oauth2/discord-oauth2.service';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Service, Component, Variable, UserService]),
   ],
   controllers: [ServicesController],
-  providers: [ServicesService],
+  providers: [ServicesService, DiscordOAuth2Service],
   exports: [ServicesService],
 })
 export class ServicesModule {}

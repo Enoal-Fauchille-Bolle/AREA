@@ -108,4 +108,18 @@ export class ServicesController {
     }
     await this.servicesService.unlinkService(req.user.id, parsedIntId);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/refresh-token')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async refreshToken(
+    @Request() req: { user: { id: number } },
+    @Param('id') id: string,
+  ): Promise<void> {
+    const parsedIntId = parseIdParam(id);
+    if (isNaN(parsedIntId)) {
+      throw new BadRequestException('Invalid ID format');
+    }
+    await this.servicesService.refreshServiceToken(req.user.id, parsedIntId);
+  }
 }

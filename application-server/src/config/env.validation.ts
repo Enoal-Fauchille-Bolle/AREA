@@ -15,6 +15,11 @@ export const envValidationSchema = z.object({
   DB_USERNAME: z.string().default('area_user'),
   DB_PASSWORD: z.string().default('area_password'),
   DB_DATABASE: z.string().default('area_db'),
+  DISCORD_CLIENT_ID: z.string().optional(),
+  DISCORD_CLIENT_SECRET: z.string().optional(),
+  DISCORD_REDIRECT_URI: z
+    .string()
+    .default('http://localhost:3000/auth/discord/callback'),
 });
 
 export function validateEnv(config: Record<string, unknown>) {
@@ -27,8 +32,19 @@ export function validateEnv(config: Record<string, unknown>) {
   }
 
   const env = parsed.data;
-  if (env.NODE_ENV === 'production' && !env.JWT_SECRET) {
-    throw new ConfigurationException('JWT_SECRET must be set in production.');
+  if (env.NODE_ENV === 'production') {
+    if (!env.JWT_SECRET) {
+      throw new ConfigurationException('JWT_SECRET must be set in production.');
+    } else {
+      console.warn('WARNING: Using default JWT secret for development.');
+    }
+    if (!env.DISCORD_CLIENT_ID || !env.DISCORD_CLIENT_SECRET) {
+      throw new ConfigurationException(
+        'Discord OAuth2 must be set in production.',
+      );
+    } else {
+      console.warn('WARNING: Discord OAuth2 not set; server may crash.');
+    }
   }
   return env;
 }

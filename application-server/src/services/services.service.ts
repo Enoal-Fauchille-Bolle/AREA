@@ -19,6 +19,7 @@ import {
   ServiceResponseDto,
 } from './dto';
 import { ConfigService } from '@nestjs/config';
+import { DiscordOAuth2Service } from './oauth2/discord-oauth2.service';
 
 @Injectable()
 export class ServicesService {
@@ -32,6 +33,7 @@ export class ServicesService {
     @InjectRepository(UserService)
     private readonly userServiceRepository: Repository<UserService>,
     private readonly configService: ConfigService,
+    private readonly discordOAuth2Service: DiscordOAuth2Service,
   ) {}
 
   async findAll(): Promise<ServiceResponseDto[]> {
@@ -149,7 +151,32 @@ export class ServicesService {
     const existing = await this.userServiceRepository.findOne({
       where: { user_id: userId, service_id: serviceId },
     });
+
+    // Handle Discord OAuth2 flow
+    if (service.name.toLowerCase() === 'discord' && code) {
+      const tokens =
+        await this.discordOAuth2Service.exchangeCodeForTokens(code);
+
+      if (existing) {
+        // Update existing user service with new tokens
+        existing.oauth_token = tokens.accessToken;
+        existing.refresh_token = tokens.refreshToken;
+        existing.token_expires_at = tokens.expiresAt;
+        await this.userServiceRepository.save(existing);
+      } else {
+        // Create new user service link with tokens
+        const userService = this.userServiceRepository.create({
+          user_id: userId,
+          service_id: serviceId,
+          oauth_token: tokens.accessToken,
+          refresh_token: tokens.refreshToken,
+          token_expires_at: tokens.expiresAt,
+        });
+        await this.userServiceRepository.save(userService);
+      }
+    } else if (!existing) {
       throw new BadRequestException('Invalid request body');
+    }
   }
 
   async unlinkService(userId: number, serviceId: number): Promise<void> {
@@ -170,5 +197,39 @@ export class ServicesService {
         `User service link not found for user ${userId} and service ${serviceId}`,
       );
     }
+  }
+
+  async refreshServiceToken(userId: number, serviceId: number): Promise<void> {
+    const service = await this.serviceRepository.findOne({
+      where: { id: serviceId },
+    });
+    if (!service) {
+      throw new NotFoundException(`Service with ID ${serviceId} not found`);
+    }
+
+    if (service.name.toLowerCase() !== 'discord') {
+      throw new NotFoundException(
+        `Service ${service.name} does not support token refresh`,
+      );
+    }
+
+    const userService = await this.userServiceRepository.findOne({
+      where: { user_id: userId, service_id: serviceId },
+    });
+
+    if (!userService || !userService.refresh_token) {
+      throw new NotFoundException(
+        `User service link not found or no refresh token available`,
+      );
+    }
+
+    const tokens = await this.discordOAuth2Service.refreshAccessToken(
+      userService.refresh_token,
+    );
+
+    userService.oauth_token = tokens.accessToken;
+    userService.refresh_token = tokens.refreshToken;
+    userService.token_expires_at = tokens.expiresAt;
+    await this.userServiceRepository.save(userService);
   }
 }

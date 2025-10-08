@@ -29,6 +29,7 @@ Go back to the [Application Server Documentation](./APPLICATION_SERVER.md).
     - [GET /services/me](#get-servicesme)
     - [POST /services/:id/link](#post-servicesidlink)
     - [DELETE /services/:id/unlink](#delete-servicesidunlink)
+    - [POST /services/:id/refresh-token](#post-servicesidrefresh-token)
   - [About](#about)
     - [GET /about.json](#get-aboutjson)
   - [Admin](#admin)
@@ -632,6 +633,26 @@ Go back to the [Application Server Documentation](./APPLICATION_SERVER.md).
 - `204 No Content`: Service successfully unlinked.
 - `401 Unauthorized`: Invalid or missing JWT token.
 - `404 Not Found`: Service not found.
+
+---
+
+### POST /services/:id/refresh-token
+
+**Description:** Refresh the OAuth2 token for a linked service.
+
+**Access:** 🔒 Authenticated
+
+**Response:**
+
+*No response body.*
+
+**Status codes:**
+
+- `204 No Content`: Token successfully refreshed.
+- `400 Bad Request`: Invalid parameters.
+- `401 Unauthorized`: Invalid or missing JWT token.
+- `404 Not Found`: Service not found.
+- `409 Conflict`: Service not linked.
 
 ---
 
