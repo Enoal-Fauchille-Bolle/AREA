@@ -45,6 +45,7 @@ class _ComponentSelectorState extends State<ComponentSelector> {
         prefixIcon: const Icon(Icons.layers),
       ),
       value: _selectedComponent,
+      menuMaxHeight: 300, // Limit dropdown menu height to prevent overflow
       items: widget.components.map((component) {
         return DropdownMenuItem<Map<String, dynamic>>(
           value: component,
@@ -58,38 +59,27 @@ class _ComponentSelectorState extends State<ComponentSelector> {
                     borderRadius: BorderRadius.circular(4),
                     child: Image.network(
                       component['service']['icon_url'],
-                      width: 24,
-                      height: 24,
+                      width: 20,
+                      height: 20,
                       errorBuilder: (_, __, ___) =>
-                          const Icon(Icons.apps, size: 24),
+                          const Icon(Icons.apps, size: 20),
                     ),
                   ),
                 ),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      component['name'] ?? 'Unnamed',
-                      style: const TextStyle(fontWeight: FontWeight.w500),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (component['description'] != null)
-                      Text(
-                        component['description'],
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                      ),
-                  ],
+                child: Text(
+                  component['name'] ?? 'Unnamed',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
               ),
               // Type badge
               Container(
+                margin: const EdgeInsets.only(left: 8),
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: component['type'] == 'action'
