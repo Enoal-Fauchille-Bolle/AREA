@@ -18,7 +18,11 @@ import { VariablesModule } from '../variables/variables.module';
     VariablesModule,
   ],
   controllers: [ServicesController],
-  providers: [ServicesService, ServicesInitializerService, DiscordOAuth2Service],
+  providers: [
+    ServicesService,
+    ServicesInitializerService,
+    DiscordOAuth2Service,
+  ],
   exports: [ServicesService],
 })
 export class ServicesModule {}
