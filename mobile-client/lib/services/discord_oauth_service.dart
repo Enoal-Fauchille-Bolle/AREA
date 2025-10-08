@@ -13,7 +13,7 @@ class DiscordOAuthService {
     if (explicit != null && explicit.isNotEmpty) return explicit;
 
     final baseUrl = dotenv.env['URL_BASE'] ?? 'http://10.84.107.120';
-    final port = dotenv.env['PORT'] ?? '3000';
+    final port = dotenv.env['PORT'] ?? '8080';
     return '$baseUrl:$port/auth/discord/callback';
   }
 

@@ -6,7 +6,7 @@ import '../utils/app_logger.dart';
 
 class ServiceApiService {
   final String baseUrl = dotenv.env['URL_BASE'] ?? 'http://10.84.107.120';
-  final String port = dotenv.env['PORT'] ?? '3000';
+  final String port = dotenv.env['PORT'] ?? '8080';
   final AuthService _authService = AuthService();
 
   // helper to normalize list responses

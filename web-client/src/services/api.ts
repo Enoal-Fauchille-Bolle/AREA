@@ -1,5 +1,5 @@
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081';
+  import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 const TOKEN_KEY = import.meta.env.VITE_TOKEN_KEY || 'auth_token';
 

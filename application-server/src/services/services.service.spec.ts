@@ -106,7 +106,7 @@ describe('ServicesService', () => {
         discord: {
           clientId: 'mock_client_id',
           clientSecret: 'mock_client_secret',
-          redirectUri: 'http://localhost:8081/callback',
+          redirectUri: 'http://localhost:8080/callback',
         },
       },
     }),
