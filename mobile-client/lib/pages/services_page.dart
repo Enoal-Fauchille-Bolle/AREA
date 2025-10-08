@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/service_api_service.dart';
+import '../services/discord_oauth_service.dart';
 import '../widgets/service_card.dart';
 
 class ServicesPage extends StatefulWidget {
@@ -49,7 +50,8 @@ class _ServicesPageState extends State<ServicesPage> {
     }
   }
 
-  Future<void> _handleLinkToggle(String serviceId, bool isLinked) async {
+  Future<void> _handleLinkToggle(
+      String serviceId, bool isLinked, String serviceName) async {
     try {
       bool success;
       if (isLinked) {
@@ -64,12 +66,36 @@ class _ServicesPageState extends State<ServicesPage> {
           await _loadServices();
         }
       } else {
-        // For services requiring OAuth2, you would need to handle the OAuth flow here
-        success = await _serviceApi.linkService(serviceId);
+        // Handle Discord OAuth flow
+        if (serviceName.toLowerCase() == 'discord') {
+          if (mounted) {
+            // Open Discord OAuth in WebView
+            final code = await DiscordOAuthService.authorize(context);
+
+            if (code == null) {
+              // User cancelled or error occurred
+              return;
+            }
+
+            print('Got Discord authorization code, linking service...');
+
+            // Link service with the authorization code
+            success = await _serviceApi.linkService(serviceId, code: code);
+          } else {
+            return;
+          }
+        } else {
+          // For non-OAuth services, use simple linking
+          success = await _serviceApi.linkService(serviceId);
+        }
+
         if (success) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Service linked successfully')),
+              const SnackBar(
+                content: Text('Service linked successfully'),
+                backgroundColor: Colors.green,
+              ),
             );
           }
           // Reload services to update the UI
@@ -86,6 +112,7 @@ class _ServicesPageState extends State<ServicesPage> {
         );
       }
     } catch (e) {
+      print('Link toggle error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -192,6 +219,7 @@ class _ServicesPageState extends State<ServicesPage> {
                             onLinkToggle: () => _handleLinkToggle(
                               service['id'].toString(),
                               true,
+                              service['name'] ?? 'Unknown',
                             ),
                           )),
                   const Divider(height: 32),
@@ -219,6 +247,7 @@ class _ServicesPageState extends State<ServicesPage> {
                           onLinkToggle: () => _handleLinkToggle(
                             service['id'].toString(),
                             false,
+                            service['name'] ?? 'Unknown',
                           ),
                         )),
               ],

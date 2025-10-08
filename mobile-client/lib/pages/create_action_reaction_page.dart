@@ -24,6 +24,9 @@ class _CreateActionReactionPageState extends State<CreateActionReactionPage> {
   List<Map<String, dynamic>> _availableReactions = [];
   Map<String, dynamic>? _selectedAction;
   Map<String, dynamic>? _selectedReaction;
+  List<Map<String, dynamic>> _actionVariables = [];
+  List<Map<String, dynamic>> _reactionVariables = [];
+  final Map<String, TextEditingController> _parameterControllers = {};
   bool _isLoading = true;
   bool _isSubmitting = false;
 
@@ -37,7 +40,106 @@ class _CreateActionReactionPageState extends State<CreateActionReactionPage> {
   void dispose() {
     _nameController.dispose();
     _descriptionController.dispose();
+    // Dispose all parameter controllers
+    for (var controller in _parameterControllers.values) {
+      controller.dispose();
+    }
     super.dispose();
+  }
+
+  Future<void> _loadComponentVariables(int componentId, bool isAction) async {
+    try {
+      final variables = await _serviceApi.fetchComponentVariables(componentId);
+      print('Loaded ${variables.length} variables for component $componentId');
+
+      setState(() {
+        if (isAction) {
+          _actionVariables = variables;
+        } else {
+          _reactionVariables = variables;
+        }
+
+        // Create controllers for new parameters
+        for (var variable in variables) {
+          final varName = variable['name'] as String;
+          if (!_parameterControllers.containsKey(varName)) {
+            _parameterControllers[varName] = TextEditingController();
+          }
+        }
+      });
+    } catch (e) {
+      print('Error loading component variables: $e');
+    }
+  }
+
+  List<Widget> _buildParameterFields(List<Map<String, dynamic>> variables) {
+    final fields = <Widget>[];
+
+    for (var variable in variables) {
+      final name = variable['name'] as String;
+      final description = variable['description'] as String? ?? '';
+      final placeholder = variable['placeholder'] as String? ?? '';
+      final isNullable = variable['nullable'] as bool? ?? true;
+      final type = variable['type'] as String? ?? 'string';
+
+      // Get or create controller for this parameter
+      if (!_parameterControllers.containsKey(name)) {
+        _parameterControllers[name] = TextEditingController();
+      }
+      final controller = _parameterControllers[name]!;
+
+      fields.add(
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            CustomTextField(
+              controller: controller,
+              label: name.replaceAll('_', ' ').toUpperCase(),
+              hint: placeholder.isNotEmpty ? placeholder : description,
+              prefixIcon: _getIconForParameterType(type),
+              keyboardType: type == 'number'
+                  ? TextInputType.number
+                  : type == 'email'
+                      ? TextInputType.emailAddress
+                      : TextInputType.text,
+              validator: (v) {
+                if (!isNullable && (v == null || v.isEmpty)) {
+                  return 'This field is required';
+                }
+                return null;
+              },
+            ),
+            if (description.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(left: 12, top: 4, bottom: 8),
+                child: Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ),
+            const SizedBox(height: 12),
+          ],
+        ),
+      );
+    }
+
+    return fields;
+  }
+
+  IconData _getIconForParameterType(String type) {
+    switch (type.toLowerCase()) {
+      case 'email':
+        return Icons.email;
+      case 'number':
+        return Icons.numbers;
+      case 'url':
+        return Icons.link;
+      default:
+        return Icons.text_fields;
+    }
   }
 
   Future<void> _loadComponents() async {
@@ -125,15 +227,26 @@ class _CreateActionReactionPageState extends State<CreateActionReactionPage> {
       final actionId = _selectedAction!['id'];
       final reactionId = _selectedReaction!['id'];
 
+      // Collect all parameters from controllers
+      final parameters = <String, String>{};
+      for (var entry in _parameterControllers.entries) {
+        final value = entry.value.text.trim();
+        if (value.isNotEmpty) {
+          parameters[entry.key] = value;
+        }
+      }
+
       print(
-          'Creating AREA with action ID: $actionId, reaction ID: $reactionId');
-      final result = await _areaApi.createArea(
+          'Creating AREA with action ID: $actionId, reaction ID: $reactionId, parameters: $parameters');
+
+      final result = await _areaApi.createAreaWithParameters(
         name: _nameController.text.trim(),
         description: _descriptionController.text.trim().isEmpty
             ? null
             : _descriptionController.text.trim(),
         componentActionId: actionId,
         componentReactionId: reactionId,
+        parameters: parameters,
         isActive: true,
       );
       print('AREA created successfully: $result');
@@ -242,10 +355,21 @@ class _CreateActionReactionPageState extends State<CreateActionReactionPage> {
                           components: _availableActions,
                           onChanged: (component) {
                             setState(() => _selectedAction = component);
+                            if (component != null) {
+                              _loadComponentVariables(component['id'], true);
+                            }
                           },
                           validator: (v) =>
                               v == null ? 'Please select an action' : null,
                         ),
+
+                        // Action parameters
+                        if (_selectedAction != null &&
+                            _actionVariables.isNotEmpty) ...[
+                          const SizedBox(height: 16),
+                          ..._buildParameterFields(_actionVariables),
+                        ],
+
                         const SizedBox(height: 24),
 
                         // Reaction selector
@@ -262,10 +386,20 @@ class _CreateActionReactionPageState extends State<CreateActionReactionPage> {
                           components: _availableReactions,
                           onChanged: (component) {
                             setState(() => _selectedReaction = component);
+                            if (component != null) {
+                              _loadComponentVariables(component['id'], false);
+                            }
                           },
                           validator: (v) =>
                               v == null ? 'Please select a reaction' : null,
                         ),
+
+                        // Reaction parameters
+                        if (_selectedReaction != null &&
+                            _reactionVariables.isNotEmpty) ...[
+                          const SizedBox(height: 16),
+                          ..._buildParameterFields(_reactionVariables),
+                        ],
                         const SizedBox(height: 32),
 
                         // Create button
