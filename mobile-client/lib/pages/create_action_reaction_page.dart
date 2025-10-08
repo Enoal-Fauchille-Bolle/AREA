@@ -1,0 +1,420 @@
+import 'package:flutter/material.dart';
+import '../services/area_api_service.dart';
+import '../services/service_api_service.dart';
+import '../widgets/component_selector.dart';
+import '../widgets/custom_text_field.dart';
+import '../widgets/custom_button.dart';
+import '../utils/app_logger.dart';
+
+class CreateActionReactionPage extends StatefulWidget {
+  const CreateActionReactionPage({super.key});
+
+  @override
+  State<CreateActionReactionPage> createState() =>
+      _CreateActionReactionPageState();
+}
+
+class _CreateActionReactionPageState extends State<CreateActionReactionPage> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final AreaApiService _areaApi = AreaApiService();
+  final ServiceApiService _serviceApi = ServiceApiService();
+
+  List<Map<String, dynamic>> _availableActions = [];
+  List<Map<String, dynamic>> _availableReactions = [];
+  Map<String, dynamic>? _selectedAction;
+  Map<String, dynamic>? _selectedReaction;
+  List<Map<String, dynamic>> _actionVariables = [];
+  List<Map<String, dynamic>> _reactionVariables = [];
+  final Map<String, TextEditingController> _parameterControllers = {};
+  bool _isLoading = true;
+  bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadComponents();
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _descriptionController.dispose();
+    // Dispose all parameter controllers
+    for (var controller in _parameterControllers.values) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  Future<void> _loadComponentVariables(int componentId, bool isAction) async {
+    try {
+      final variables = await _serviceApi.fetchComponentVariables(componentId);
+      AppLogger.log(
+          'Loaded ${variables.length} variables for component $componentId');
+
+      setState(() {
+        if (isAction) {
+          _actionVariables = variables;
+        } else {
+          _reactionVariables = variables;
+        }
+
+        // Create controllers for new parameters
+        for (var variable in variables) {
+          final varName = variable['name'] as String;
+          if (!_parameterControllers.containsKey(varName)) {
+            _parameterControllers[varName] = TextEditingController();
+          }
+        }
+      });
+    } catch (e) {
+      AppLogger.error('Error loading component variables: $e');
+    }
+  }
+
+  List<Widget> _buildParameterFields(List<Map<String, dynamic>> variables) {
+    final fields = <Widget>[];
+
+    for (var variable in variables) {
+      final name = variable['name'] as String;
+      final description = variable['description'] as String? ?? '';
+      final placeholder = variable['placeholder'] as String? ?? '';
+      final isNullable = variable['nullable'] as bool? ?? true;
+      final type = variable['type'] as String? ?? 'string';
+
+      // Get or create controller for this parameter
+      if (!_parameterControllers.containsKey(name)) {
+        _parameterControllers[name] = TextEditingController();
+      }
+      final controller = _parameterControllers[name]!;
+
+      fields.add(
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            CustomTextField(
+              controller: controller,
+              label: name.replaceAll('_', ' ').toUpperCase(),
+              hint: placeholder.isNotEmpty ? placeholder : description,
+              prefixIcon: _getIconForParameterType(type),
+              keyboardType: type == 'number'
+                  ? TextInputType.number
+                  : type == 'email'
+                      ? TextInputType.emailAddress
+                      : TextInputType.text,
+              validator: (v) {
+                if (!isNullable && (v == null || v.isEmpty)) {
+                  return 'This field is required';
+                }
+                return null;
+              },
+            ),
+            if (description.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(left: 12, top: 4, bottom: 8),
+                child: Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ),
+            const SizedBox(height: 12),
+          ],
+        ),
+      );
+    }
+
+    return fields;
+  }
+
+  IconData _getIconForParameterType(String type) {
+    switch (type.toLowerCase()) {
+      case 'email':
+        return Icons.email;
+      case 'number':
+        return Icons.numbers;
+      case 'url':
+        return Icons.link;
+      default:
+        return Icons.text_fields;
+    }
+  }
+
+  Future<void> _loadComponents() async {
+    try {
+      setState(() => _isLoading = true);
+
+      // Get all linked services
+      final services = await _serviceApi.fetchUserServices();
+      AppLogger.log(
+          'Loaded ${services.length} linked services for creating AREA');
+
+      // Fetch actions and reactions for each service
+      final List<Map<String, dynamic>> actions = [];
+      final List<Map<String, dynamic>> reactions = [];
+
+      for (final service in services) {
+        try {
+          // User service records have 'service_id', not 'id'
+          final serviceId = service['service_id'];
+          if (serviceId == null) {
+            AppLogger.log('Skipping service with null service_id');
+            continue;
+          }
+
+          AppLogger.log('Loading components for service ID: $serviceId');
+          final components = await _serviceApi.fetchServiceComponents(
+            serviceId.toString(),
+          );
+
+          AppLogger.log(
+              'Got ${components.length} components for service $serviceId');
+          for (final component in components) {
+            // Backend uses 'kind' field, not 'type'
+            final componentType = component['kind'] ?? component['type'];
+            AppLogger.log(
+                'Component kind: $componentType, id: ${component['id']}, name: ${component['name']}');
+            if (componentType == 'action') {
+              actions.add(component);
+            } else if (componentType == 'reaction') {
+              reactions.add(component);
+            }
+          }
+        } catch (e) {
+          AppLogger.error(
+              'Error loading components for service ${service['service_id']}: $e');
+          // Continue to next service instead of failing completely
+        }
+      }
+      AppLogger.log(
+          'Loaded ${actions.length} actions and ${reactions.length} reactions');
+      setState(() {
+        _availableActions = actions;
+        _availableReactions = reactions;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading components: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleCreate() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    if (_selectedAction == null || _selectedReaction == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select both an action and a reaction'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      // Extract component IDs
+      final actionId = _selectedAction!['id'];
+      final reactionId = _selectedReaction!['id'];
+
+      // Collect all parameters from controllers
+      final parameters = <String, String>{};
+      for (var entry in _parameterControllers.entries) {
+        final value = entry.value.text.trim();
+        if (value.isNotEmpty) {
+          parameters[entry.key] = value;
+        }
+      }
+
+      AppLogger.log(
+          'Creating AREA with action ID: $actionId, reaction ID: $reactionId, parameters: $parameters');
+
+      final result = await _areaApi.createAreaWithParameters(
+        name: _nameController.text.trim(),
+        description: _descriptionController.text.trim().isEmpty
+            ? null
+            : _descriptionController.text.trim(),
+        componentActionId: actionId,
+        componentReactionId: reactionId,
+        parameters: parameters,
+        isActive: true,
+      );
+      AppLogger.log('AREA created successfully: $result');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('AREA created successfully!')),
+        );
+        Navigator.of(context).pop(true);
+      }
+    } catch (e) {
+      AppLogger.error('Error creating AREA: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error creating AREA: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      resizeToAvoidBottomInset: true,
+      appBar: AppBar(
+        title: const Text('Create AREA'),
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _availableActions.isEmpty || _availableReactions.isEmpty
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.link_off, size: 64, color: Colors.grey[400]),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No services linked',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Please link services first to create AREAs',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.grey[600]),
+                        ),
+                        const SizedBox(height: 24),
+                        ElevatedButton.icon(
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: const Icon(Icons.arrow_back),
+                          label: const Text('Go Back'),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Name field
+                        CustomTextField(
+                          controller: _nameController,
+                          label: 'AREA Name',
+                          hint: 'e.g., Email to Discord',
+                          prefixIcon: Icons.title,
+                          validator: (v) => v == null || v.isEmpty
+                              ? 'Please enter a name'
+                              : null,
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Description field
+                        CustomTextField(
+                          controller: _descriptionController,
+                          label: 'Description (optional)',
+                          hint: 'What does this AREA do?',
+                          prefixIcon: Icons.description,
+                          maxLines: 3,
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Action selector
+                        Text(
+                          'When this happens...',
+                          style:
+                              Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                        ),
+                        const SizedBox(height: 8),
+                        ComponentSelector(
+                          label: 'Select Action (Trigger)',
+                          components: _availableActions,
+                          onChanged: (component) {
+                            setState(() => _selectedAction = component);
+                            if (component != null) {
+                              _loadComponentVariables(component['id'], true);
+                            }
+                          },
+                          validator: (v) =>
+                              v == null ? 'Please select an action' : null,
+                        ),
+
+                        // Action parameters
+                        if (_selectedAction != null &&
+                            _actionVariables.isNotEmpty) ...[
+                          const SizedBox(height: 16),
+                          ..._buildParameterFields(_actionVariables),
+                        ],
+
+                        const SizedBox(height: 24),
+
+                        // Reaction selector
+                        Text(
+                          'Do this...',
+                          style:
+                              Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                        ),
+                        const SizedBox(height: 8),
+                        ComponentSelector(
+                          label: 'Select Reaction (Task)',
+                          components: _availableReactions,
+                          onChanged: (component) {
+                            setState(() => _selectedReaction = component);
+                            if (component != null) {
+                              _loadComponentVariables(component['id'], false);
+                            }
+                          },
+                          validator: (v) =>
+                              v == null ? 'Please select a reaction' : null,
+                        ),
+
+                        // Reaction parameters
+                        if (_selectedReaction != null &&
+                            _reactionVariables.isNotEmpty) ...[
+                          const SizedBox(height: 16),
+                          ..._buildParameterFields(_reactionVariables),
+                        ],
+                        const SizedBox(height: 32),
+
+                        // Create button
+                        CustomButton(
+                          text: 'Create AREA',
+                          isLoading: _isSubmitting,
+                          onPressed: _handleCreate,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+    );
+  }
+}
