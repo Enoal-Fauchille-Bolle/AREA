@@ -17,6 +17,7 @@ import {
   ServiceReactionsResponseDto,
   ServiceComponentsResponseDto,
   ServiceResponseDto,
+  CreateServiceDto,
 } from './dto';
 import { ConfigService } from '@nestjs/config';
 import { DiscordOAuth2Service } from './oauth2/discord-oauth2.service';
@@ -49,6 +50,50 @@ export class ServicesService {
       throw new NotFoundException(`Service with ID ${id} not found`);
     }
     return ServiceResponseDto.fromEntity(service, this.configService);
+  }
+
+  async findByName(name: string): Promise<ServiceResponseDto> {
+    const service = await this.serviceRepository.findOne({
+      where: { name: name },
+    });
+    if (!service) {
+      throw new NotFoundException(`Service with ID ${id} not found`);
+    }
+    return ServiceResponseDto.fromEntity(service, this.configService);
+  }
+
+  async findActive(): Promise<ServiceResponseDto> {
+    const services = await this.serviceRepository.find({
+      where: { is_active: true },
+      order: { name: 'ASC' },
+    });
+
+    return services.map((service) =>
+      ServiceResponseDto.fromEntity(service, this.configService),
+    );
+  }
+
+  async findAllActions(id: number): Promise<ServiceActionsResponseDto[]> {
+    const service = await this.serviceRepository.findOne({ where: { id } });
+    if (!service) {
+      throw new NotFoundException(`Service with ID ${id} not found`);
+    }
+    const components = await this.componentRepository.find({
+      where: { service_id: id, type: ComponentType.ACTION },
+    });
+
+    const result: ServiceActionsResponseDto[] = [];
+
+    for (const component of components) {
+      const variables = await this.variableRepository.find({
+        where: { component_id: component.id },
+        order: { display_order: 'ASC' },
+      });
+
+      result.push(ServiceActionsResponseDto.fromEntity(component, variables));
+    }
+
+    return result;
   }
 
   async findAllActions(id: number): Promise<ServiceActionsResponseDto[]> {
@@ -134,6 +179,14 @@ export class ServicesService {
     return userServices.map((us) =>
       ServiceResponseDto.fromEntity(us.service, this.configService),
     );
+  }
+
+  async create(
+    createServiceDto: CreateServiceDto,
+  ): Promise<ServiceResponseDto> {
+    const service = this.serviceRepository.create(createServiceDto);
+    const savedService = await this.serviceRepository.save(service);
+    return ServiceResponseDto.fromEntity(savedService, this.configService);
   }
 
   async linkService(
