@@ -13,11 +13,7 @@ vi.mock('react-router-dom', async () => {
 });
 
 const renderWithRouter = (component: React.ReactElement) => {
-  return render(
-    <BrowserRouter>
-      {component}
-    </BrowserRouter>
-  );
+  return render(<BrowserRouter>{component}</BrowserRouter>);
 };
 
 describe('SignUp Page', () => {
@@ -39,10 +35,11 @@ describe('SignUp Page', () => {
     renderWithRouter(<SignUp />);
     expect(screen.getByText('Join AREA')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Enter your email')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Create a password')).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText('Create a password'),
+    ).toBeInTheDocument();
     expect(screen.getByText('Create Account')).toBeInTheDocument();
   });
-
 
   it('renders Google sign up button', () => {
     renderWithRouter(<SignUp />);

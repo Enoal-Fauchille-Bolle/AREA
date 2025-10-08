@@ -13,11 +13,7 @@ vi.mock('react-router-dom', async () => {
 });
 
 const renderWithRouter = (component: React.ReactElement) => {
-  return render(
-    <BrowserRouter>
-      {component}
-    </BrowserRouter>
-  );
+  return render(<BrowserRouter>{component}</BrowserRouter>);
 };
 
 describe('Login Page', () => {
@@ -39,7 +35,9 @@ describe('Login Page', () => {
     renderWithRouter(<Login />);
     expect(screen.getByText('Welcome Back')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Enter your email')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Enter your password')).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText('Enter your password'),
+    ).toBeInTheDocument();
     expect(screen.getByText('Sign In')).toBeInTheDocument();
   });
 
