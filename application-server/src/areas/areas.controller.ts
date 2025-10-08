@@ -7,20 +7,24 @@ import {
   Param,
   Delete,
   Request,
+  UseGuards,
+  UnauthorizedException,
   // HttpCode,
   // HttpStatus,
 } from '@nestjs/common';
 import { AreasService } from './areas.service';
 import { CreateAreaDto, UpdateAreaDto, AreaResponseDto } from './dto';
 import { parseIdParam } from '../common/constants';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('areas')
+@UseGuards(JwtAuthGuard)
 export class AreasController {
   constructor(private readonly areasService: AreasService) {}
 
   @Post('create-with-parameters')
   async createWithParameters(
-    @Request() req: { user?: { id: number } },
+    @Request() req: { user: { id: number } },
     @Body()
     createAreaData: {
       area: CreateAreaDto;
@@ -28,7 +32,10 @@ export class AreasController {
     },
   ) {
     try {
-      const userId = req.user?.id || 1;
+      if (!req.user?.id) {
+        throw new UnauthorizedException('User not authenticated');
+      }
+      const userId = req.user.id;
       console.log('Controller: Creating area with parameters', {
         userId,
         createAreaData,
@@ -49,11 +56,14 @@ export class AreasController {
 
   @Post()
   async create(
-    @Request() req: { user?: { id: number } },
+    @Request() req: { user: { id: number } },
     @Body() createAreaDto: CreateAreaDto,
   ) {
     try {
-      const userId = req.user?.id || 1;
+      if (!req.user?.id) {
+        throw new UnauthorizedException('User not authenticated');
+      }
+      const userId = req.user.id;
       console.log('Controller: Creating area', { userId, createAreaDto });
       const area = await this.areasService.create(userId, createAreaDto);
       console.log('Controller: Area created', area);
@@ -66,9 +76,12 @@ export class AreasController {
   }
 
   @Get()
-  async findAll(@Request() req: { user?: { id: number } }) {
+  async findAll(@Request() req: { user: { id: number } }) {
     try {
-      const userId = req.user?.id || 1;
+      if (!req.user?.id) {
+        throw new UnauthorizedException('User not authenticated');
+      }
+      const userId = req.user.id;
       const areas = await this.areasService.findAll(userId);
       return areas;
     } catch (error) {
@@ -81,10 +94,13 @@ export class AreasController {
   @Get(':id')
   async findOne(
     @Param('id') id: string,
-    @Request() req: { user?: { id: number } },
+    @Request() req: { user: { id: number } },
   ) {
     try {
-      const userId = req.user?.id || 1;
+      if (!req.user?.id) {
+        throw new UnauthorizedException('User not authenticated');
+      }
+      const userId = req.user.id;
       const parsedId = parseIdParam(id);
       if (isNaN(parsedId)) {
         throw new Error('Invalid ID format');
@@ -100,16 +116,19 @@ export class AreasController {
   @Patch(':id')
   async update(
     @Param('id') id: string,
-    @Request() req: { user?: { id: number } },
+    @Request() req: { user: { id: number } },
     @Body() updateAreaDto: UpdateAreaDto,
   ): Promise<AreaResponseDto> {
+    if (!req.user?.id) {
+      throw new UnauthorizedException('User not authenticated');
+    }
     const parsedId = parseIdParam(id);
     if (isNaN(parsedId)) {
       throw new Error('Invalid ID format');
     }
     const area = await this.areasService.update(
       parsedId,
-      req.user?.id || 1,
+      req.user.id,
       updateAreaDto,
     );
     return new AreaResponseDto(area);
@@ -118,10 +137,13 @@ export class AreasController {
   @Delete(':id')
   async remove(
     @Param('id') id: string,
-    @Request() req: { user?: { id: number } },
+    @Request() req: { user: { id: number } },
   ) {
     try {
-      const userId = req.user?.id || 1;
+      if (!req.user?.id) {
+        throw new UnauthorizedException('User not authenticated');
+      }
+      const userId = req.user.id;
       const parsedId = parseIdParam(id);
       if (isNaN(parsedId)) {
         throw new Error('Invalid ID format');
@@ -137,15 +159,18 @@ export class AreasController {
   @Patch(':id/toggle')
   async toggleActive(
     @Param('id') id: string,
-    @Request() req: { user?: { id: number } },
+    @Request() req: { user: { id: number } },
   ): Promise<AreaResponseDto> {
+    if (!req.user?.id) {
+      throw new UnauthorizedException('User not authenticated');
+    }
     const parsedId = parseIdParam(id);
     if (isNaN(parsedId)) {
       throw new Error('Invalid ID format');
     }
     const area = await this.areasService.toggleActive(
       parsedId,
-      req.user?.id || 1,
+      req.user.id,
     );
     return new AreaResponseDto(area);
   }
