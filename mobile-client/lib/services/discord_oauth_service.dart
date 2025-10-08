@@ -3,10 +3,15 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class DiscordOAuthService {
-  static const String clientId = '1424743637777907742';
+  static String get clientId =>
+      dotenv.env['DISCORD_CLIENT_ID'] ?? '1424743637777907742';
 
   // Use the backend URL from environment variables
   static String get redirectUri {
+    // Allow explicit override via DISCORD_REDIRECT_URI, otherwise construct from URL_BASE and PORT
+    final explicit = dotenv.env['DISCORD_REDIRECT_URI'];
+    if (explicit != null && explicit.isNotEmpty) return explicit;
+
     final baseUrl = dotenv.env['URL_BASE'] ?? 'http://10.84.107.120';
     final port = dotenv.env['PORT'] ?? '3000';
     return '$baseUrl:$port/auth/discord/callback';
