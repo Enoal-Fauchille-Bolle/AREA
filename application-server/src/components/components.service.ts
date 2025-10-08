@@ -124,21 +124,13 @@ export class ComponentsService {
     const response: ComponentResponseDto = {
       id: component.id,
       service_id: component.service_id,
-      type: component.type,
+      kind: component.type,
       name: component.name,
       description: component.description,
       is_active: component.is_active,
       webhook_endpoint: component.webhook_endpoint,
       polling_interval: component.polling_interval,
     };
-
-    if (component.service) {
-      response.service = {
-        id: component.service.id,
-        name: component.service.name,
-        description: component.service.description,
-      };
-    }
 
     return response;
   }
