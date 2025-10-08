@@ -35,14 +35,17 @@ export function validateEnv(config: Record<string, unknown>) {
   if (env.NODE_ENV === 'production') {
     if (!env.JWT_SECRET) {
       throw new ConfigurationException('JWT_SECRET must be set in production.');
-    } else {
-      console.warn('WARNING: Using default JWT secret for development.');
     }
     if (!env.DISCORD_CLIENT_ID || !env.DISCORD_CLIENT_SECRET) {
       throw new ConfigurationException(
         'Discord OAuth2 must be set in production.',
       );
-    } else {
+    }
+  } else {
+    if (!env.JWT_SECRET) {
+      console.warn('WARNING: Using default JWT secret for development.');
+    }
+    if (!env.DISCORD_CLIENT_ID || !env.DISCORD_CLIENT_SECRET) {
       console.warn('WARNING: Discord OAuth2 not set; server may crash.');
     }
   }

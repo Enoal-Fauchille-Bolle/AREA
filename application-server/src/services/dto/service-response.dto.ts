@@ -35,7 +35,7 @@ export class ServiceResponseDto {
   icon_url: string | null;
 
   @ApiProperty({
-    description: 'Whether service requires OAuth2 authentification',
+    description: 'Whether service requires OAuth2 authentication',
     example: false,
     default: DB_DEFAULTS.requiresAuth,
   })

@@ -175,7 +175,11 @@ export class ServicesService {
         await this.userServiceRepository.save(userService);
       }
     } else if (!existing) {
-      throw new BadRequestException('Invalid request body');
+      throw new BadRequestException(
+        service.name.toLowerCase() === 'discord'
+          ? 'Discord service requires OAuth2 authentication code.'
+          : `Cannot link service "${service.name}". The service may require authentication or is not supported for linking.`,
+      );
     }
   }
 
