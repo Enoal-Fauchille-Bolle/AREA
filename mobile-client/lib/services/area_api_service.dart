@@ -59,7 +59,51 @@ class AreaApiService {
     }
   }
 
-  // Create a new area
+  // Create a new area with parameters
+  Future<Map<String, dynamic>> createAreaWithParameters({
+    required String name,
+    String? description,
+    required int componentActionId,
+    required int componentReactionId,
+    required Map<String, String> parameters,
+    bool isActive = true,
+  }) async {
+    try {
+      final headers = await _authService.getAuthHeaders();
+      print('Creating area with parameters: $headers');
+
+      final body = {
+        'area': {
+          'name': name,
+          'description': description,
+          'component_action_id': componentActionId,
+          'component_reaction_id': componentReactionId,
+          'is_active': isActive,
+        },
+        'parameters': parameters,
+      };
+      print('Creating area with body: ${jsonEncode(body)}');
+
+      final response = await http.post(
+        Uri.parse('$baseUrl:$port/areas/create-with-parameters'),
+        headers: headers,
+        body: jsonEncode(body),
+      );
+
+      print('Create area response status: ${response.statusCode}');
+      print('Create area response body: ${response.body}');
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+      throw Exception('Failed to create AREA: ${response.statusCode}');
+    } catch (e) {
+      print('Create area error: $e');
+      rethrow;
+    }
+  }
+
+  // Create a new area (simple version without parameters)
   Future<Map<String, dynamic>> createArea({
     required String name,
     String? description,

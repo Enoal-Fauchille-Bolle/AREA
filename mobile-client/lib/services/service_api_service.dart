@@ -137,6 +137,36 @@ class ServiceApiService {
     }
   }
 
+  // Get variables/parameters for a component
+  Future<List<Map<String, dynamic>>> fetchComponentVariables(
+      int componentId) async {
+    try {
+      print('Fetching variables for component ID: $componentId');
+      final headers = await _authService.getAuthHeaders();
+      final url = '$baseUrl:$port/variables/component/$componentId';
+      print('Request URL: $url');
+
+      final response = await http.get(
+        Uri.parse(url),
+        headers: headers,
+      );
+
+      print('Fetch variables response status: ${response.statusCode}');
+      print('Fetch variables response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final body = jsonDecode(response.body);
+        final variables = _extractList(body);
+        print('Extracted ${variables.length} variables');
+        return variables;
+      }
+      throw Exception('Failed to load variables: ${response.statusCode}');
+    } catch (e) {
+      print('Fetch variables error: $e');
+      rethrow;
+    }
+  }
+
   // Get services linked to the authenticated user
   Future<List<Map<String, dynamic>>> fetchUserServices() async {
     try {
