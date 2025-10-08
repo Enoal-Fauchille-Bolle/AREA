@@ -83,25 +83,36 @@ class _SignUpPageState extends State<SignUpPage> {
 
   String? _validateEmail(String? value) {
     if (value == null || value.isEmpty) return 'Enter your email';
-    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value))
+    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
       return 'Invalid email';
+    }
     return null;
   }
 
   String? _validateUsername(String? value) {
-    if (value == null || value.isEmpty) return 'Enter your username';
-    if (value.length < 3) return 'Min 3 characters';
+    if (value == null || value.isEmpty) {
+      return 'Enter your username';
+    }
+    if (value.length < 3) {
+      return 'Min 3 characters';
+    }
     return null;
   }
 
   String? _validatePassword(String? value) {
-    if (value == null || value.isEmpty) return 'Enter your password';
-    if (value.length < 6) return 'Min 6 characters';
+    if (value == null || value.isEmpty) {
+      return 'Enter your password';
+    }
+    if (value.length < 6) {
+      return 'Min 6 characters';
+    }
     return null;
   }
 
   String? _validateConfirm(String? value) {
-    if (value != _passwordController.text) return 'Passwords do not match';
+    if (value != _passwordController.text) {
+      return 'Passwords do not match';
+    }
     return null;
   }
 

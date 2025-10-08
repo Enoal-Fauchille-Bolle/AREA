@@ -4,15 +4,14 @@ import 'pages/welcome_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Load environment variables
   try {
     await dotenv.load(fileName: ".env");
   } catch (e) {
-    print('Error loading .env file: $e');
     // Continue with default values if .env file doesn't exist
   }
-  
+
   runApp(const MyApp());
 }
 

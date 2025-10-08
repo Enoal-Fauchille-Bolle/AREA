@@ -16,7 +16,7 @@ class WelcomePage extends StatelessWidget {
           padding: const EdgeInsets.all(24.0),
           child: Center(
             child: ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: 800),
+              constraints: const BoxConstraints(maxWidth: 800),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -95,7 +95,7 @@ class WelcomePage extends StatelessWidget {
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (context) =>
-                              ActionsReactionsPage(guestMode: true),
+                              const ActionsReactionsPage(guestMode: true),
                         ),
                       );
                     },

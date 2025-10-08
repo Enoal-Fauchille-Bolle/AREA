@@ -44,7 +44,7 @@ class _ComponentSelectorState extends State<ComponentSelector> {
         ),
         prefixIcon: const Icon(Icons.layers),
       ),
-      value: _selectedComponent,
+      initialValue: _selectedComponent,
       menuMaxHeight: 300, // Limit dropdown menu height to prevent overflow
       items: widget.components.map((component) {
         return DropdownMenuItem<Map<String, dynamic>>(
@@ -82,17 +82,20 @@ class _ComponentSelectorState extends State<ComponentSelector> {
                 margin: const EdgeInsets.only(left: 8),
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: component['type'] == 'action'
+                  color: (component['type'] ?? component['kind']) == 'action'
                       ? Colors.blue[100]
                       : Colors.green[100],
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  component['type']?.toString().toUpperCase() ?? '',
+                  (component['type'] ?? component['kind'])
+                          ?.toString()
+                          .toUpperCase() ??
+                      '',
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    color: component['type'] == 'action'
+                    color: (component['type'] ?? component['kind']) == 'action'
                         ? Colors.blue[700]
                         : Colors.green[700],
                   ),

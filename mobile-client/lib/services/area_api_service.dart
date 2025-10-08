@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'auth_service.dart';
+import '../utils/app_logger.dart';
 
 class AreaApiService {
   final String baseUrl = dotenv.env['URL_BASE'] ?? 'http://10.84.107.120';
@@ -12,35 +13,35 @@ class AreaApiService {
   Future<List<Map<String, dynamic>>> fetchAreas() async {
     try {
       final headers = await _authService.getAuthHeaders();
-      print('Fetching areas with headers: $headers');
+      AppLogger.log('Fetching areas with headers: $headers');
 
       final response = await http.get(
         Uri.parse('$baseUrl:$port/areas'),
         headers: headers,
       );
 
-      print('Fetch areas response status: ${response.statusCode}');
-      print('Fetch areas response body: ${response.body}');
+      AppLogger.log('Fetch areas response status: ${response.statusCode}');
+      AppLogger.log('Fetch areas response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
-        print('Decoded body type: ${body.runtimeType}');
+        AppLogger.log('Decoded body type: ${body.runtimeType}');
 
         // The endpoint might return {areas: [...]} or just [...]
         if (body is List) {
-          print('Found ${body.length} areas');
+          AppLogger.log('Found ${body.length} areas');
           return body.cast<Map<String, dynamic>>();
         } else if (body is Map && body['areas'] is List) {
           final areas = (body['areas'] as List).cast<Map<String, dynamic>>();
-          print('Found ${areas.length} areas in wrapper');
+          AppLogger.log('Found ${areas.length} areas in wrapper');
           return areas;
         }
-        print('No areas found in response');
+        AppLogger.log('No areas found in response');
         return [];
       }
       throw Exception('Failed to fetch areas: ${response.statusCode}');
     } catch (e) {
-      print('Fetch areas error: $e');
+      AppLogger.error('Fetch areas error: $e');
       rethrow;
     }
   }
@@ -70,7 +71,7 @@ class AreaApiService {
   }) async {
     try {
       final headers = await _authService.getAuthHeaders();
-      print('Creating area with parameters: $headers');
+      AppLogger.log('Creating area with parameters: $headers');
 
       final body = {
         'area': {
@@ -82,7 +83,7 @@ class AreaApiService {
         },
         'parameters': parameters,
       };
-      print('Creating area with body: ${jsonEncode(body)}');
+      AppLogger.log('Creating area with body: ${jsonEncode(body)}');
 
       final response = await http.post(
         Uri.parse('$baseUrl:$port/areas/create-with-parameters'),
@@ -90,15 +91,15 @@ class AreaApiService {
         body: jsonEncode(body),
       );
 
-      print('Create area response status: ${response.statusCode}');
-      print('Create area response body: ${response.body}');
+      AppLogger.log('Create area response status: ${response.statusCode}');
+      AppLogger.log('Create area response body: ${response.body}');
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         return jsonDecode(response.body);
       }
       throw Exception('Failed to create AREA: ${response.statusCode}');
     } catch (e) {
-      print('Create area error: $e');
+      AppLogger.error('Create area error: $e');
       rethrow;
     }
   }
@@ -113,7 +114,7 @@ class AreaApiService {
   }) async {
     try {
       final headers = await _authService.getAuthHeaders();
-      print('Creating area with headers: $headers');
+      AppLogger.log('Creating area with headers: $headers');
 
       final body = {
         'name': name,
@@ -122,7 +123,7 @@ class AreaApiService {
         'component_reaction_id': componentReactionId,
         'is_active': isActive,
       };
-      print('Creating area with body: ${jsonEncode(body)}');
+      AppLogger.log('Creating area with body: ${jsonEncode(body)}');
 
       final response = await http.post(
         Uri.parse('$baseUrl:$port/areas'),
@@ -130,15 +131,15 @@ class AreaApiService {
         body: jsonEncode(body),
       );
 
-      print('Create area response status: ${response.statusCode}');
-      print('Create area response body: ${response.body}');
+      AppLogger.log('Create area response status: ${response.statusCode}');
+      AppLogger.log('Create area response body: ${response.body}');
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         return jsonDecode(response.body);
       }
       throw Exception('Failed to create AREA: ${response.statusCode}');
     } catch (e) {
-      print('Create area error: $e');
+      AppLogger.error('Create area error: $e');
       rethrow;
     }
   }
@@ -183,7 +184,7 @@ class AreaApiService {
         throw Exception('Failed to update area: ${response.statusCode}');
       }
     } catch (e) {
-      print('Update area error: $e');
+      AppLogger.error('Update area error: $e');
       rethrow;
     }
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/service_api_service.dart';
 import '../services/discord_oauth_service.dart';
 import '../widgets/service_card.dart';
+import '../utils/app_logger.dart';
 
 class ServicesPage extends StatefulWidget {
   const ServicesPage({super.key});
@@ -40,12 +41,12 @@ class _ServicesPageState extends State<ServicesPage> {
           .where((id) => id.isNotEmpty)
           .toSet();
 
-      print('Loaded ${services.length} services');
-      print('Linked service IDs: $_linkedServiceIds');
+      AppLogger.log('Loaded ${services.length} services');
+      AppLogger.log('Linked service IDs: $_linkedServiceIds');
 
       return services;
     } catch (e) {
-      print('Error loading services: $e');
+      AppLogger.error('Error loading services: $e');
       rethrow;
     }
   }
@@ -77,7 +78,7 @@ class _ServicesPageState extends State<ServicesPage> {
               return;
             }
 
-            print('Got Discord authorization code, linking service...');
+            AppLogger.log('Got Discord authorization code, linking service...');
 
             // Link service with the authorization code
             success = await _serviceApi.linkService(serviceId, code: code);
@@ -112,7 +113,7 @@ class _ServicesPageState extends State<ServicesPage> {
         );
       }
     } catch (e) {
-      print('Link toggle error: $e');
+      AppLogger.error('Link toggle error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

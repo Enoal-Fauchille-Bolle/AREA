@@ -58,8 +58,7 @@ class _DiscordOAuthWebViewState extends State<_DiscordOAuthWebView> {
           onPageFinished: (url) {
             setState(() => _isLoading = false);
           },
-          onWebResourceError: (error) {
-          },
+          onWebResourceError: (error) {},
         ),
       )
       ..loadRequest(Uri.parse(widget.authUrl));

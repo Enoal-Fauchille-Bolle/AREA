@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../utils/app_logger.dart';
 
 class AuthService {
   final String baseUrl = dotenv.env['URL_BASE'] ?? 'http://10.84.107.120';
@@ -59,7 +60,7 @@ class AuthService {
       }
       return false;
     } catch (e) {
-      print('Login error: $e');
+      AppLogger.error('Login error: $e');
       return false;
     }
   }
@@ -84,7 +85,7 @@ class AuthService {
       }
       return false;
     } catch (e) {
-      print('OAuth2 login error: $e');
+      AppLogger.error('OAuth2 login error: $e');
       return false;
     }
   }
@@ -110,7 +111,7 @@ class AuthService {
       }
       return false;
     } catch (e) {
-      print('Register error: $e');
+      AppLogger.error('Register error: $e');
       return false;
     }
   }
@@ -135,7 +136,7 @@ class AuthService {
       }
       return false;
     } catch (e) {
-      print('OAuth2 register error: $e');
+      AppLogger.error('OAuth2 register error: $e');
       return false;
     }
   }
@@ -160,7 +161,7 @@ class AuthService {
       }
       return null;
     } catch (e) {
-      print('Fetch profile error: $e');
+      AppLogger.error('Fetch profile error: $e');
       return null;
     }
   }
@@ -198,7 +199,7 @@ class AuthService {
       }
       return false;
     } catch (e) {
-      print('Update profile error: $e');
+      AppLogger.error('Update profile error: $e');
       return false;
     }
   }
@@ -222,7 +223,7 @@ class AuthService {
       }
       return false;
     } catch (e) {
-      print('Delete account error: $e');
+      AppLogger.error('Delete account error: $e');
       return false;
     }
   }

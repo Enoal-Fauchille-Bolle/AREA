@@ -19,24 +19,19 @@ class _ActionsReactionsPageState extends State<ActionsReactionsPage> {
   @override
   void initState() {
     super.initState();
-    print('ActionsReactionsPage: initState - loading areas');
     _areasFuture = api.fetchAreas();
   }
 
   void _refreshAreas() {
-    print('ActionsReactionsPage: refreshing areas');
     setState(() {
       _areasFuture = api.fetchAreas();
     });
   }
 
   Future<void> _handleCreate() async {
-    print('ActionsReactionsPage: navigating to create page');
-    final result = await Navigator.of(context).push(
+    await Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const CreateActionReactionPage()),
     );
-    print(
-        'ActionsReactionsPage: returned from create page with result: $result');
     _refreshAreas();
   }
 

@@ -123,9 +123,9 @@ class _LoginPageState extends State<LoginPage> {
                   Text(
                     'Welcome Back',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey[800],
-                    ),
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey[800],
+                        ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),

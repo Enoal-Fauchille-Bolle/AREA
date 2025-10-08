@@ -4,6 +4,7 @@ import '../services/service_api_service.dart';
 import '../widgets/component_selector.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/custom_button.dart';
+import '../utils/app_logger.dart';
 
 class CreateActionReactionPage extends StatefulWidget {
   const CreateActionReactionPage({super.key});
@@ -50,7 +51,8 @@ class _CreateActionReactionPageState extends State<CreateActionReactionPage> {
   Future<void> _loadComponentVariables(int componentId, bool isAction) async {
     try {
       final variables = await _serviceApi.fetchComponentVariables(componentId);
-      print('Loaded ${variables.length} variables for component $componentId');
+      AppLogger.log(
+          'Loaded ${variables.length} variables for component $componentId');
 
       setState(() {
         if (isAction) {
@@ -68,7 +70,7 @@ class _CreateActionReactionPageState extends State<CreateActionReactionPage> {
         }
       });
     } catch (e) {
-      print('Error loading component variables: $e');
+      AppLogger.error('Error loading component variables: $e');
     }
   }
 
@@ -148,7 +150,8 @@ class _CreateActionReactionPageState extends State<CreateActionReactionPage> {
 
       // Get all linked services
       final services = await _serviceApi.fetchUserServices();
-      print('Loaded ${services.length} linked services for creating AREA');
+      AppLogger.log(
+          'Loaded ${services.length} linked services for creating AREA');
 
       // Fetch actions and reactions for each service
       final List<Map<String, dynamic>> actions = [];
@@ -159,20 +162,21 @@ class _CreateActionReactionPageState extends State<CreateActionReactionPage> {
           // User service records have 'service_id', not 'id'
           final serviceId = service['service_id'];
           if (serviceId == null) {
-            print('Skipping service with null service_id');
+            AppLogger.log('Skipping service with null service_id');
             continue;
           }
 
-          print('Loading components for service ID: $serviceId');
+          AppLogger.log('Loading components for service ID: $serviceId');
           final components = await _serviceApi.fetchServiceComponents(
             serviceId.toString(),
           );
 
-          print('Got ${components.length} components for service $serviceId');
+          AppLogger.log(
+              'Got ${components.length} components for service $serviceId');
           for (final component in components) {
             // Backend uses 'kind' field, not 'type'
             final componentType = component['kind'] ?? component['type'];
-            print(
+            AppLogger.log(
                 'Component kind: $componentType, id: ${component['id']}, name: ${component['name']}');
             if (componentType == 'action') {
               actions.add(component);
@@ -181,13 +185,12 @@ class _CreateActionReactionPageState extends State<CreateActionReactionPage> {
             }
           }
         } catch (e) {
-          print(
+          AppLogger.error(
               'Error loading components for service ${service['service_id']}: $e');
           // Continue to next service instead of failing completely
         }
       }
-
-      print(
+      AppLogger.log(
           'Loaded ${actions.length} actions and ${reactions.length} reactions');
       setState(() {
         _availableActions = actions;
@@ -236,7 +239,7 @@ class _CreateActionReactionPageState extends State<CreateActionReactionPage> {
         }
       }
 
-      print(
+      AppLogger.log(
           'Creating AREA with action ID: $actionId, reaction ID: $reactionId, parameters: $parameters');
 
       final result = await _areaApi.createAreaWithParameters(
@@ -249,7 +252,7 @@ class _CreateActionReactionPageState extends State<CreateActionReactionPage> {
         parameters: parameters,
         isActive: true,
       );
-      print('AREA created successfully: $result');
+      AppLogger.log('AREA created successfully: $result');
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -258,7 +261,7 @@ class _CreateActionReactionPageState extends State<CreateActionReactionPage> {
         Navigator.of(context).pop(true);
       }
     } catch (e) {
-      print('Error creating AREA: $e');
+      AppLogger.error('Error creating AREA: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
