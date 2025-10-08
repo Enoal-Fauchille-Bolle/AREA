@@ -10,12 +10,38 @@ class AreaApiService {
 
   // Fetch all areas
   Future<List<Map<String, dynamic>>> fetchAreas() async {
-    final response = await http.get(Uri.parse('$baseUrl:$port/areas'));
-    if (response.statusCode == 200) {
-      final List data = jsonDecode(response.body);
-      return data.cast<Map<String, dynamic>>();
-    } else {
+    try {
+      final headers = await _authService.getAuthHeaders();
+      print('Fetching areas with headers: $headers');
+
+      final response = await http.get(
+        Uri.parse('$baseUrl:$port/areas'),
+        headers: headers,
+      );
+
+      print('Fetch areas response status: ${response.statusCode}');
+      print('Fetch areas response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final body = jsonDecode(response.body);
+        print('Decoded body type: ${body.runtimeType}');
+
+        // The endpoint might return {areas: [...]} or just [...]
+        if (body is List) {
+          print('Found ${body.length} areas');
+          return body.cast<Map<String, dynamic>>();
+        } else if (body is Map && body['areas'] is List) {
+          final areas = (body['areas'] as List).cast<Map<String, dynamic>>();
+          print('Found ${areas.length} areas in wrapper');
+          return areas;
+        }
+        print('No areas found in response');
+        return [];
+      }
       throw Exception('Failed to fetch areas: ${response.statusCode}');
+    } catch (e) {
+      print('Fetch areas error: $e');
+      rethrow;
     }
   }
 
@@ -37,23 +63,33 @@ class AreaApiService {
   Future<Map<String, dynamic>> createArea({
     required String name,
     String? description,
-    required List<Map<String, dynamic>> components,
+    required int componentActionId,
+    required int componentReactionId,
     bool isActive = true,
   }) async {
     try {
       final headers = await _authService.getAuthHeaders();
+      print('Creating area with headers: $headers');
+
+      final body = {
+        'name': name,
+        'description': description,
+        'component_action_id': componentActionId,
+        'component_reaction_id': componentReactionId,
+        'is_active': isActive,
+      };
+      print('Creating area with body: ${jsonEncode(body)}');
+
       final response = await http.post(
-        Uri.parse('$baseUrl/areas'),
+        Uri.parse('$baseUrl:$port/areas'),
         headers: headers,
-        body: jsonEncode({
-          'name': name,
-          'description': description,
-          'components': components,
-          'is_active': isActive,
-        }),
+        body: jsonEncode(body),
       );
 
-      if (response.statusCode == 201) {
+      print('Create area response status: ${response.statusCode}');
+      print('Create area response body: ${response.body}');
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
         return jsonDecode(response.body);
       }
       throw Exception('Failed to create AREA: ${response.statusCode}');

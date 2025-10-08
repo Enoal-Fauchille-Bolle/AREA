@@ -66,15 +66,15 @@ class ServiceApiService {
     try {
       final headers = await _authService.getAuthHeaders();
       final response = await http.get(
-        Uri.parse('$baseUrl:$port/services/$serviceId/actions'),
+        Uri.parse('$baseUrl:$port/components/service/$serviceId/actions'),
         headers: headers,
       );
 
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
-        return _extractList(body, key: 'actions');
+        return _extractList(body);
       }
-      throw Exception('Failed to load actions');
+      throw Exception('Failed to load actions: ${response.statusCode}');
     } catch (e) {
       print('Fetch actions error: $e');
       rethrow;
@@ -87,15 +87,15 @@ class ServiceApiService {
     try {
       final headers = await _authService.getAuthHeaders();
       final response = await http.get(
-        Uri.parse('$baseUrl:$port/services/$serviceId/reactions'),
+        Uri.parse('$baseUrl:$port/components/service/$serviceId/reactions'),
         headers: headers,
       );
 
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
-        return _extractList(body, key: 'reactions');
+        return _extractList(body);
       }
-      throw Exception('Failed to load reactions');
+      throw Exception('Failed to load reactions: ${response.statusCode}');
     } catch (e) {
       print('Fetch reactions error: $e');
       rethrow;
@@ -108,15 +108,16 @@ class ServiceApiService {
     try {
       final headers = await _authService.getAuthHeaders();
       final response = await http.get(
-        Uri.parse('$baseUrl:$port/services/$serviceId/components'),
+        Uri.parse('$baseUrl:$port/components/service/$serviceId'),
         headers: headers,
       );
 
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
-        return _extractList(body, key: 'components');
+        // The endpoint returns an array directly
+        return _extractList(body);
       }
-      throw Exception('Failed to load components');
+      throw Exception('Failed to load components: ${response.statusCode}');
     } catch (e) {
       print('Fetch components error: $e');
       rethrow;
@@ -126,17 +127,29 @@ class ServiceApiService {
   // Get services linked to the authenticated user
   Future<List<Map<String, dynamic>>> fetchUserServices() async {
     try {
+      // Get the current user's data to extract the user ID
+      final userData = await _authService.getUserData();
+      if (userData == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final userId = userData['id'];
+      if (userId == null) {
+        throw Exception('User ID not found');
+      }
+
       final headers = await _authService.getAuthHeaders();
       final response = await http.get(
-        Uri.parse('$baseUrl:$port/services/me'),
+        Uri.parse('$baseUrl:$port/user-services/user/$userId'),
         headers: headers,
       );
 
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
-        return _extractList(body, key: 'services');
+        // The endpoint returns an array directly, not wrapped in an object
+        return _extractList(body);
       }
-      throw Exception('Failed to load user services');
+      throw Exception('Failed to load user services: ${response.statusCode}');
     } catch (e) {
       print('Fetch user services error: $e');
       rethrow;
@@ -146,16 +159,39 @@ class ServiceApiService {
   // Link a service to the authenticated user
   Future<bool> linkService(String serviceId, {String? code}) async {
     try {
+      // Get the current user's data to extract the user ID
+      final userData = await _authService.getUserData();
+      if (userData == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final userId = userData['id'];
+      if (userId == null) {
+        throw Exception('User ID not found');
+      }
+
       final headers = await _authService.getAuthHeaders();
-      final body = code != null ? jsonEncode({'code': code}) : null;
+
+      // Create the user-service link
+      final body = {
+        'user_id': userId,
+        'service_id': int.parse(serviceId),
+        'oauth_token': code ?? '', // Use empty string if no code provided
+      };
 
       final response = await http.post(
-        Uri.parse('$baseUrl:$port/services/$serviceId/link'),
+        Uri.parse('$baseUrl:$port/user-services'),
         headers: headers,
-        body: body,
+        body: jsonEncode(body),
       );
 
-      return response.statusCode == 204 || response.statusCode == 200;
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        return true;
+      }
+
+      print('Link service failed with status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+      return false;
     } catch (e) {
       print('Link service error: $e');
       return false;
@@ -165,13 +201,30 @@ class ServiceApiService {
   // Unlink a service from the authenticated user
   Future<bool> unlinkService(String serviceId) async {
     try {
+      // Get the current user's data to extract the user ID
+      final userData = await _authService.getUserData();
+      if (userData == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final userId = userData['id'];
+      if (userId == null) {
+        throw Exception('User ID not found');
+      }
+
       final headers = await _authService.getAuthHeaders();
       final response = await http.delete(
-        Uri.parse('$baseUrl:$port/services/$serviceId/unlink'),
+        Uri.parse('$baseUrl:$port/user-services/connection/$userId/$serviceId'),
         headers: headers,
       );
 
-      return response.statusCode == 204 || response.statusCode == 200;
+      if (response.statusCode == 204 || response.statusCode == 200) {
+        return true;
+      }
+
+      print('Unlink service failed with status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+      return false;
     } catch (e) {
       print('Unlink service error: $e');
       return false;
