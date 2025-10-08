@@ -1,237 +1,106 @@
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { appIcons } from '../../lib/appIcons';
+
 function App() {
+  const [fontLoaded, setFontLoaded] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const checkFontLoaded = () => {
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(() => {
+          setFontLoaded(true);
+        });
+      } else {
+        setTimeout(() => setFontLoaded(true), 100);
+      }
+    };
+
+    checkFontLoaded();
+  }, []);
+
+  const handleGetStarted = () => {
+    navigate('/signup');
+  };
+
+  const handleLogin = () => {
+    navigate('/login');
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <div className="text-xl font-bold text-gray-800">AREA</div>
-            </div>
-            <div className="hidden md:block">
-              <div className="ml-10 flex items-baseline space-x-4">
-                <a
-                  href="#"
-                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-                >
-                  Home
-                </a>
-                <a
-                  href="#"
-                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-                >
-                  Services
-                </a>
-                <a
-                  href="#"
-                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-                >
-                  About
-                </a>
-                <a
-                  href="#"
-                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-                >
-                  Contact
-                </a>
+    <div
+      className={`min-h-screen bg-gray-900 relative overflow-hidden ${fontLoaded ? 'font-loaded' : 'font-loading'}`}
+    >
+      <div className="absolute inset-0 opacity-10">
+        <div className="grid grid-cols-8 gap-8 p-6 transform rotate-9 scale-110">
+          {Array.from({ length: 64 }).map((_, i) => {
+            const appIndex = i % appIcons.length;
+            return (
+              <div
+                key={i}
+                className="w-16 h-16 bg-white rounded-lg flex items-center justify-center"
+              >
+                {appIcons[appIndex]}
               </div>
-            </div>
-            <div className="hidden md:block">
-              <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
-                Get Started
-              </button>
-            </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <header className="relative z-10 p-6">
+        <div className="flex justify-between items-center">
+          <div className="text-6xl font-black text-white select-none">AREA</div>
+          <div className="flex items-center space-x-8">
+            <button className="text-white hover:text-gray-300 text-lg transition-all duration-300 hover:scale-110 transform">
+              Explore
+            </button>
+            <button className="text-white hover:text-gray-300 text-lg transition-all duration-300 hover:scale-110 transform">
+              Plans
+            </button>
+            <button
+              onClick={handleLogin}
+              className="text-white hover:text-gray-300 text-lg transition-all duration-300 hover:scale-110 transform"
+            >
+              Log in
+            </button>
+            <button
+              onClick={handleGetStarted}
+              className="bg-white text-black px-8 py-3 rounded-full text-lg font-black hover:bg-gray-200 hover:scale-110 transform transition-all duration-300"
+            >
+              Get started
+            </button>
           </div>
         </div>
-      </nav>
+      </header>
 
-      <section className="bg-gradient-to-r from-blue-600 to-red-700 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+      <main className="relative z-10 flex items-center justify-center min-h-[60vh]">
+        <div className="text-center space-y-8">
+          <h1 className="text-7xl font-black text-white leading-tight max-w-4xl select-none">
+            Automate all your tasks easily with AREA
+          </h1>
+          <button
+            onClick={handleGetStarted}
+            className="bg-white text-black px-12 py-6 rounded-full text-2xl font-black hover:bg-gray-200 hover:scale-110 transform transition-all duration-300"
+          >
+            Start now
+          </button>
+        </div>
+      </main>
+
+      <section className="bg-white py-20 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">
-              Welcome to AREA
-            </h1>
-            <p className="text-xl md:text-2xl mb-8 text-blue-100 max-w-3xl mx-auto">
-              Building the future with innovative solutions and cutting-edge
-              technology
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
-                Learn More
-              </button>
-              <button className="border-2 border-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-blue-600 transition-colors">
-                Contact Us
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Our Services
+            <h2 className="text-4xl font-black text-black mb-6">
+              Connect your favorite apps
             </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              We provide comprehensive solutions tailored to meet your business
-              needs
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Build powerful automations between the tools you already use. Save
+              time and increase productivity with seamless integrations.
             </p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center p-6 rounded-lg border border-gray-200 hover:shadow-lg transition-shadow">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <svg
-                  className="w-6 h-6 text-blue-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M13 10V3L4 14h7v7l9-11h-7z"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                Fast Performance
-              </h3>
-              <p className="text-gray-600">
-                Lightning-fast solutions optimized for maximum efficiency
-              </p>
-            </div>
-            <div className="text-center p-6 rounded-lg border border-gray-200 hover:shadow-lg transition-shadow">
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <svg
-                  className="w-6 h-6 text-green-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                Reliable Security
-              </h3>
-              <p className="text-gray-600">
-                Enterprise-grade security to protect your valuable data
-              </p>
-            </div>
-            <div className="text-center p-6 rounded-lg border border-gray-200 hover:shadow-lg transition-shadow">
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <svg
-                  className="w-6 h-6 text-purple-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                24/7 Support
-              </h3>
-              <p className="text-gray-600">
-                Round-the-clock support from our expert team
-              </p>
-            </div>
           </div>
         </div>
       </section>
-
-      <footer className="bg-gray-900 text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div>
-              <h3 className="text-lg font-semibold mb-4">AREA</h3>
-              <p className="text-gray-400">
-                Innovative solutions for the modern world.
-              </p>
-            </div>
-            <div>
-              <h4 className="text-sm font-semibold mb-4 uppercase tracking-wide">
-                Company
-              </h4>
-              <ul className="space-y-2 text-gray-400">
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    About
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Careers
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Contact
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-sm font-semibold mb-4 uppercase tracking-wide">
-                Services
-              </h4>
-              <ul className="space-y-2 text-gray-400">
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Development
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Consulting
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Support
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-sm font-semibold mb-4 uppercase tracking-wide">
-                Connect
-              </h4>
-              <ul className="space-y-2 text-gray-400">
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Twitter
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    LinkedIn
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    GitHub
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 AREA. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

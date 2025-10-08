@@ -24,7 +24,7 @@ class InfoCard extends StatelessWidget {
     return Card(
       margin: margin,
       child: Padding(
-        padding: padding!,
+        padding: padding ?? const EdgeInsets.all(16),
         child: Column(
           children: [
             Icon(icon, size: 48, color: iconColor),

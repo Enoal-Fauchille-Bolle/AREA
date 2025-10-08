@@ -52,7 +52,7 @@ export class AreaExecutionsService {
 
   async findByAreaId(areaId: number): Promise<AreaExecutionResponseDto[]> {
     const executions = await this.areaExecutionRepository.find({
-      where: { area_id: areaId },
+      where: { areaId: areaId },
     });
     return executions.map(
       (execution) => new AreaExecutionResponseDto(execution),
@@ -108,8 +108,8 @@ export class AreaExecutionsService {
       status: ExecutionStatus.FAILED,
     };
 
-    if (areaId) {
-      whereCondition.area_id = areaId;
+    if (areaId !== undefined) {
+      whereCondition.areaId = areaId;
     }
 
     const executions = await this.areaExecutionRepository.find({
@@ -135,11 +135,11 @@ export class AreaExecutionsService {
     // Auto-calculate execution time if completing
     if (
       updateAreaExecutionDto.status === ExecutionStatus.SUCCESS &&
-      execution.started_at
+      execution.startedAt
     ) {
       const completedAt = updateAreaExecutionDto.completedAt || new Date();
       updateAreaExecutionDto.executionTimeMs =
-        completedAt.getTime() - execution.started_at.getTime();
+        completedAt.getTime() - execution.startedAt.getTime();
       updateAreaExecutionDto.completedAt = completedAt;
     }
 
@@ -197,7 +197,7 @@ export class AreaExecutionsService {
   }
 
   async removeByAreaId(areaId: number): Promise<void> {
-    await this.areaExecutionRepository.delete({ area_id: areaId });
+    await this.areaExecutionRepository.delete({ areaId: areaId });
   }
 
   async cleanup(olderThanDays: number = 30): Promise<number> {
