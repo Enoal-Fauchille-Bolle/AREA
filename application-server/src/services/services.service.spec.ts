@@ -428,7 +428,7 @@ describe('ServicesService', () => {
         BadRequestException,
       );
       await expect(service.linkService(1, 1)).rejects.toThrow(
-        'Invalid request body',
+        'Discord service requires OAuth2 authentication code',
       );
     });
 
