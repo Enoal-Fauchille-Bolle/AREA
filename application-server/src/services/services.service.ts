@@ -67,6 +67,7 @@ export class ServicesService {
       where: { is_active: true },
       order: { name: 'ASC' },
     });
+
     return services.map((service) =>
       ServiceResponseDto.fromEntity(service, this.configService),
     );
