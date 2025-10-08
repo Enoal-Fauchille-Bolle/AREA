@@ -1,4 +1,4 @@
-import { DB_COLUMN_LENGTHS, DB_DEFAULTS } from 'src/config';
+import { DB_COLUMN_LENGTHS, DB_DEFAULTS } from '../../config';
 import {
   Entity,
   PrimaryGeneratedColumn,

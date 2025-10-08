@@ -33,14 +33,14 @@ export class AppService {
         );
 
         const actions = components
-          .filter((component) => component.type === ComponentType.ACTION)
+          .filter((component) => component.kind === ComponentType.ACTION)
           .map((component) => ({
             name: component.name,
             description: component.description || '',
           }));
 
         const reactions = components
-          .filter((component) => component.type === ComponentType.REACTION)
+          .filter((component) => component.kind === ComponentType.REACTION)
           .map((component) => ({
             name: component.name,
             description: component.description || '',

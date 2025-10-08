@@ -22,6 +22,9 @@ async function bootstrap(): Promise<void> {
 
   const configService = app.get(ConfigService);
   const appConfig = configService.get<AppConfig>('app');
+  if (!appConfig) {
+    throw new Error('App configuration is not properly loaded');
+  }
   const port = appConfig.port;
 
   await app.listen(port);
