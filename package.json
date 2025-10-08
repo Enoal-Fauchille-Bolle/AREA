@@ -1,0 +1,52 @@
+{
+  "name": "area",
+  "version": "1.0.0",
+  "description": "An automation platform similar to IFTTT/Zapier that enables users to connect various services and create automated workflows through Actions and REActions.",
+  "license": "GNU v3",
+  "workspaces": [
+    "application-server",
+    "web-client",
+    "mobile-client"
+  ],
+  "scripts": {
+    "prepare": "husky",
+    "commit": "commit",
+    "dev:server": "npm run start:dev --workspace=application-server",
+    "dev:web": "npm run dev --workspace=web-client",
+    "dev:both": "concurrently \"npm run dev:server\" \"npm run dev:web\""
+  },
+  "lint-staged": {
+    "application-server/**/*.ts": [
+      "npm run format --workspace=application-server",
+      "npm run lint --workspace=application-server"
+    ],
+    "web-client/**/*.{ts,tsx}": [
+      "npm run format --workspace=web-client",
+      "npm run lint --workspace=web-client"
+    ],
+    "mobile-client/**/*.{ts,tsx}": [
+      "dart format --set-exit-if-changed -o none .",
+      "flutter analyze"
+    ]
+  },
+  "type": "commonjs",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Enoal-Fauchille-Bolle/AREA.git"
+  },
+  "directories": {
+    "doc": "docs"
+  },
+  "bugs": {
+    "url": "https://github.com/Enoal-Fauchille-Bolle/AREA/issues"
+  },
+  "homepage": "https://github.com/Enoal-Fauchille-Bolle/AREA#readme",
+  "devDependencies": {
+    "@commitlint/cli": "^20.1.0",
+    "@commitlint/config-conventional": "^20.0.0",
+    "@commitlint/prompt-cli": "^20.1.0",
+    "concurrently": "^9.2.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.3"
+  }
+}
