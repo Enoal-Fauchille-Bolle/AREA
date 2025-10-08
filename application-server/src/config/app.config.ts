@@ -35,7 +35,7 @@ export const appConfig = registerAs('app', () => ({
       clientSecret: process.env.DISCORD_CLIENT_SECRET,
       redirectUri:
         process.env.DISCORD_REDIRECT_URI ||
-        'http://localhost:3000/auth/discord/callback',
+        'http://localhost:8081/auth/discord/callback',
     },
   },
 }));

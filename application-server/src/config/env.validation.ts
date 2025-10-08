@@ -19,7 +19,7 @@ export const envValidationSchema = z.object({
   DISCORD_CLIENT_SECRET: z.string().optional(),
   DISCORD_REDIRECT_URI: z
     .string()
-    .default('http://localhost:3000/auth/discord/callback'),
+    .default('http://localhost:8081/auth/discord/callback'),
 });
 
 export function validateEnv(config: Record<string, unknown>) {
