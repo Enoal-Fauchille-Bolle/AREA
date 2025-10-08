@@ -3,7 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { UsersService } from '../../users/users.service';
-import type { AppConfig } from 'src/config';
+import type { AppConfig } from '../../config';
 
 export interface JwtPayload {
   sub: number;
@@ -18,6 +18,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     private configService: ConfigService,
   ) {
     const appConfig = configService.get<AppConfig>('app');
+    if (!appConfig) {
+      throw new Error('App configuration is not properly loaded');
+    }
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
