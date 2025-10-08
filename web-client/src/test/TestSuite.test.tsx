@@ -22,16 +22,18 @@ describe('Application Structure', () => {
     ];
 
     expect(pages.length).toBe(4);
-    return Promise.all(pages.map(pageImport => 
-      pageImport().then(module => {
-        expect(module.default).toBeDefined();
-        expect(typeof module.default).toBe('function');
-      })
-    ));
+    return Promise.all(
+      pages.map((pageImport) =>
+        pageImport().then((module) => {
+          expect(module.default).toBeDefined();
+          expect(typeof module.default).toBe('function');
+        }),
+      ),
+    );
   });
 
   it('has shared components', () => {
-    return import('../lib/appIcons').then(module => {
+    return import('../lib/appIcons').then((module) => {
       expect(module.appIcons).toBeDefined();
       expect(Array.isArray(module.appIcons)).toBe(true);
     });
@@ -42,12 +44,12 @@ describe('Test Coverage Report', () => {
   it('covers all main components', () => {
     const testFiles = [
       'App.test.tsx',
-      'Login.test.tsx', 
+      'Login.test.tsx',
       'SignUp.test.tsx',
       'UserProfile.test.tsx',
       'Integration.test.tsx',
       'AppIcons.test.tsx',
-      'Accessibility.test.tsx'
+      'Accessibility.test.tsx',
     ];
     expect(testFiles.length).toBe(7);
   });
@@ -58,14 +60,14 @@ describe('Test Coverage Report', () => {
       'Navigation and Routing',
       'User Interactions',
       'Form Handling',
-      'Search Functionality', 
+      'Search Functionality',
       'Accessibility',
       'Performance',
       'Responsive Design',
       'Shared Components',
-      'Integration Testing'
+      'Integration Testing',
     ];
-    
+
     expect(coverageAreas.length).toBeGreaterThanOrEqual(10);
   });
 });

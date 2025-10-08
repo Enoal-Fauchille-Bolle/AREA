@@ -7,11 +7,7 @@ import SignUp from '../app/pages/SignUp';
 import UserProfile from '../app/pages/UserProfile';
 
 const renderWithRouter = (component: React.ReactElement) => {
-  return render(
-    <BrowserRouter>
-      {component}
-    </BrowserRouter>
-  );
+  return render(<BrowserRouter>{component}</BrowserRouter>);
 };
 
 describe('Accessibility Tests', () => {
@@ -25,7 +21,7 @@ describe('Accessibility Tests', () => {
     it('has accessible buttons', () => {
       renderWithRouter(<App />);
       const buttons = screen.getAllByRole('button');
-      buttons.forEach(button => {
+      buttons.forEach((button) => {
         expect(button).toHaveAccessibleName();
       });
     });
@@ -142,15 +138,18 @@ describe('Performance Tests', () => {
 describe('Responsive Design Tests', () => {
   it('uses responsive CSS classes', () => {
     renderWithRouter(<UserProfile />);
-    const grid = document.querySelector('.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-3.xl\\:grid-cols-4');
+    const grid = document.querySelector(
+      '.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-3.xl\\:grid-cols-4',
+    );
     expect(grid).toBeInTheDocument();
   });
 
   it('has mobile-friendly touch targets', () => {
     renderWithRouter(<App />);
     const buttons = screen.getAllByRole('button');
-    const hasGoodPadding = buttons.some(button =>
-      button.className.includes('px-') || button.className.includes('py-')
+    const hasGoodPadding = buttons.some(
+      (button) =>
+        button.className.includes('px-') || button.className.includes('py-'),
     );
     expect(hasGoodPadding).toBe(true);
   });

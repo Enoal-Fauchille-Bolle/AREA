@@ -13,11 +13,7 @@ vi.mock('react-router-dom', async () => {
 });
 
 const renderWithRouter = (component: React.ReactElement) => {
-  return render(
-    <BrowserRouter>
-      {component}
-    </BrowserRouter>
-  );
+  return render(<BrowserRouter>{component}</BrowserRouter>);
 };
 
 describe('App (Landing Page)', () => {
@@ -27,7 +23,9 @@ describe('App (Landing Page)', () => {
 
   it('renders without crashing', () => {
     renderWithRouter(<App />);
-    expect(screen.getByText('Automate all your tasks easily with AREA')).toBeInTheDocument();
+    expect(
+      screen.getByText('Automate all your tasks easily with AREA'),
+    ).toBeInTheDocument();
   });
 
   it('renders AREA title', () => {
@@ -37,8 +35,14 @@ describe('App (Landing Page)', () => {
 
   it('renders main heading and subtitle', () => {
     renderWithRouter(<App />);
-    expect(screen.getByText('Automate all your tasks easily with AREA')).toBeInTheDocument();
-    expect(screen.getByText('Build powerful automations between the tools you already use. Save time and increase productivity with seamless integrations.')).toBeInTheDocument();
+    expect(
+      screen.getByText('Automate all your tasks easily with AREA'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Build powerful automations between the tools you already use. Save time and increase productivity with seamless integrations.',
+      ),
+    ).toBeInTheDocument();
   });
 
   it('renders navigation buttons', () => {

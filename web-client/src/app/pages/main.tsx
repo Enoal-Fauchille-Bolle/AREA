@@ -6,6 +6,7 @@ import App from './App.tsx';
 import SignUp from './SignUp.tsx';
 import Login from './Login.tsx';
 import UserProfile from './UserProfile.tsx';
+import ProtectedRoute from '../../components/ProtectedRoute.tsx';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -14,7 +15,14 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/" element={<App />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/profile" element={<UserProfile />} />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <UserProfile />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </BrowserRouter>
   </StrictMode>,
