@@ -2,9 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { createTransport, Transporter } from 'nodemailer';
 import { AreaExecutionsService } from '../area-executions/area-executions.service';
 import { AreaParametersService } from '../area-parameters/area-parameters.service';
-import * as dotenv from 'dotenv';
-
-dotenv.config();
+import { ConfigService } from '@nestjs/config';
 
 interface EmailParams {
   to: string;
@@ -20,15 +18,18 @@ export class RealEmailService {
   constructor(
     private readonly areaExecutionsService: AreaExecutionsService,
     private readonly areaParametersService: AreaParametersService,
+    private readonly configService: ConfigService,
   ) {
-    const smtpUser = process.env.SMTP_USER;
-    const smtpPass = process.env.SMTP_PASS;
+    const smtpUser = this.configService.get<string>('SMTP_USER');
+    const smtpPass = this.configService.get<string>('SMTP_PASS');
 
     if (!smtpUser || !smtpPass) {
       this.logger.warn(
         'SMTP_USER and SMTP_PASS not set - real email sending will fail',
       );
     }
+    console.log('SMTP_USER:', smtpUser);
+    console.log('SMTP_PASS:', smtpPass);
 
     this.transporter = createTransport({
       service: 'gmail',
