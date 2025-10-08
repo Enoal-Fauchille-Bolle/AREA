@@ -33,7 +33,14 @@ class _ServicesPageState extends State<ServicesPage> {
       final userServices = await _serviceApi.fetchUserServices();
 
       // Create a set of linked service IDs
-      _linkedServiceIds = userServices.map((s) => s['id'].toString()).toSet();
+      // Note: userServices contains service_id field, not id
+      _linkedServiceIds = userServices
+          .map((s) => s['service_id']?.toString() ?? '')
+          .where((id) => id.isNotEmpty)
+          .toSet();
+
+      print('Loaded ${services.length} services');
+      print('Linked service IDs: $_linkedServiceIds');
 
       return services;
     } catch (e) {

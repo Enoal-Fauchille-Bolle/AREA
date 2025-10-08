@@ -46,6 +46,7 @@ class _CreateActionReactionPageState extends State<CreateActionReactionPage> {
 
       // Get all linked services
       final services = await _serviceApi.fetchUserServices();
+      print('Loaded ${services.length} linked services for creating AREA');
 
       // Fetch actions and reactions for each service
       final List<Map<String, dynamic>> actions = [];
@@ -53,8 +54,16 @@ class _CreateActionReactionPageState extends State<CreateActionReactionPage> {
 
       for (final service in services) {
         try {
+          // User service records have 'service_id', not 'id'
+          final serviceId = service['service_id'];
+          if (serviceId == null) {
+            print('Skipping service with null service_id');
+            continue;
+          }
+
+          print('Loading components for service ID: $serviceId');
           final components = await _serviceApi.fetchServiceComponents(
-            service['id'].toString(),
+            serviceId.toString(),
           );
 
           for (final component in components) {
@@ -65,10 +74,13 @@ class _CreateActionReactionPageState extends State<CreateActionReactionPage> {
             }
           }
         } catch (e) {
-          print('Error loading components for service ${service['name']}: $e');
+          print(
+              'Error loading components for service ${service['service_id']}: $e');
         }
       }
 
+      print(
+          'Loaded ${actions.length} actions and ${reactions.length} reactions');
       setState(() {
         _availableActions = actions;
         _availableReactions = reactions;
@@ -103,20 +115,22 @@ class _CreateActionReactionPageState extends State<CreateActionReactionPage> {
     setState(() => _isSubmitting = true);
 
     try {
-      // Build components array with selected action and reaction
-      final components = [
-        {'id': _selectedAction!['id']},
-        {'id': _selectedReaction!['id']},
-      ];
+      // Extract component IDs
+      final actionId = _selectedAction!['id'];
+      final reactionId = _selectedReaction!['id'];
 
-      await _areaApi.createArea(
+      print(
+          'Creating AREA with action ID: $actionId, reaction ID: $reactionId');
+      final result = await _areaApi.createArea(
         name: _nameController.text.trim(),
         description: _descriptionController.text.trim().isEmpty
             ? null
             : _descriptionController.text.trim(),
-        components: components,
+        componentActionId: actionId,
+        componentReactionId: reactionId,
         isActive: true,
       );
+      print('AREA created successfully: $result');
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -125,6 +139,7 @@ class _CreateActionReactionPageState extends State<CreateActionReactionPage> {
         Navigator.of(context).pop(true);
       }
     } catch (e) {
+      print('Error creating AREA: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
