@@ -21,15 +21,23 @@ export class AreasController {
   @Post('create-with-parameters')
   async createWithParameters(
     @Request() req: { user?: { id: number } },
-    @Body() createAreaData: { 
-      area: CreateAreaDto; 
-      parameters: { [parameterName: string]: string } 
+    @Body()
+    createAreaData: {
+      area: CreateAreaDto;
+      parameters: { [parameterName: string]: string };
     },
   ) {
     try {
       const userId = req.user?.id || 1;
-      console.log('Controller: Creating area with parameters', { userId, createAreaData });
-      const area = await this.areasService.createWithParameters(userId, createAreaData.area, createAreaData.parameters);
+      console.log('Controller: Creating area with parameters', {
+        userId,
+        createAreaData,
+      });
+      const area = await this.areasService.createWithParameters(
+        userId,
+        createAreaData.area,
+        createAreaData.parameters,
+      );
       console.log('Controller: Area with parameters created', area);
       return area;
     } catch (error) {

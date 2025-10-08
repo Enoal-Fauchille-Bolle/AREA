@@ -1,9 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { servicesApi, componentsApi, areasApi, areaParametersApi } from '../../services/api';
+import {
+  servicesApi,
+  componentsApi,
+  areasApi,
+} from '../../services/api';
 import type { Service, Component, ComponentType } from '../../services/api';
-import { getRequiredParameters, type ComponentParameter } from '../../config/componentParameters';
+import {
+  getRequiredParameters,
+  type ComponentParameter,
+} from '../../config/componentParameters';
 
 interface CreateAreaStep {
   step: 'action' | 'reaction' | 'config' | 'parameters' | 'complete';
@@ -22,7 +29,8 @@ interface AreaFormData {
 const CreateArea: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState<CreateAreaStep['step']>('action');
+  const [currentStep, setCurrentStep] =
+    useState<CreateAreaStep['step']>('action');
   const [formData, setFormData] = useState<AreaFormData>({
     name: '',
     description: '',
@@ -32,7 +40,9 @@ const CreateArea: React.FC = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [actionComponents, setActionComponents] = useState<Component[]>([]);
   const [reactionComponents, setReactionComponents] = useState<Component[]>([]);
-  const [requiredParameters, setRequiredParameters] = useState<ComponentParameter[]>([]);
+  const [requiredParameters, setRequiredParameters] = useState<
+    ComponentParameter[]
+  >([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -76,7 +86,9 @@ const CreateArea: React.FC = () => {
       try {
         setLoading(true);
         const servicesData = await servicesApi.getServices();
-        setServices(servicesData.filter((service: Service) => service.is_active));
+        setServices(
+          servicesData.filter((service: Service) => service.is_active),
+        );
       } catch (err) {
         setError('Error loading services');
         console.error('Error fetching services:', err);
@@ -88,11 +100,15 @@ const CreateArea: React.FC = () => {
     fetchServices();
   }, []);
 
-  const loadServiceComponents = async (serviceId: number, type: ComponentType) => {
+  const loadServiceComponents = async (
+    serviceId: number,
+    type: ComponentType,
+  ) => {
     try {
       const components = await componentsApi.getComponentsByService(serviceId);
       const filteredComponents = components.filter(
-        (component: Component) => component.type === type && component.is_active
+        (component: Component) =>
+          component.type === type && component.is_active,
       );
       if (type === 'action') {
         setActionComponents(filteredComponents);
@@ -106,43 +122,49 @@ const CreateArea: React.FC = () => {
   };
 
   const handleActionServiceSelect = (service: Service) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       actionService: service,
-      actionComponent: undefined
+      actionComponent: undefined,
     }));
     loadServiceComponents(service.id, 'action');
   };
 
   const handleReactionServiceSelect = (service: Service) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       reactionService: service,
-      reactionComponent: undefined
+      reactionComponent: undefined,
     }));
     loadServiceComponents(service.id, 'reaction');
   };
 
   const handleActionComponentSelect = (component: Component) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      actionComponent: component
+      actionComponent: component,
     }));
     setCurrentStep('reaction');
   };
 
   const handleReactionComponentSelect = (component: Component) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      reactionComponent: component
+      reactionComponent: component,
     }));
     setCurrentStep('parameters');
     updateRequiredParameters(formData.actionComponent, component);
   };
 
-  const updateRequiredParameters = (actionComponent?: Component, reactionComponent?: Component) => {
+  const updateRequiredParameters = (
+    actionComponent?: Component,
+    reactionComponent?: Component,
+  ) => {
     if (actionComponent && reactionComponent) {
-      const parameters = getRequiredParameters(actionComponent.name, reactionComponent.name);
+      const parameters = getRequiredParameters(
+        actionComponent.name,
+        reactionComponent.name,
+      );
       setRequiredParameters(parameters);
       console.log('Required parameters loaded:', parameters);
     }
@@ -153,17 +175,20 @@ const CreateArea: React.FC = () => {
   };
 
   const handleParameterChange = (parameterName: string, value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       parameters: {
         ...prev.parameters,
-        [parameterName]: value
-      }
+        [parameterName]: value,
+      },
     }));
   };
 
   const getAllVariables = () => {
-    console.log('getAllVariables called - Required parameters:', requiredParameters.length);
+    console.log(
+      'getAllVariables called - Required parameters:',
+      requiredParameters.length,
+    );
     return requiredParameters;
   };
 
@@ -181,13 +206,16 @@ const CreateArea: React.FC = () => {
     try {
       setLoading(true);
 
-      const createdArea = await areasApi.createAreaWithParameters({
-        component_action_id: formData.actionComponent.id,
-        component_reaction_id: formData.reactionComponent.id,
-        name: formData.name,
-        description: formData.description || undefined,
-        is_active: true
-      }, formData.parameters);
+      const createdArea = await areasApi.createAreaWithParameters(
+        {
+          component_action_id: formData.actionComponent.id,
+          component_reaction_id: formData.reactionComponent.id,
+          name: formData.name,
+          description: formData.description || undefined,
+          is_active: true,
+        },
+        formData.parameters,
+      );
 
       console.log('AREA created successfully with parameters:', createdArea);
       setCurrentStep('complete');
@@ -205,43 +233,79 @@ const CreateArea: React.FC = () => {
   const renderStepIndicator = () => (
     <div className="flex items-center justify-center mb-8">
       <div className="flex items-center space-x-4">
-        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-          currentStep === 'action' ? 'bg-blue-600 text-white' :
-          ['reaction', 'parameters', 'config', 'complete'].includes(currentStep) ? 'bg-green-600 text-white' : 'bg-gray-600 text-gray-300'
-        }`}>
+        <div
+          className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+            currentStep === 'action'
+              ? 'bg-blue-600 text-white'
+              : ['reaction', 'parameters', 'config', 'complete'].includes(
+                    currentStep,
+                  )
+                ? 'bg-green-600 text-white'
+                : 'bg-gray-600 text-gray-300'
+          }`}
+        >
           1
         </div>
         <div className="w-16 h-0.5 bg-gray-600">
-          <div className={`h-full transition-all duration-300 ${
-            ['reaction', 'parameters', 'config', 'complete'].includes(currentStep) ? 'bg-green-600 w-full' : 'bg-gray-600 w-0'
-          }`} />
+          <div
+            className={`h-full transition-all duration-300 ${
+              ['reaction', 'parameters', 'config', 'complete'].includes(
+                currentStep,
+              )
+                ? 'bg-green-600 w-full'
+                : 'bg-gray-600 w-0'
+            }`}
+          />
         </div>
-        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-          currentStep === 'reaction' ? 'bg-blue-600 text-white' :
-          ['parameters', 'config', 'complete'].includes(currentStep) ? 'bg-green-600 text-white' : 'bg-gray-600 text-gray-300'
-        }`}>
+        <div
+          className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+            currentStep === 'reaction'
+              ? 'bg-blue-600 text-white'
+              : ['parameters', 'config', 'complete'].includes(currentStep)
+                ? 'bg-green-600 text-white'
+                : 'bg-gray-600 text-gray-300'
+          }`}
+        >
           2
         </div>
         <div className="w-16 h-0.5 bg-gray-600">
-          <div className={`h-full transition-all duration-300 ${
-            ['parameters', 'config', 'complete'].includes(currentStep) ? 'bg-green-600 w-full' : 'bg-gray-600 w-0'
-          }`} />
+          <div
+            className={`h-full transition-all duration-300 ${
+              ['parameters', 'config', 'complete'].includes(currentStep)
+                ? 'bg-green-600 w-full'
+                : 'bg-gray-600 w-0'
+            }`}
+          />
         </div>
-        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-          currentStep === 'parameters' ? 'bg-blue-600 text-white' :
-          ['config', 'complete'].includes(currentStep) ? 'bg-green-600 text-white' : 'bg-gray-600 text-gray-300'
-        }`}>
+        <div
+          className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+            currentStep === 'parameters'
+              ? 'bg-blue-600 text-white'
+              : ['config', 'complete'].includes(currentStep)
+                ? 'bg-green-600 text-white'
+                : 'bg-gray-600 text-gray-300'
+          }`}
+        >
           3
         </div>
         <div className="w-16 h-0.5 bg-gray-600">
-          <div className={`h-full transition-all duration-300 ${
-            ['config', 'complete'].includes(currentStep) ? 'bg-green-600 w-full' : 'bg-gray-600 w-0'
-          }`} />
+          <div
+            className={`h-full transition-all duration-300 ${
+              ['config', 'complete'].includes(currentStep)
+                ? 'bg-green-600 w-full'
+                : 'bg-gray-600 w-0'
+            }`}
+          />
         </div>
-        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-          currentStep === 'config' ? 'bg-blue-600 text-white' :
-          currentStep === 'complete' ? 'bg-green-600 text-white' : 'bg-gray-600 text-gray-300'
-        }`}>
+        <div
+          className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+            currentStep === 'config'
+              ? 'bg-blue-600 text-white'
+              : currentStep === 'complete'
+                ? 'bg-green-600 text-white'
+                : 'bg-gray-600 text-gray-300'
+          }`}
+        >
           4
         </div>
       </div>
@@ -251,7 +315,7 @@ const CreateArea: React.FC = () => {
   const renderServiceSelection = (
     title: string,
     selectedService: Service | undefined,
-    onServiceSelect: (service: Service) => void
+    onServiceSelect: (service: Service) => void,
   ) => (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold text-white">{title}</h3>
@@ -275,17 +339,26 @@ const CreateArea: React.FC = () => {
                     className="w-6 h-6"
                     crossOrigin="anonymous"
                     onLoad={() => {
-                      console.log(`Icon loaded successfully for ${service.name}:`, service.icon_path);
+                      console.log(
+                        `Icon loaded successfully for ${service.name}:`,
+                        service.icon_path,
+                      );
                     }}
                     onError={(e) => {
-                      console.error(`Failed to load icon for ${service.name}:`, service.icon_path);
+                      console.error(
+                        `Failed to load icon for ${service.name}:`,
+                        service.icon_path,
+                      );
                       const target = e.target as HTMLImageElement;
                       target.style.display = 'none';
                       const fallback = target.nextElementSibling as HTMLElement;
                       if (fallback) fallback.style.display = 'flex';
                     }}
                   />
-                  <div className="w-8 h-8 bg-gray-600 rounded flex items-center justify-center" style={{ display: 'none' }}>
+                  <div
+                    className="w-8 h-8 bg-gray-600 rounded flex items-center justify-center"
+                    style={{ display: 'none' }}
+                  >
                     <span className="text-gray-300 text-sm font-medium">
                       {service.name.charAt(0)}
                     </span>
@@ -313,12 +386,14 @@ const CreateArea: React.FC = () => {
     title: string,
     components: Component[],
     selectedComponent: Component | undefined,
-    onComponentSelect: (component: Component) => void
+    onComponentSelect: (component: Component) => void,
   ) => (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold text-white">{title}</h3>
       {components.length === 0 ? (
-        <p className="text-gray-400">No components available for this service.</p>
+        <p className="text-gray-400">
+          No components available for this service.
+        </p>
       ) : (
         <div className="space-y-2">
           {components.map((component) => (
@@ -332,7 +407,9 @@ const CreateArea: React.FC = () => {
               }`}
             >
               <h4 className="font-medium text-white">{component.name}</h4>
-              <p className="text-sm text-gray-400 mt-1">{component.description}</p>
+              <p className="text-sm text-gray-400 mt-1">
+                {component.description}
+              </p>
             </button>
           ))}
         </div>
@@ -348,7 +425,7 @@ const CreateArea: React.FC = () => {
             {renderServiceSelection(
               'Choose a service for the action (trigger)',
               formData.actionService,
-              handleActionServiceSelect
+              handleActionServiceSelect,
             )}
             {formData.actionService && (
               <div>
@@ -356,7 +433,7 @@ const CreateArea: React.FC = () => {
                   `Available actions for ${formData.actionService.name}`,
                   actionComponents,
                   formData.actionComponent,
-                  handleActionComponentSelect
+                  handleActionComponentSelect,
                 )}
               </div>
             )}
@@ -378,13 +455,14 @@ const CreateArea: React.FC = () => {
             <div className="bg-green-900 bg-opacity-50 p-4 rounded-lg border border-green-500">
               <h3 className="font-medium text-green-300">Action selected ✓</h3>
               <p className="text-green-200">
-                {formData.actionService?.name} - {formData.actionComponent?.name}
+                {formData.actionService?.name} -{' '}
+                {formData.actionComponent?.name}
               </p>
             </div>
             {renderServiceSelection(
               'Choose a service for the reaction',
               formData.reactionService,
-              handleReactionServiceSelect
+              handleReactionServiceSelect,
             )}
             {formData.reactionService && (
               <div>
@@ -392,7 +470,7 @@ const CreateArea: React.FC = () => {
                   `Available reactions for ${formData.reactionService.name}`,
                   reactionComponents,
                   formData.reactionComponent,
-                  handleReactionComponentSelect
+                  handleReactionComponentSelect,
                 )}
               </div>
             )}
@@ -405,7 +483,9 @@ const CreateArea: React.FC = () => {
               </button>
               <button
                 onClick={() => setCurrentStep('config')}
-                disabled={!formData.reactionService || !formData.reactionComponent}
+                disabled={
+                  !formData.reactionService || !formData.reactionComponent
+                }
                 className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Next →
@@ -416,46 +496,79 @@ const CreateArea: React.FC = () => {
 
       case 'parameters':
         const allVariables = getAllVariables();
-        console.log('Rendering parameters step with parameters:', allVariables);
         return (
           <div className="space-y-6">
             <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold text-white mb-2">Configure Parameters</h2>
-              <p className="text-gray-400">Set up any required parameters for your action and reaction</p>
+              <h2 className="text-2xl font-bold text-white mb-2">
+                Configure Parameters
+              </h2>
+              <p className="text-gray-400">
+                Set up any required parameters for your action and reaction
+              </p>
             </div>
 
             {allVariables.length === 0 ? (
               <div className="bg-gray-800 rounded-lg p-6 text-center">
-                <p className="text-gray-400">No parameters required for the selected components.</p>
+                <p className="text-gray-400">
+                  No parameters required for the selected components.
+                </p>
                 <p className="text-sm text-gray-500 mt-2">
-                  Action component: {formData.actionComponent?.name || 'None'} (ID: {formData.actionComponent?.id})
+                  Action component: {formData.actionComponent?.name || 'None'}{' '}
+                  (ID: {formData.actionComponent?.id})
                   <br />
-                  Reaction component: {formData.reactionComponent?.name || 'None'} (ID: {formData.reactionComponent?.id})
+                  Reaction component:{' '}
+                  {formData.reactionComponent?.name || 'None'} (ID:{' '}
+                  {formData.reactionComponent?.id})
                 </p>
               </div>
             ) : (
               <div className="space-y-4">
                 {getAllVariables().map((parameter, index) => (
-                  <div key={`param-${index}`} className="bg-gray-800 rounded-lg p-4">
-                    <label htmlFor={`param-${parameter.name}`} className="block text-sm font-medium text-white mb-2">
+                  <div
+                    key={`param-${index}`}
+                    className="bg-gray-800 rounded-lg p-4"
+                  >
+                    <label
+                      htmlFor={`param-${parameter.name}`}
+                      className="block text-sm font-medium text-white mb-2"
+                    >
                       {parameter.name}
-                      {parameter.required && <span className="text-red-400 ml-1">*</span>}
+                      {parameter.required && (
+                        <span className="text-red-400 ml-1">*</span>
+                      )}
                     </label>
                     {parameter.description && (
-                      <p className="text-sm text-gray-400 mb-2">{parameter.description}</p>
+                      <p className="text-sm text-gray-400 mb-2">
+                        {parameter.description}
+                      </p>
                     )}
                     <input
-                      type={parameter.type === 'number' ? 'number' : parameter.type === 'email' ? 'email' : parameter.type === 'url' ? 'url' : 'text'}
+                      type={
+                        parameter.type === 'number'
+                          ? 'number'
+                          : parameter.type === 'email'
+                            ? 'email'
+                            : parameter.type === 'url'
+                              ? 'url'
+                              : 'text'
+                      }
                       id={`param-${parameter.name}`}
                       value={formData.parameters[parameter.name] || ''}
-                      onChange={(e) => handleParameterChange(parameter.name, e.target.value)}
-                      placeholder={parameter.placeholder || `Enter ${parameter.name.toLowerCase()}`}
+                      onChange={(e) =>
+                        handleParameterChange(parameter.name, e.target.value)
+                      }
+                      placeholder={
+                        parameter.placeholder ||
+                        `Enter ${parameter.name.toLowerCase()}`
+                      }
                       required={parameter.required}
                       pattern={parameter.validation}
                       className="w-full px-3 py-2 border border-gray-600 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     {parameter.type && (
-                      <p className="text-xs text-gray-500 mt-1">Type: {parameter.type}</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Type: {parameter.type}
+                      </p>
                     )}
                   </div>
                 ))}
@@ -486,39 +599,54 @@ const CreateArea: React.FC = () => {
               <div className="bg-green-900 bg-opacity-50 p-4 rounded-lg border border-green-500">
                 <h3 className="font-medium text-green-300">Action ✓</h3>
                 <p className="text-green-200">
-                  {formData.actionService?.name} - {formData.actionComponent?.name}
+                  {formData.actionService?.name} -{' '}
+                  {formData.actionComponent?.name}
                 </p>
               </div>
               <div className="bg-green-900 bg-opacity-50 p-4 rounded-lg border border-green-500">
                 <h3 className="font-medium text-green-300">Reaction ✓</h3>
                 <p className="text-green-200">
-                  {formData.reactionService?.name} - {formData.reactionComponent?.name}
+                  {formData.reactionService?.name} -{' '}
+                  {formData.reactionComponent?.name}
                 </p>
               </div>
             </div>
 
             <div className="space-y-4">
               <div>
-                                <label htmlFor="name" className="block text-sm font-medium text-white mb-2">
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-medium text-white mb-2"
+                >
                   AREA Name *
                 </label>
                 <input
                   type="text"
                   id="name"
                   value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, name: e.target.value }))
+                  }
                   className="w-full px-3 py-2 border border-gray-600 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Area Name"
                 />
               </div>
               <div>
-                <label htmlFor="description" className="block text-sm font-medium text-white mb-2">
+                <label
+                  htmlFor="description"
+                  className="block text-sm font-medium text-white mb-2"
+                >
                   Description (optional)
                 </label>
                 <textarea
                   id="description"
                   value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      description: e.target.value,
+                    }))
+                  }
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-600 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Describe what your AREA does"
@@ -558,11 +686,23 @@ const CreateArea: React.FC = () => {
         return (
           <div className="text-center space-y-4">
             <div className="w-16 h-16 bg-green-900 bg-opacity-50 border border-green-500 rounded-full flex items-center justify-center mx-auto">
-              <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              <svg
+                className="w-8 h-8 text-green-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-white">AREA created successfully!</h2>
+            <h2 className="text-2xl font-bold text-white">
+              AREA created successfully!
+            </h2>
             <p className="text-gray-400">Redirecting to your profile...</p>
           </div>
         );
@@ -577,7 +717,9 @@ const CreateArea: React.FC = () => {
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-white mb-4">Access Denied</h1>
-          <p className="text-gray-400 mb-4">You must be logged in to create an AREA.</p>
+          <p className="text-gray-400 mb-4">
+            You must be logged in to create an AREA.
+          </p>
           <Link to="/login" className="text-blue-400 hover:text-blue-300">
             Sign In
           </Link>
@@ -627,9 +769,7 @@ const CreateArea: React.FC = () => {
                 <div className="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-lg py-2 z-50">
                   <div className="px-4 py-2 text-sm text-gray-300 border-b border-gray-700">
                     <div className="font-semibold">
-                      {user
-                        ? `${user.username}`
-                        : 'Loading...'}
+                      {user ? `${user.username}` : 'Loading...'}
                     </div>
                     <div
                       className="text-gray-400 text-xs truncate"
@@ -692,7 +832,9 @@ const CreateArea: React.FC = () => {
       <main className="px-6 py-8">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-white mb-2">Create a new AREA</h1>
+            <h1 className="text-3xl font-bold text-white mb-2">
+              Create a new AREA
+            </h1>
             <p className="text-gray-400">
               Set up an automation by choosing a trigger action and a reaction
             </p>
@@ -709,9 +851,25 @@ const CreateArea: React.FC = () => {
           {loading && currentStep !== 'config' && (
             <div className="text-center py-8">
               <div className="inline-flex items-center px-4 py-2 text-sm text-gray-400">
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <svg
+                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-400"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
                 </svg>
                 Loading...
               </div>

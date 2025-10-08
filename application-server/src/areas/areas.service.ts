@@ -10,7 +10,10 @@ import { CreateAreaDto, UpdateAreaDto } from './dto';
 import { VariablesService } from '../variables/variables.service';
 import { AreaParametersService } from '../area-parameters/area-parameters.service';
 import { ComponentsService } from '../components/components.service';
-import { VariableKind, VariableType } from '../variables/entities/variable.entity';
+import {
+  VariableKind,
+  VariableType,
+} from '../variables/entities/variable.entity';
 
 @Injectable()
 export class AreasService {
@@ -23,18 +26,34 @@ export class AreasService {
   ) {}
 
   async createWithParameters(
-    userId: number, 
-    createAreaDto: CreateAreaDto, 
-    parameters: { [parameterName: string]: string }
+    userId: number,
+    createAreaDto: CreateAreaDto,
+    parameters: { [parameterName: string]: string },
   ): Promise<Area> {
     try {
-      console.log('Creating area with parameters:', { userId, createAreaDto, parameters });
+      console.log('Creating area with parameters:', {
+        userId,
+        createAreaDto,
+        parameters,
+      });
       const area = await this.create(userId, createAreaDto);
       console.log('Area created:', area);
-      const actionComponent = await this.componentsService.findOne(createAreaDto.component_action_id);
-      const reactionComponent = await this.componentsService.findOne(createAreaDto.component_reaction_id);
-      console.log('Components:', { actionComponent: actionComponent.name, reactionComponent: reactionComponent.name });
-      await this.createVariablesAndParameters(area.id, actionComponent, reactionComponent, parameters);
+      const actionComponent = await this.componentsService.findOne(
+        createAreaDto.component_action_id,
+      );
+      const reactionComponent = await this.componentsService.findOne(
+        createAreaDto.component_reaction_id,
+      );
+      console.log('Components:', {
+        actionComponent: actionComponent.name,
+        reactionComponent: reactionComponent.name,
+      });
+      await this.createVariablesAndParameters(
+        area.id,
+        actionComponent,
+        reactionComponent,
+        parameters,
+      );
 
       return area;
     } catch (error) {
@@ -47,16 +66,30 @@ export class AreasService {
     areaId: number,
     actionComponent: any,
     reactionComponent: any,
-    parameters: { [parameterName: string]: string }
+    parameters: { [parameterName: string]: string },
   ): Promise<void> {
     const componentConfigs = this.getComponentParameterConfigs();
-    const actionConfig = componentConfigs.find(c => c.componentName === actionComponent.name);
+    const actionConfig = componentConfigs.find(
+      (c) => c.componentName === actionComponent.name,
+    );
     if (actionConfig) {
-      await this.createVariablesForComponent(actionComponent.id, actionConfig.parameters, areaId, parameters);
+      await this.createVariablesForComponent(
+        actionComponent.id,
+        actionConfig.parameters,
+        areaId,
+        parameters,
+      );
     }
-    const reactionConfig = componentConfigs.find(c => c.componentName === reactionComponent.name);
+    const reactionConfig = componentConfigs.find(
+      (c) => c.componentName === reactionComponent.name,
+    );
     if (reactionConfig) {
-      await this.createVariablesForComponent(reactionComponent.id, reactionConfig.parameters, areaId, parameters);
+      await this.createVariablesForComponent(
+        reactionComponent.id,
+        reactionConfig.parameters,
+        areaId,
+        parameters,
+      );
     }
   }
 
@@ -64,7 +97,7 @@ export class AreasService {
     componentId: number,
     parameterConfigs: any[],
     areaId: number,
-    userParameters: { [parameterName: string]: string }
+    userParameters: { [parameterName: string]: string },
   ): Promise<void> {
     for (const paramConfig of parameterConfigs) {
       const variable = await this.variablesService.create({
@@ -92,10 +125,14 @@ export class AreasService {
 
   private mapStringToVariableType(type: string): VariableType {
     switch (type) {
-      case 'number': return VariableType.NUMBER;
-      case 'email': return VariableType.EMAIL;
-      case 'url': return VariableType.URL;
-      default: return VariableType.STRING;
+      case 'number':
+        return VariableType.NUMBER;
+      case 'email':
+        return VariableType.EMAIL;
+      case 'url':
+        return VariableType.URL;
+      default:
+        return VariableType.STRING;
     }
   }
 
@@ -110,9 +147,9 @@ export class AreasService {
             type: 'string',
             required: true,
             placeholder: '09:30',
-            validation: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$'
-          }
-        ]
+            validation: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$',
+          },
+        ],
       },
       {
         componentName: 'weekly_timer',
@@ -123,16 +160,16 @@ export class AreasService {
             type: 'string',
             required: true,
             placeholder: '09:30',
-            validation: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$'
+            validation: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$',
           },
           {
             name: 'days_of_week',
             description: 'Days of week to trigger (comma-separated)',
             type: 'string',
             required: true,
-            placeholder: 'monday,friday'
-          }
-        ]
+            placeholder: 'monday,friday',
+          },
+        ],
       },
       {
         componentName: 'monthly_timer',
@@ -143,16 +180,17 @@ export class AreasService {
             type: 'string',
             required: true,
             placeholder: '09:30',
-            validation: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$'
+            validation: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$',
           },
           {
             name: 'days_of_month',
-            description: 'Days of month to trigger (comma-separated: 1,15,30 or "last" for last day)',
+            description:
+              'Days of month to trigger (comma-separated: 1,15,30 or "last" for last day)',
             type: 'string',
             required: true,
-            placeholder: '1,15'
-          }
-        ]
+            placeholder: '1,15',
+          },
+        ],
       },
       {
         componentName: 'interval_timer',
@@ -162,7 +200,7 @@ export class AreasService {
             description: 'Interval in minutes between triggers',
             type: 'number',
             required: true,
-            placeholder: '30'
+            placeholder: '30',
           },
           {
             name: 'start_time',
@@ -170,9 +208,9 @@ export class AreasService {
             type: 'string',
             required: true,
             placeholder: '09:00',
-            validation: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$'
-          }
-        ]
+            validation: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$',
+          },
+        ],
       },
       {
         componentName: 'send_email',
@@ -183,24 +221,24 @@ export class AreasService {
             type: 'email',
             required: true,
             placeholder: 'user@example.com',
-            validation: '^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$'
+            validation: '^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$',
           },
           {
             name: 'subject',
             description: 'Email subject line',
             type: 'string',
             required: false,
-            placeholder: 'AREA Notification'
+            placeholder: 'AREA Notification',
           },
           {
             name: 'body',
             description: 'Email message body',
             type: 'string',
             required: false,
-            placeholder: 'Your AREA was triggered successfully.'
-          }
-        ]
-      }
+            placeholder: 'Your AREA was triggered successfully.',
+          },
+        ],
+      },
     ];
   }
 
