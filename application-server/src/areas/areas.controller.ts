@@ -168,10 +168,7 @@ export class AreasController {
     if (isNaN(parsedId)) {
       throw new Error('Invalid ID format');
     }
-    const area = await this.areasService.toggleActive(
-      parsedId,
-      req.user.id,
-    );
+    const area = await this.areasService.toggleActive(parsedId, req.user.id);
     return new AreaResponseDto(area);
   }
 }
