@@ -9,7 +9,7 @@
     "mobile-client"
   ],
   "scripts": {
-    "prepare": "husky",
+    "prepare": "husky || exit 0",
     "commit": "commit",
     "dev:server": "npm run start:dev --workspace=application-server",
     "dev:web": "npm run dev --workspace=web-client",
