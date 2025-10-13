@@ -81,8 +81,10 @@ Go back to the [Application Server Documentation](./APPLICATION_SERVER.md).
 
 **Request Body:**
 
-- `service` (string, required): OAuth2 service (e.g., "Google", "Discord").
 - `code` (string, required): Authorization code from the OAuth2 provider.
+- `code_verifier` (string, required if service requires PKCE, otherwise ignored): Code verifier for PKCE flow.
+- `provider` (string, required): OAuth2 provider (e.g., "Google", "Discord").
+- `platform` (string, required): Platform from which the linking is initiated (e.g., "web", "mobile").
 
 **Response:**
 
@@ -127,8 +129,10 @@ Go back to the [Application Server Documentation](./APPLICATION_SERVER.md).
 
 **Request Body:**
 
-- `service` (string, required): OAuth2 service (e.g., "Google", "Discord").
 - `code` (string, required): Authorization code from the OAuth2 provider.
+- `code_verifier` (string, required if service requires PKCE, otherwise ignored): Code verifier for PKCE flow.
+- `provider` (string, required): OAuth2 provider (e.g., "Google", "Discord").
+- `platform` (string, required): Platform from which the linking is initiated (e.g., "web", "mobile").
 
 **Response:**
 
@@ -603,7 +607,9 @@ Go back to the [Application Server Documentation](./APPLICATION_SERVER.md).
 
 **Request Body:**
 
-- `code` (string, required if service requires OAuth2, otherwise ignored): Exchange code or token for service authentication.
+- `code` (string, required): Exchange code or token for service authentication.
+- `code_verifier` (string, required if service requires PKCE, otherwise ignored): Code verifier for PKCE flow.
+- `platform` (string, required): Platform from which the linking is initiated (e.g., "web", "mobile").
 
 **Response:**
 

@@ -17,9 +17,10 @@ export const envValidationSchema = z.object({
   POSTGRES_DB: z.string().default('area_db'),
   DISCORD_CLIENT_ID: z.string().optional(),
   DISCORD_CLIENT_SECRET: z.string().optional(),
-  DISCORD_REDIRECT_URI: z
+  WEB_SERVICE_REDIRECT_URI: z
     .string()
-    .default('http://localhost:8081/auth/discord/callback'),
+    .default('http://localhost:8081/service/callback'),
+  MOBILE_SERVICE_REDIRECT_URI: z.string().default('area://service/callback'),
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
 });

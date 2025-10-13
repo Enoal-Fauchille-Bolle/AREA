@@ -86,13 +86,25 @@ export class ServicesController {
   async linkService(
     @Request() req: { user: { id: number } },
     @Param('id') id: string,
-    @Body() body: { code?: string },
+    @Body()
+    body: {
+      code: string;
+      code_verifier?: string;
+      platform: 'web' | 'mobile';
+    },
   ): Promise<void> {
     const parsedIntId = parseIdParam(id);
     if (isNaN(parsedIntId)) {
       throw new BadRequestException('Invalid ID format');
     }
-    await this.servicesService.linkService(req.user.id, parsedIntId, body.code);
+    if (
+      !body.code ||
+      !body.platform ||
+      (body.platform != 'web' && body.platform != 'mobile')
+    ) {
+      throw new BadRequestException(`Invalid request body`);
+    }
+    await this.servicesService.linkService(req.user.id, parsedIntId, body);
   }
 
   @UseGuards(JwtAuthGuard)

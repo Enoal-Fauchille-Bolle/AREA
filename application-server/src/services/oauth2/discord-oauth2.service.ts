@@ -14,7 +14,6 @@ interface DiscordTokenResponse {
 export class DiscordOAuth2Service {
   private readonly clientId: string | undefined;
   private readonly clientSecret: string | undefined;
-  private readonly redirectUri: string;
   private readonly tokenUrl = 'https://discord.com/api/oauth2/token';
 
   constructor(private readonly configService: ConfigService) {
@@ -24,10 +23,13 @@ export class DiscordOAuth2Service {
     }
     this.clientId = appConfig.oauth2.discord.clientId;
     this.clientSecret = appConfig.oauth2.discord.clientSecret;
-    this.redirectUri = appConfig.oauth2.discord.redirectUri;
   }
 
-  async exchangeCodeForTokens(code: string): Promise<{
+  async exchangeCodeForTokens(
+    code: string,
+    redirect_uri: string,
+    code_verifier?: string,
+  ): Promise<{
     accessToken: string;
     refreshToken: string;
     expiresAt: Date;
@@ -36,13 +38,20 @@ export class DiscordOAuth2Service {
       throw new BadRequestException('Discord OAuth2 is not configured');
     }
 
-    const params = new URLSearchParams({
+    const paramsObj: Record<string, string> = {
       client_id: this.clientId,
       client_secret: this.clientSecret,
       grant_type: 'authorization_code',
       code: code,
-      redirect_uri: this.redirectUri,
-    });
+      redirect_uri: redirect_uri,
+    };
+
+    // Only add code_verifier if it's provided (for PKCE flow)
+    if (code_verifier) {
+      paramsObj.code_verifier = code_verifier;
+    }
+
+    const params = new URLSearchParams(paramsObj);
 
     try {
       const response = await fetch(this.tokenUrl, {

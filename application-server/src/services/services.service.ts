@@ -21,6 +21,7 @@ import {
 } from './dto';
 import { ConfigService } from '@nestjs/config';
 import { DiscordOAuth2Service } from './oauth2/discord-oauth2.service';
+import { AppConfig } from 'src/config';
 
 @Injectable()
 export class ServicesService {
@@ -35,7 +36,17 @@ export class ServicesService {
     private readonly userServiceRepository: Repository<UserService>,
     private readonly configService: ConfigService,
     private readonly discordOAuth2Service: DiscordOAuth2Service,
-  ) {}
+    private readonly webRedirectUri: string,
+    private readonly mobileRedirectUri: string,
+  ) {
+    const appConfig = this.configService.get<AppConfig>('app');
+    if (!appConfig) {
+      // Unreachable
+      throw new Error('App configuration is not properly loaded');
+    }
+    this.webRedirectUri = appConfig.oauth2.service.web_redirect_uri;
+    this.mobileRedirectUri = appConfig.oauth2.service.mobile_redirect_uri;
+  }
 
   async findAll(): Promise<ServiceResponseDto[]> {
     const services = await this.serviceRepository.find({});
@@ -169,7 +180,7 @@ export class ServicesService {
   async linkService(
     userId: number,
     serviceId: number,
-    code?: string,
+    body: { code: string; code_verifier?: string; platform: 'web' | 'mobile' },
   ): Promise<void> {
     const service = await this.serviceRepository.findOne({
       where: { id: serviceId },
@@ -182,10 +193,16 @@ export class ServicesService {
       where: { user_id: userId, service_id: serviceId },
     });
 
+    const redirectUri =
+      body.platform === 'web' ? this.webRedirectUri : this.mobileRedirectUri;
+
     // Handle Discord OAuth2 flow
-    if (service.name.toLowerCase() === 'discord' && code) {
-      const tokens =
-        await this.discordOAuth2Service.exchangeCodeForTokens(code);
+    if (service.name.toLowerCase() === 'discord') {
+      const tokens = await this.discordOAuth2Service.exchangeCodeForTokens(
+        body.code,
+        redirectUri,
+        body.code_verifier,
+      );
 
       if (existing) {
         // Update existing user service with new tokens

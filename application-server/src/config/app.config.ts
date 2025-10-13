@@ -42,12 +42,16 @@ export const appConfig = registerAs('app', () => {
 
     // OAuth2 Configuration
     oauth2: {
+      service: {
+        web_redirect_uri:
+          process.env.WEB_SERVICE_REDIRECT_URI ||
+          'http://localhost:8081/service/callback',
+        mobile_redirect_uri:
+          process.env.MOBILE_SERVICE_REDIRECT_URI || 'area://service/callback',
+      },
       discord: {
         clientId: process.env.DISCORD_CLIENT_ID,
         clientSecret: process.env.DISCORD_CLIENT_SECRET,
-        redirectUri:
-          process.env.DISCORD_REDIRECT_URI ||
-          'http://localhost:8081/auth/discord/callback',
       },
     },
   };
