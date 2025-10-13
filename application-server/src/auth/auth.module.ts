@@ -20,6 +20,7 @@ import type { AppConfig } from '../config';
         if (!appConfig) {
           throw new Error('App configuration is not properly loaded');
         }
+
         return {
           secret: appConfig.jwt.secret,
           signOptions: {
