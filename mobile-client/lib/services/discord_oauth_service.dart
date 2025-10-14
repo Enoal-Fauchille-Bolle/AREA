@@ -21,19 +21,34 @@ class DiscordOAuthService {
 
   /// Opens Discord OAuth in a WebView and returns the authorization code
   static Future<String?> authorize(BuildContext context) async {
-    final authUrl = Uri.https('discord.com', '/oauth2/authorize', {
-      'client_id': clientId,
-      'redirect_uri': redirectUri,
-      'response_type': 'code',
-      'scope': scope,
-    }).toString();
+    try {
+      final authUrl = Uri.https('discord.com', '/oauth2/authorize', {
+        'client_id': clientId,
+        'response_type': 'code',
+        'redirect_uri': redirectUri,
+        'scope': scope,
+      });
 
-    return Navigator.of(context).push<String>(
-      MaterialPageRoute(
-        fullscreenDialog: true,
-        builder: (context) => _DiscordOAuthWebView(authUrl: authUrl),
-      ),
-    );
+      return await Navigator.of(context).push<String>(
+        MaterialPageRoute(
+          fullscreenDialog: true,
+          builder: (context) =>
+              _DiscordOAuthWebView(authUrl: authUrl.toString()),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Discord OAuth error: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to start Discord authorization: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 20),
+          ),
+        );
+      }
+      return null;
+    }
   }
 }
 
@@ -63,7 +78,21 @@ class _DiscordOAuthWebViewState extends State<_DiscordOAuthWebView> {
           onPageFinished: (url) {
             setState(() => _isLoading = false);
           },
-          onWebResourceError: (error) {},
+          onWebResourceError: (error) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Failed to load: ${error.description}'),
+                  backgroundColor: Colors.orange,
+                  duration: const Duration(seconds: 20),
+                ),
+              );
+            }
+          },
+          onNavigationRequest: (request) {
+            // Allow all navigation requests
+            return NavigationDecision.navigate;
+          },
         ),
       )
       ..loadRequest(Uri.parse(widget.authUrl));
@@ -72,32 +101,46 @@ class _DiscordOAuthWebViewState extends State<_DiscordOAuthWebView> {
   void _checkForCode(String url) {
     final uri = Uri.parse(url);
 
-    // Extract host and port from the redirect URI
+    // Extract scheme, host, and path from the redirect URI
     final redirectUriParsed = Uri.parse(DiscordOAuthService.redirectUri);
 
     // Check if this is the callback URL with a code
-    if (uri.host == redirectUriParsed.host &&
-        uri.port == redirectUriParsed.port &&
-        uri.path == redirectUriParsed.path &&
-        uri.queryParameters.containsKey('code')) {
+    // For custom schemes like area://, the host might be in the path
+    final isCallbackUrl = (uri.scheme == redirectUriParsed.scheme) &&
+        (uri.host == redirectUriParsed.host ||
+            uri
+                .toString()
+                .startsWith(redirectUriParsed.toString().split('?')[0]));
+
+    if (isCallbackUrl && uri.queryParameters.containsKey('code')) {
       final code = uri.queryParameters['code'];
 
-      if (mounted && code != null) {
+      if (mounted && code != null && code.isNotEmpty) {
         Navigator.of(context).pop(code);
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Invalid authorization code received'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 20),
+          ),
+        );
+        Navigator.of(context).pop();
       }
     }
 
-    // Check for error
+    // Check for OAuth error response (e.g., access_denied, invalid_request)
     if (uri.queryParameters.containsKey('error')) {
       final error = uri.queryParameters['error'];
       final errorDescription =
-          uri.queryParameters['error_description'] ?? error;
+          uri.queryParameters['error_description'] ?? error ?? 'Unknown error';
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Authorization failed: $errorDescription'),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 20),
           ),
         );
         Navigator.of(context).pop();

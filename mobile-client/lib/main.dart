@@ -8,7 +8,10 @@ Future<void> main() async {
   // Load environment variables
   try {
     await dotenv.load(fileName: ".env");
+    debugPrint('Successfully loaded .env file');
   } catch (e) {
+    debugPrint('Warning: Could not load .env file: $e');
+    debugPrint('Using default environment values');
     // Continue with default values if .env file doesn't exist
   }
 

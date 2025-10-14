@@ -211,7 +211,7 @@ class AuthService {
       if (token == null) return false;
 
       final response = await http.delete(
-        Uri.parse('$baseUrl/auth/me'),
+        Uri.parse('$baseUrl:$port/auth/me'),
         headers: {
           'Authorization': 'Bearer $token',
         },
