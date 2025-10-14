@@ -25,6 +25,9 @@ import { AppConfig } from 'src/config';
 
 @Injectable()
 export class ServicesService {
+  private readonly webRedirectUri: string;
+  private readonly mobileRedirectUri: string;
+
   constructor(
     @InjectRepository(Service)
     private readonly serviceRepository: Repository<Service>,
@@ -36,8 +39,6 @@ export class ServicesService {
     private readonly userServiceRepository: Repository<UserService>,
     private readonly configService: ConfigService,
     private readonly discordOAuth2Service: DiscordOAuth2Service,
-    private readonly webRedirectUri: string,
-    private readonly mobileRedirectUri: string,
   ) {
     const appConfig = this.configService.get<AppConfig>('app');
     if (!appConfig) {
