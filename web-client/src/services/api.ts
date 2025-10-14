@@ -147,6 +147,13 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface OAuth2LoginRequest {
+  service: string;
+  code: string;
+  redirect_uri: string;
+  code_verifier?: string;
+}
+
 export interface AuthResponse {
   token: string;
 }
@@ -511,6 +518,20 @@ export const authApi = {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(credentials),
+    });
+
+    return handleResponse(response);
+  },
+
+  async loginWithOAuth2(
+    oauthData: OAuth2LoginRequest,
+  ): Promise<AuthResponse> {
+    const response = await fetch(`${API_BASE_URL}/auth/login-oauth2`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(oauthData),
     });
 
     return handleResponse(response);

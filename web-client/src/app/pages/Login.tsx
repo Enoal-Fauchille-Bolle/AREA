@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { appIcons } from '../../lib/appIcons';
 import { authApi, tokenService } from '../../services/api';
+import { googleOAuth } from '../../lib/googleOAuth';
 
 function Login() {
   const [fontLoaded, setFontLoaded] = useState(false);
@@ -33,6 +34,10 @@ function Login() {
 
   const handleGoToSignUp = () => {
     navigate('/signup');
+  };
+
+  const handleGoogleLogin = () => {
+    googleOAuth.initiate();
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -201,8 +206,10 @@ function Login() {
             </div>
 
             <button
-              onClick={handleLogin}
-              className="w-full mt-6 bg-white border-2 border-gray-300 text-gray-700 py-4 rounded-lg text-lg font-bold hover:border-black hover:scale-105 transform transition-all duration-300 flex items-center justify-center space-x-3"
+              onClick={handleGoogleLogin}
+              type="button"
+              disabled={isLoading}
+              className="w-full mt-6 bg-white border-2 border-gray-300 text-gray-700 py-4 rounded-lg text-lg font-bold hover:border-black hover:scale-105 transform transition-all duration-300 flex items-center justify-center space-x-3 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
               <svg className="w-6 h-6" viewBox="0 0 24 24">
                 <path
