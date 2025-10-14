@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { useDiscordAuth } from '../../hooks/useDiscordAuth';
 import { servicesApi, componentsApi, areasApi } from '../../services/api';
 import type { Service, Component, ComponentType } from '../../services/api';
 import {
@@ -24,6 +25,7 @@ interface AreaFormData {
 
 const CreateArea: React.FC = () => {
   const { user, logout } = useAuth();
+  const { isConnecting, connectToDiscord } = useDiscordAuth();
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] =
     useState<CreateAreaStep['step']>('action');
@@ -34,6 +36,7 @@ const CreateArea: React.FC = () => {
   });
 
   const [services, setServices] = useState<Service[]>([]);
+  const [userServices, setUserServices] = useState<Service[]>([]);
   const [actionComponents, setActionComponents] = useState<Component[]>([]);
   const [reactionComponents, setReactionComponents] = useState<Component[]>([]);
   const [requiredParameters, setRequiredParameters] = useState<
@@ -81,10 +84,14 @@ const CreateArea: React.FC = () => {
     const fetchServices = async () => {
       try {
         setLoading(true);
-        const servicesData = await servicesApi.getServices();
+        const [servicesData, userServicesData] = await Promise.all([
+          servicesApi.getServices(),
+          servicesApi.getUserServices(),
+        ]);
         setServices(
           servicesData.filter((service: Service) => service.is_active),
         );
+        setUserServices(userServicesData);
       } catch (err) {
         setError('Error loading services');
         console.error('Error fetching services:', err);
@@ -167,6 +174,10 @@ const CreateArea: React.FC = () => {
   };
 
   const handleParametersComplete = () => {
+    if (!areAllRequiredParametersFilled()) {
+      setError('Please fill in all required parameters before proceeding');
+      return;
+    }
     setCurrentStep('config');
   };
 
@@ -186,6 +197,57 @@ const CreateArea: React.FC = () => {
       requiredParameters.length,
     );
     return requiredParameters;
+  };
+
+  const areAllRequiredParametersFilled = () => {
+    const allRequiredParams = requiredParameters.filter(param => param.required);
+    return allRequiredParams.every(param => {
+      const value = formData.parameters[param.name];
+      return value && value.trim() !== '';
+    });
+  };
+
+  const isDiscordService = (service?: Service) => {
+    return service?.name.toLowerCase() === 'discord';
+  };
+
+  const requiresAuth = (service?: Service) => {
+    return service?.requires_auth === true;
+  };
+
+  const isServiceConnected = (service?: Service) => {
+    if (!service) return false;
+    return userServices.some(us => us.id === service.id);
+  };
+
+  const needsDiscordAuth = () => {
+    const actionNeedsAuth = requiresAuth(formData.actionService) && !isServiceConnected(formData.actionService);
+    const reactionNeedsAuth = requiresAuth(formData.reactionService) && !isServiceConnected(formData.reactionService);
+
+    const actionIsDiscord = actionNeedsAuth && isDiscordService(formData.actionService);
+    const reactionIsDiscord = reactionNeedsAuth && isDiscordService(formData.reactionService);
+
+    return actionIsDiscord || reactionIsDiscord;
+  };
+
+  const handleConnectDiscord = async () => {
+    try {
+      setError(null);
+      const discordService = isDiscordService(formData.actionService)
+        ? formData.actionService
+        : formData.reactionService;
+
+      if (!discordService) return;
+
+      await connectToDiscord(discordService.id);
+
+      const userServicesData = await servicesApi.getUserServices();
+      setUserServices(userServicesData);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to connect to Discord';
+      setError(errorMessage);
+      console.error('Discord connection error:', err);
+    }
   };
 
   const handleCreateArea = async () => {
@@ -492,6 +554,7 @@ const CreateArea: React.FC = () => {
 
       case 'parameters': {
         const allVariables = getAllVariables();
+        const showDiscordAuth = needsDiscordAuth();
         return (
           <div className="space-y-6">
             <div className="text-center mb-6">
@@ -502,6 +565,43 @@ const CreateArea: React.FC = () => {
                 Set up any required parameters for your action and reaction
               </p>
             </div>
+
+            {showDiscordAuth && (
+              <div className="bg-blue-900 bg-opacity-50 border border-blue-500 rounded-lg p-6 mb-6">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                    <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419-.0190 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9460 2.4189-2.1568 2.4189Z"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-white font-semibold">Discord Authentication Required</h3>
+                    <p className="text-blue-200 text-sm">
+                      Connect your Discord account to use Discord actions or reactions
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleConnectDiscord}
+                  disabled={isConnecting}
+                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                >
+                  {isConnecting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Connecting to Discord...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419-.0190 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9460 2.4189-2.1568 2.4189Z"/>
+                      </svg>
+                      <span>Connect to Discord</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
 
             {allVariables.length === 0 ? (
               <div className="bg-gray-800 rounded-lg p-6 text-center">
@@ -580,7 +680,8 @@ const CreateArea: React.FC = () => {
               </button>
               <button
                 onClick={handleParametersComplete}
-                className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors"
+                disabled={!areAllRequiredParametersFilled() || showDiscordAuth}
+                className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Next →
               </button>
@@ -615,7 +716,7 @@ const CreateArea: React.FC = () => {
                   htmlFor="name"
                   className="block text-sm font-medium text-white mb-2"
                 >
-                  AREA Name *
+                  AREA Name <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="text"

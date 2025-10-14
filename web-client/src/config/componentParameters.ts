@@ -119,10 +119,37 @@ export const emailComponentsConfig: ComponentConfig[] = [
   },
 ];
 
+export const discordComponentsConfig: ComponentConfig[] = [
+  {
+    componentName: 'send_message',
+    parameters: [
+      {
+        name: 'channel_id',
+        description: 'Discord channel ID where the message will be sent',
+        type: 'string',
+        required: true,
+        placeholder: '123456789012345678',
+        validation: '^[0-9]{17,19}$',
+      },
+      {
+        name: 'content',
+        description: 'Message content to send (supports Discord markdown)',
+        type: 'string',
+        required: true,
+        placeholder: 'Hello from AREA! 👋',
+      },
+    ],
+  },
+];
+
 export function getComponentParameters(
   componentName: string,
 ): ComponentParameter[] {
-  const allConfigs = [...clockComponentsConfig, ...emailComponentsConfig];
+  const allConfigs = [
+    ...clockComponentsConfig,
+    ...emailComponentsConfig,
+    ...discordComponentsConfig,
+  ];
   const config = allConfigs.find((c) => c.componentName === componentName);
   return config ? config.parameters : [];
 }

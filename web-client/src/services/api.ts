@@ -294,6 +294,56 @@ export const servicesApi = {
 
     return handleResponse(response);
   },
+
+  async linkService(serviceId: number, code?: string): Promise<void> {
+    const token = tokenService.getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    console.log('Linking service:', { serviceId, code: code ? 'present' : 'missing' });
+
+    const response = await fetch(`${API_BASE_URL}/services/${serviceId}/link`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ code }),
+    });
+
+    console.log('Link service response:', response.status, response.statusText);
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to link service';
+      try {
+        const errorData = await response.json();
+        console.error('Link service error data:', errorData);
+        errorMessage = errorData.message || errorData.error || errorMessage;
+      } catch (e) {
+        console.error('Failed to parse error response:', e);
+        errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
+    }
+  },
+
+  async getUserServices(): Promise<Service[]> {
+    const token = tokenService.getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/services/me`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return handleResponse(response);
+  },
 };
 
 export const componentsApi = {
