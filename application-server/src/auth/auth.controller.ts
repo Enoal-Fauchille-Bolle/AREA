@@ -51,6 +51,8 @@ export class AuthController {
     return this.authService.loginWithOAuth2(
       oauthLoginDto.service,
       oauthLoginDto.code,
+      oauthLoginDto.redirect_uri,
+      oauthLoginDto.code_verifier,
     );
   }
 
@@ -62,6 +64,8 @@ export class AuthController {
     return this.authService.registerWithOAuth2(
       oauthLoginDto.service,
       oauthLoginDto.code,
+      oauthLoginDto.redirect_uri,
+      oauthLoginDto.code_verifier,
     );
   }
 

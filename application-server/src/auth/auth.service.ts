@@ -13,6 +13,9 @@ import {
   AuthResponseDto,
 } from './dto';
 import { UserResponseDto } from '../users/dto/user-response.dto';
+import { ServicesService } from '../services/services.service';
+import { UserServicesService } from '../user-services/user-services.service';
+import { GoogleOAuth2Service } from '../services/oauth2/google-oauth2.service';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -20,6 +23,9 @@ export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
+    private servicesService: ServicesService,
+    private userServicesService: UserServicesService,
+    private googleOAuth2Service: GoogleOAuth2Service,
   ) {}
 
   // Replace 'UserEntity' with the actual user type used in your project
@@ -166,26 +172,134 @@ export class AuthService {
     await this.usersService.remove(userId);
   }
 
-  // OAuth2 methods - placeholder for now
-  loginWithOAuth2(_service: string, _code: string): Promise<AuthResponseDto> {
-    // TODO: Implement OAuth2 login flow
+  // OAuth2 methods
+  async loginWithOAuth2(
+    service: string,
+    code: string,
+    redirectUri: string,
+    codeVerifier?: string,
+  ): Promise<AuthResponseDto> {
+    if (service.toLowerCase() !== 'google') {
+      throw new UnauthorizedException(
+        `OAuth2 login for ${service} not yet implemented`,
+      );
+    }
+
     // 1. Exchange code for access token
+    const tokenData = await this.googleOAuth2Service.exchangeCodeForTokens(
+      code,
+      redirectUri,
+      codeVerifier,
+    );
+
     // 2. Fetch user info from provider
-    // 3. Check if user exists, login or create account
-    // 4. Generate JWT token
-    return Promise.reject(new Error('OAuth2 login not yet implemented'));
+    const googleUser = await this.googleOAuth2Service.getUserInfo(
+      tokenData.accessToken,
+    );
+
+    // 3. Find Google service in database
+    const googleService = await this.servicesService.findByName('Google');
+
+    // 4. Check if user exists (by email)
+    const existingUser = await this.usersService
+      .findByEmail(googleUser.email)
+      .catch(() => null);
+
+    let user: UserResponseDto;
+
+    if (!existingUser) {
+      // User doesn't exist, create new account (auto-register)
+      // Generate a username from email
+      const baseUsername = googleUser.email
+        .split('@')[0]
+        .replace(/[^a-zA-Z0-9]/g, '');
+
+      // Check if username already exists and add counter if needed
+      let finalUsername = baseUsername;
+      let attempts = 0;
+      const maxAttempts = 10;
+
+      while (attempts < maxAttempts) {
+        const existingUser =
+          await this.usersService.findByUsername(finalUsername);
+        if (!existingUser) {
+          // Username doesn't exist, we can use it
+          break;
+        }
+        // Username exists, try with counter
+        attempts++;
+        finalUsername = `${baseUsername}${attempts}`;
+      }
+
+      // If we still can't find a unique username, use timestamp
+      if (attempts >= maxAttempts) {
+        finalUsername = `${baseUsername}${Date.now()}`;
+      }
+
+      console.log(`[OAuth2] Creating new user with username: ${finalUsername}`);
+
+      user = await this.usersService.create({
+        email: googleUser.email,
+        username: finalUsername,
+        password: Math.random().toString(36).substring(2, 15), // Random password for OAuth users
+      });
+    } else {
+      // Convert User entity to UserResponseDto
+      const foundUser = await this.usersService.findOne(existingUser.id);
+      if (!foundUser) {
+        throw new Error('User not found after lookup');
+      }
+      user = foundUser;
+    }
+
+    // 5. Store/update OAuth tokens in UserServices
+    const existingConnection =
+      await this.userServicesService.findUserServiceConnection(
+        user.id,
+        googleService.id,
+      );
+
+    if (existingConnection) {
+      // Update existing connection
+      await this.userServicesService.refreshToken(
+        user.id,
+        tokenData.accessToken,
+        tokenData.refreshToken || undefined,
+        tokenData.expiresAt,
+      );
+    } else {
+      // Create new connection
+      await this.userServicesService.create({
+        user_id: user.id,
+        service_id: googleService.id,
+        oauth_token: tokenData.accessToken,
+        refresh_token: tokenData.refreshToken || undefined,
+        token_expires_at: tokenData.expiresAt,
+      });
+    }
+
+    // 6. Update last connection
+    await this.usersService.updateLastConnection(user.id);
+
+    // 7. Generate JWT token
+    const payload = {
+      email: user.email,
+      sub: user.id,
+      username: user.username,
+    };
+    const token = this.jwtService.sign(payload);
+
+    return new AuthResponseDto(token);
   }
 
-  registerWithOAuth2(
-    _service: string,
-    _code: string,
+  async registerWithOAuth2(
+    service: string,
+    code: string,
+    redirectUri: string,
+    codeVerifier?: string,
   ): Promise<AuthResponseDto> {
-    // TODO: Implement OAuth2 registration flow
-    // 1. Exchange code for access token
-    // 2. Fetch user info from provider
-    // 3. Create new user account
-    // 4. Store OAuth tokens in UserServices
-    // 5. Generate JWT token
-    return Promise.reject(new Error('OAuth2 registration not yet implemented'));
+    // For OAuth2, login and register are essentially the same
+    // We auto-create the account if it doesn't exist
+    return this.loginWithOAuth2(service, code, redirectUri, codeVerifier);
   }
 }

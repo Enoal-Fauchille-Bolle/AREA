@@ -21,6 +21,14 @@ import {
 } from './dto';
 import { ConfigService } from '@nestjs/config';
 import { DiscordOAuth2Service } from './oauth2/discord-oauth2.service';
+import { GoogleOAuth2Service } from './oauth2/google-oauth2.service';
+
+// Minimal token shape returned by provider services (exchange/refresh)
+type OAuthTokens = {
+  accessToken: string;
+  refreshToken: string | null;
+  expiresAt: Date;
+};
 import { AppConfig } from 'src/config';
 
 @Injectable()
@@ -39,6 +47,7 @@ export class ServicesService {
     private readonly userServiceRepository: Repository<UserService>,
     private readonly configService: ConfigService,
     private readonly discordOAuth2Service: DiscordOAuth2Service,
+    private readonly googleOAuth2Service: GoogleOAuth2Service,
   ) {
     const appConfig = this.configService.get<AppConfig>('app');
     if (!appConfig) {
@@ -259,7 +268,10 @@ export class ServicesService {
       throw new NotFoundException(`Service with ID ${serviceId} not found`);
     }
 
-    if (service.name.toLowerCase() !== 'discord') {
+    // Support token refresh for Discord and Google
+    const provider = service.name.toLowerCase();
+
+    if (provider !== 'discord' && provider !== 'google') {
       throw new NotFoundException(
         `Service ${service.name} does not support token refresh`,
       );
@@ -275,9 +287,16 @@ export class ServicesService {
       );
     }
 
-    const tokens = await this.discordOAuth2Service.refreshAccessToken(
-      userService.refresh_token,
-    );
+    let tokens: OAuthTokens;
+    if (provider === 'discord') {
+      tokens = (await this.discordOAuth2Service.refreshAccessToken(
+        userService.refresh_token,
+      )) as OAuthTokens;
+    } else {
+      tokens = (await this.googleOAuth2Service.refreshAccessToken(
+        userService.refresh_token,
+      )) as OAuthTokens;
+    }
 
     userService.oauth_token = tokens.accessToken;
     userService.refresh_token = tokens.refreshToken;
