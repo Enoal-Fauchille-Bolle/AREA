@@ -344,6 +344,23 @@ export const servicesApi = {
 
     return handleResponse(response);
   },
+
+  async getDiscordProfile(): Promise<any> {
+    const token = tokenService.getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/services/discord/profile`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return handleResponse(response);
+  },
 };
 
 export const componentsApi = {

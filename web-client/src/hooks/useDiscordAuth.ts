@@ -1,9 +1,36 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { servicesApi } from '../services/api';
+
+interface DiscordUser {
+  id: string;
+  username: string;
+  discriminator: string;
+  avatar: string | null;
+  email?: string;
+}
 
 export const useDiscordAuth = () => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
+  const [discordUser, setDiscordUser] = useState<DiscordUser | null>(null);
+
+  useEffect(() => {
+    const checkConnection = async () => {
+      try {
+        console.log('Checking Discord connection at startup...');
+        const profile = await servicesApi.getDiscordProfile();
+        console.log('Discord profile at startup:', profile);
+        setDiscordUser(profile);
+        setIsConnected(true);
+      } catch (error) {
+        console.log('Discord not connected at startup:', error);
+        setIsConnected(false);
+        setDiscordUser(null);
+      }
+    };
+
+    checkConnection();
+  }, []);
 
   const connectToDiscord = async (serviceId: number) => {
     try {
@@ -56,6 +83,20 @@ export const useDiscordAuth = () => {
             await servicesApi.linkService(serviceId, event.data.code);
             console.log('Successfully linked Discord service');
             setIsConnected(true);
+            try {
+              const profile = await servicesApi.getDiscordProfile();
+              console.log('Discord profile received:', profile);
+              setDiscordUser(profile);
+            } catch (error) {
+              console.log('Could not fetch Discord profile, using placeholder');
+              setDiscordUser({
+                id: 'connected',
+                username: 'Discord User',
+                discriminator: '0000',
+                avatar: null,
+                email: undefined
+              });
+            }
             popup.close();
             clearInterval(checkClosed);
             window.removeEventListener('message', messageListener);
@@ -94,6 +135,7 @@ export const useDiscordAuth = () => {
   return {
     isConnecting,
     isConnected,
+    discordUser,
     connectToDiscord,
   };
 };

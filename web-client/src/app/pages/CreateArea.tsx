@@ -25,7 +25,7 @@ interface AreaFormData {
 
 const CreateArea: React.FC = () => {
   const { user, logout } = useAuth();
-  const { isConnecting, connectToDiscord } = useDiscordAuth();
+  const { isConnecting, isConnected, discordUser, connectToDiscord } = useDiscordAuth();
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] =
     useState<CreateAreaStep['step']>('action');
@@ -44,6 +44,7 @@ const CreateArea: React.FC = () => {
   >([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [discordConnectionTrigger, setDiscordConnectionTrigger] = useState(0);
 
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
@@ -221,16 +222,13 @@ const CreateArea: React.FC = () => {
   };
 
   const needsDiscordAuth = () => {
+    if (isConnected) return false;
     const actionNeedsAuth = requiresAuth(formData.actionService) && !isServiceConnected(formData.actionService);
     const reactionNeedsAuth = requiresAuth(formData.reactionService) && !isServiceConnected(formData.reactionService);
-
     const actionIsDiscord = actionNeedsAuth && isDiscordService(formData.actionService);
     const reactionIsDiscord = reactionNeedsAuth && isDiscordService(formData.reactionService);
-
     return actionIsDiscord || reactionIsDiscord;
-  };
-
-  const handleConnectDiscord = async () => {
+  };  const handleConnectDiscord = async () => {
     try {
       setError(null);
       const discordService = isDiscordService(formData.actionService)
@@ -243,6 +241,7 @@ const CreateArea: React.FC = () => {
 
       const userServicesData = await servicesApi.getUserServices();
       setUserServices(userServicesData);
+      setDiscordConnectionTrigger(prev => prev + 1);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to connect to Discord';
       setError(errorMessage);
@@ -555,6 +554,13 @@ const CreateArea: React.FC = () => {
       case 'parameters': {
         const allVariables = getAllVariables();
         const showDiscordAuth = needsDiscordAuth();
+        console.log('Discord auth state:', {
+          showDiscordAuth,
+          userServices: userServices.length,
+          actionService: formData.actionService?.name,
+          reactionService: formData.reactionService?.name,
+          discordConnectionTrigger
+        });
         return (
           <div className="space-y-6">
             <div className="text-center mb-6">
@@ -566,7 +572,7 @@ const CreateArea: React.FC = () => {
               </p>
             </div>
 
-            {showDiscordAuth && (
+            {showDiscordAuth ? (
               <div className="bg-blue-900 bg-opacity-50 border border-blue-500 rounded-lg p-6 mb-6">
                 <div className="flex items-center space-x-3 mb-4">
                   <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
@@ -600,6 +606,64 @@ const CreateArea: React.FC = () => {
                     </>
                   )}
                 </button>
+              </div>
+            ) : (
+              <div className="bg-green-900 bg-opacity-50 border border-green-500 rounded-lg p-6 mb-6">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-white font-semibold">Discord Connected Successfully</h3>
+                    <p className="text-green-200 text-sm">
+                      Your Discord account is connected and ready to use
+                    </p>
+                  </div>
+                </div>
+                {discordUser && (
+                  <div className="bg-green-800 bg-opacity-30 rounded-lg p-4 mb-3">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center overflow-hidden">
+                        {discordUser.avatar ? (
+                          <img
+                            src={discordUser.avatar}
+                            alt="Discord Avatar"
+                            className="w-full h-full rounded-full object-cover"
+                            onLoad={() => console.log('Avatar loaded successfully')}
+                            onError={(e) => {
+                              console.error('Avatar failed to load:', e);
+                              console.log('Avatar URL:', discordUser.avatar);
+                              console.log('Discord user data:', discordUser);
+                              console.log('Discord user ID:', discordUser.id);
+                              console.log('Discord user avatar:', discordUser.avatar);
+                            }}
+                          />
+                        ) : (
+                          <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                          </svg>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-green-100 font-medium">
+                          {discordUser.discriminator !== '0' && discordUser.discriminator !== '0000' ? (
+                            <>#{discordUser.discriminator} {discordUser.username}</>
+                          ) : (
+                            discordUser.username
+                          )}
+                        </p>
+                        <p className="text-green-300 text-sm">Connected Account</p>
+                      </div>
+                      <div className="text-green-400">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

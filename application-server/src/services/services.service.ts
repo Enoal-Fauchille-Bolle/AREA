@@ -266,4 +266,40 @@ export class ServicesService {
     userService.token_expires_at = tokens.expiresAt;
     await this.userServiceRepository.save(userService);
   }
+
+  async getDiscordProfile(
+    userId: number,
+  ): Promise<{ username: string; avatar: string | null; id: string }> {
+    const userService = await this.userServiceRepository.findOne({
+      where: { user_id: userId, service: { name: 'Discord' } },
+      relations: ['service'],
+    });
+
+    if (!userService || !userService.oauth_token) {
+      throw new NotFoundException('Discord account not connected');
+    }
+
+    try {
+      const response = await fetch('https://discord.com/api/users/@me', {
+        headers: {
+          Authorization: `Bearer ${userService.oauth_token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch Discord profile');
+      }
+
+      const profile = await response.json();
+      return {
+        username: profile.username,
+        avatar: profile.avatar
+          ? `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png`
+          : null,
+        id: profile.id,
+      };
+    } catch (error) {
+      throw new BadRequestException('Failed to retrieve Discord profile');
+    }
+  }
 }
