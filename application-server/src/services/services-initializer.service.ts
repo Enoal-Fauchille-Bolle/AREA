@@ -24,6 +24,7 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
     await this.createClockService();
     await this.createEmailService();
     await this.createDiscordService();
+    await this.createGoogleService();
   }
 
   private async createClockService(): Promise<void> {
@@ -364,5 +365,26 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
     console.log(
       'Discord service and send_message component created successfully',
     );
+  }
+
+  private async createGoogleService(): Promise<void> {
+    try {
+      await this.servicesService.findByName('Google');
+      console.log('Google service already exists, skipping creation');
+      return;
+    } catch {
+      console.log('Creating Google service...');
+    }
+
+    await this.servicesService.create({
+      name: 'Google',
+      description: 'Google OAuth2 integration for authentication and services',
+      icon_path:
+        'https://www.gstatic.com/images/branding/product/1x/googleg_48dp.png',
+      requires_auth: true,
+      is_active: true,
+    });
+
+    console.log('Google service created successfully');
   }
 }

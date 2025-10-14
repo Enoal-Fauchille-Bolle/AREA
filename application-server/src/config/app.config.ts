@@ -53,8 +53,20 @@ export const appConfig = registerAs('app', () => {
         clientId: process.env.DISCORD_CLIENT_ID,
         clientSecret: process.env.DISCORD_CLIENT_SECRET,
       },
+      google: {
+        clientId: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      },
     },
   };
+});
+
+// Debug logging
+console.log('[app.config] Google OAuth2 Environment Variables:', {
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID
+    ? `${process.env.GOOGLE_CLIENT_ID.substring(0, 20)}...`
+    : 'undefined',
+  GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET ? 'set' : 'undefined',
 });
 
 export type AppConfig = ReturnType<typeof appConfig>;
