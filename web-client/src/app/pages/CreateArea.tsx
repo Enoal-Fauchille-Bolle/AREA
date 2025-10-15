@@ -39,6 +39,8 @@ const CreateArea: React.FC = () => {
   const [userServices, setUserServices] = useState<Service[]>([]);
   const [actionComponents, setActionComponents] = useState<Component[]>([]);
   const [reactionComponents, setReactionComponents] = useState<Component[]>([]);
+  const [servicesWithActions, setServicesWithActions] = useState<Service[]>([]);
+  const [servicesWithReactions, setServicesWithReactions] = useState<Service[]>([]);
   const [requiredParameters, setRequiredParameters] = useState<
     ComponentParameter[]
   >([]);
@@ -85,14 +87,29 @@ const CreateArea: React.FC = () => {
     const fetchServices = async () => {
       try {
         setLoading(true);
-        const [servicesData, userServicesData] = await Promise.all([
+        const [servicesData, userServicesData, actionsData, reactionsData] = await Promise.all([
           servicesApi.getServices(),
           servicesApi.getUserServices(),
+          componentsApi.getActionComponents(),
+          componentsApi.getReactionComponents(),
         ]);
-        setServices(
-          servicesData.filter((service: Service) => service.is_active),
-        );
+        
+        const activeServices = servicesData.filter((service: Service) => service.is_active);
+        setServices(activeServices);
         setUserServices(userServicesData);
+
+        const serviceIdsWithActions = new Set(actionsData.map(action => action.service_id));
+        const filteredServicesWithActions = activeServices.filter(service => 
+          serviceIdsWithActions.has(service.id)
+        );
+        setServicesWithActions(filteredServicesWithActions);
+
+        const serviceIdsWithReactions = new Set(reactionsData.map(reaction => reaction.service_id));
+        const filteredServicesWithReactions = activeServices.filter(service => 
+          serviceIdsWithReactions.has(service.id)
+        );
+        setServicesWithReactions(filteredServicesWithReactions);
+        
       } catch (err) {
         setError('Error loading services');
         console.error('Error fetching services:', err);
@@ -373,11 +390,12 @@ const CreateArea: React.FC = () => {
     title: string,
     selectedService: Service | undefined,
     onServiceSelect: (service: Service) => void,
+    availableServices: Service[] = services,
   ) => (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold text-white">{title}</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {services.map((service) => (
+        {availableServices.map((service) => (
           <button
             key={service.id}
             onClick={() => onServiceSelect(service)}
@@ -483,6 +501,7 @@ const CreateArea: React.FC = () => {
               'Choose a service for the action (trigger)',
               formData.actionService,
               handleActionServiceSelect,
+              servicesWithActions,
             )}
             {formData.actionService && (
               <div>
@@ -520,6 +539,7 @@ const CreateArea: React.FC = () => {
               'Choose a service for the reaction',
               formData.reactionService,
               handleReactionServiceSelect,
+              servicesWithReactions,
             )}
             {formData.reactionService && (
               <div>
