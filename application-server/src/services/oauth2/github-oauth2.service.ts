@@ -65,9 +65,10 @@ export class GithubOAuth2Service {
       const data = (await response.json()) as GithubTokenResponse;
 
       if (!response.ok || data.error) {
-        const errorData = await response.text();
+        const errorMessage =
+          data.error_description || data.error || 'Unknown error';
         throw new BadRequestException(
-          `Failed to exchange code for tokens: ${errorData}`,
+          `Failed to exchange code for tokens: ${errorMessage}`,
         );
       }
 
