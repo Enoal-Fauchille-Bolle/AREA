@@ -361,6 +361,37 @@ export const servicesApi = {
 
     return handleResponse(response);
   },
+
+  async disconnectService(serviceName: string): Promise<void> {
+    const token = tokenService.getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/services/${serviceName}/disconnect`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorMessage;
+      } catch {
+        errorMessage = 'Network error or invalid response';
+      }
+      throw new Error(errorMessage);
+    }
+
+    if (response.status === 204) {
+      return;
+    }
+    return response.json();
+  },
 };
 
 export const componentsApi = {

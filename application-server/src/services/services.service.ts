@@ -302,4 +302,31 @@ export class ServicesService {
       throw new BadRequestException('Failed to retrieve Discord profile');
     }
   }
+
+  async disconnectService(userId: number, serviceName: string): Promise<void> {
+    const service = await this.serviceRepository.findOne({
+      where: [
+        { name: serviceName },
+        { name: serviceName.toLowerCase() },
+        { name: serviceName.charAt(0).toUpperCase() + serviceName.slice(1).toLowerCase() }
+      ],
+    });
+
+    if (!service) {
+      throw new NotFoundException(`Service ${serviceName} not found`);
+    }
+
+    const userService = await this.userServiceRepository.findOne({
+      where: {
+        user_id: userId,
+        service_id: service.id
+      },
+    });
+
+    if (!userService) {
+      throw new NotFoundException(`No connection found to service ${serviceName}`);
+    }
+
+    await this.userServiceRepository.remove(userService);
+  }
 }

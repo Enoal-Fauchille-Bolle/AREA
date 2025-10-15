@@ -943,7 +943,7 @@ const CreateArea: React.FC = () => {
                   <button
                     onClick={() => {
                       setIsProfileMenuOpen(false);
-                      console.log('Profile settings');
+                      navigate('/profile/settings');
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors flex items-center"
                   >
