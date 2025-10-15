@@ -28,7 +28,6 @@ export class DiscordOAuth2Service {
   async exchangeCodeForTokens(
     code: string,
     redirect_uri: string,
-    code_verifier?: string,
   ): Promise<{
     accessToken: string;
     refreshToken: string;
@@ -45,11 +44,6 @@ export class DiscordOAuth2Service {
       code: code,
       redirect_uri: redirect_uri,
     };
-
-    // Only add code_verifier if it's provided (for PKCE flow)
-    if (code_verifier) {
-      paramsObj.code_verifier = code_verifier;
-    }
 
     const params = new URLSearchParams(paramsObj);
 

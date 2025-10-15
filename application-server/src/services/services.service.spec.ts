@@ -16,6 +16,7 @@ import {
 } from '../variables/entities/variable.entity';
 import { UserService } from '../user-services/entities/user-service.entity';
 import { DiscordOAuth2Service } from './oauth2/discord-oauth2.service';
+import { GithubOAuth2Service } from './oauth2/github-oauth2.service';
 describe('ServicesService', () => {
   let service: ServicesService;
   let _serviceRepository: Repository<Service>;
@@ -24,6 +25,7 @@ describe('ServicesService', () => {
   let _userServiceRepository: Repository<UserService>;
   let _configService: ConfigService;
   let _discordOAuth2Service: DiscordOAuth2Service;
+  let _githubOAuth2Service: GithubOAuth2Service;
 
   const mockService: Service = {
     id: 1,
@@ -36,8 +38,8 @@ describe('ServicesService', () => {
 
   const mockServiceNoAuth: Service = {
     id: 2,
-    name: 'Time',
-    description: 'Time service',
+    name: 'Clock',
+    description: 'Time-based trigger service',
     icon_path: null,
     requires_auth: false,
     is_active: true,
@@ -103,16 +105,28 @@ describe('ServicesService', () => {
     get: jest.fn().mockReturnValue({
       serverUrl: 'http://localhost:8080',
       oauth2: {
+        service: {
+          web_redirect_uri: 'http://localhost:8081/service/callback',
+          mobile_redirect_uri: 'area://service/callback',
+        },
         discord: {
           clientId: 'mock_client_id',
           clientSecret: 'mock_client_secret',
-          redirectUri: 'http://localhost:8080/callback',
+        },
+        github: {
+          clientId: 'mock_github_client_id',
+          clientSecret: 'mock_github_client_secret',
         },
       },
     }),
   };
 
   const mockDiscordOAuth2Service = {
+    exchangeCodeForTokens: jest.fn(),
+    refreshAccessToken: jest.fn(),
+  };
+
+  const mockGithubOAuth2Service = {
     exchangeCodeForTokens: jest.fn(),
     refreshAccessToken: jest.fn(),
   };
@@ -145,6 +159,10 @@ describe('ServicesService', () => {
           provide: DiscordOAuth2Service,
           useValue: mockDiscordOAuth2Service,
         },
+        {
+          provide: GithubOAuth2Service,
+          useValue: mockGithubOAuth2Service,
+        },
       ],
     }).compile();
 
@@ -164,6 +182,7 @@ describe('ServicesService', () => {
     _configService = module.get<ConfigService>(ConfigService);
     _discordOAuth2Service =
       module.get<DiscordOAuth2Service>(DiscordOAuth2Service);
+    _githubOAuth2Service = module.get<GithubOAuth2Service>(GithubOAuth2Service);
   });
 
   afterEach(() => {
@@ -367,11 +386,17 @@ describe('ServicesService', () => {
       });
       mockUserServiceRepository.save.mockResolvedValue({});
 
-      await service.linkService(1, 1, 'authorization_code');
+      await service.linkService(1, 1, {
+        code: 'authorization_code',
+        platform: 'web',
+      });
 
       expect(
         mockDiscordOAuth2Service.exchangeCodeForTokens,
-      ).toHaveBeenCalledWith('authorization_code');
+      ).toHaveBeenCalledWith(
+        'authorization_code',
+        'http://localhost:8081/service/callback',
+      );
       expect(mockUserServiceRepository.create).toHaveBeenCalledWith({
         user_id: 1,
         service_id: 1,
@@ -396,11 +421,17 @@ describe('ServicesService', () => {
       );
       mockUserServiceRepository.save.mockResolvedValue({});
 
-      await service.linkService(1, 1, 'new_authorization_code');
+      await service.linkService(1, 1, {
+        code: 'new_authorization_code',
+        platform: 'web',
+      });
 
       expect(
         mockDiscordOAuth2Service.exchangeCodeForTokens,
-      ).toHaveBeenCalledWith('new_authorization_code');
+      ).toHaveBeenCalledWith(
+        'new_authorization_code',
+        'http://localhost:8081/service/callback',
+      );
       expect(mockUserService.oauth_token).toBe(mockTokens.accessToken);
       expect(mockUserService.refresh_token).toBe(mockTokens.refreshToken);
       expect(mockUserService.token_expires_at).toBe(mockTokens.expiresAt);
@@ -412,40 +443,21 @@ describe('ServicesService', () => {
     it('should throw NotFoundException when service does not exist', async () => {
       mockServiceRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.linkService(1, 999, 'code')).rejects.toThrow(
-        NotFoundException,
-      );
-      await expect(service.linkService(1, 999, 'code')).rejects.toThrow(
-        'Service with ID 999 not found',
-      );
-    });
-
-    it('should throw BadRequestException when no code provided and service not linked', async () => {
-      mockServiceRepository.findOne.mockResolvedValue(mockService);
-      mockUserServiceRepository.findOne.mockResolvedValue(null);
-
-      await expect(service.linkService(1, 1)).rejects.toThrow(
-        BadRequestException,
-      );
-      await expect(service.linkService(1, 1)).rejects.toThrow(
-        'Discord service requires OAuth2 authentication code',
-      );
-    });
-
-    it('should not throw error when service already linked and no code provided', async () => {
-      mockServiceRepository.findOne.mockResolvedValue(mockService);
-      mockUserServiceRepository.findOne.mockResolvedValue(mockUserService);
-
-      await expect(service.linkService(1, 1)).resolves.not.toThrow();
+      await expect(
+        service.linkService(1, 999, { code: 'code', platform: 'web' }),
+      ).rejects.toThrow(NotFoundException);
+      await expect(
+        service.linkService(1, 999, { code: 'code', platform: 'web' }),
+      ).rejects.toThrow('Service with ID 999 not found');
     });
 
     it('should handle non-OAuth2 services', async () => {
       mockServiceRepository.findOne.mockResolvedValue(mockServiceNoAuth);
       mockUserServiceRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.linkService(1, 2)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        service.linkService(1, 2, { code: 'code', platform: 'web' }),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -530,7 +542,7 @@ describe('ServicesService', () => {
         NotFoundException,
       );
       await expect(service.refreshServiceToken(1, 2)).rejects.toThrow(
-        'Service Time does not support token refresh',
+        'Service Clock does not support token refresh',
       );
     });
 

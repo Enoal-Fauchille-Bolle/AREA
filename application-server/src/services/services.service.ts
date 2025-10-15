@@ -183,7 +183,7 @@ export class ServicesService {
   async linkService(
     userId: number,
     serviceId: number,
-    body: { code: string; code_verifier?: string; platform: 'web' | 'mobile' },
+    body: { code: string; platform: 'web' | 'mobile' },
   ): Promise<void> {
     const service = await this.serviceRepository.findOne({
       where: { id: serviceId },
@@ -204,7 +204,6 @@ export class ServicesService {
       const tokens = await this.discordOAuth2Service.exchangeCodeForTokens(
         body.code,
         redirectUri,
-        body.code_verifier,
       );
 
       if (existing) {
