@@ -21,6 +21,7 @@ import {
 } from './dto';
 import { ConfigService } from '@nestjs/config';
 import { DiscordOAuth2Service } from './oauth2/discord-oauth2.service';
+import { GithubOAuth2Service } from './oauth2/github-oauth2.service';
 import { AppConfig } from 'src/config';
 
 @Injectable()
@@ -39,6 +40,7 @@ export class ServicesService {
     private readonly userServiceRepository: Repository<UserService>,
     private readonly configService: ConfigService,
     private readonly discordOAuth2Service: DiscordOAuth2Service,
+    private readonly githubOAuth2Service: GithubOAuth2Service,
   ) {
     const appConfig = this.configService.get<AppConfig>('app');
     if (!appConfig) {
@@ -222,11 +224,28 @@ export class ServicesService {
         });
         await this.userServiceRepository.save(userService);
       }
+    } else if (service.name.toLowerCase() === 'github') {
+      const tokens = await this.githubOAuth2Service.exchangeCodeForTokens(
+        body.code,
+        redirectUri,
+      );
+
+      if (existing) {
+        // Update existing user service with new tokens
+        existing.oauth_token = tokens.accessToken;
+        await this.userServiceRepository.save(existing);
+      } else {
+        // Create new user service link with tokens
+        const userService = this.userServiceRepository.create({
+          user_id: userId,
+          service_id: serviceId,
+          oauth_token: tokens.accessToken,
+        });
+        await this.userServiceRepository.save(userService);
+      }
     } else if (!existing) {
       throw new BadRequestException(
-        service.name.toLowerCase() === 'discord'
-          ? 'Discord service requires OAuth2 authentication code.'
-          : `Cannot link service "${service.name}". The service may require authentication or is not supported for linking.`,
+        `Cannot link service "${service.name}". The service may require authentication or is not supported for linking.`,
       );
     }
   }
