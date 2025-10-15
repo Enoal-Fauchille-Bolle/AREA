@@ -245,7 +245,7 @@ export class ServicesService {
       }
     } else if (!existing) {
       throw new BadRequestException(
-        `Cannot link service "${service.name}". The service may require authentication or is not supported for linking.`,
+        `Cannot link service "${service.name}". The service may not be implemented or is not supported for linking.`,
       );
     }
   }
