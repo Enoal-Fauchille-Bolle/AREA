@@ -406,46 +406,6 @@ const CreateArea: React.FC = () => {
             }`}
           >
             <div className="flex items-center space-x-3">
-              {service.icon_path ? (
-                <div className="w-8 h-8 flex items-center justify-center">
-                  <img
-                    src={service.icon_path}
-                    alt={service.name}
-                    className="w-6 h-6"
-                    crossOrigin="anonymous"
-                    onLoad={() => {
-                      console.log(
-                        `Icon loaded successfully for ${service.name}:`,
-                        service.icon_path,
-                      );
-                    }}
-                    onError={(e) => {
-                      console.error(
-                        `Failed to load icon for ${service.name}:`,
-                        service.icon_path,
-                      );
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
-                      const fallback = target.nextElementSibling as HTMLElement;
-                      if (fallback) fallback.style.display = 'flex';
-                    }}
-                  />
-                  <div
-                    className="w-8 h-8 bg-gray-600 rounded flex items-center justify-center"
-                    style={{ display: 'none' }}
-                  >
-                    <span className="text-gray-300 text-sm font-medium">
-                      {service.name.charAt(0)}
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                <div className="w-8 h-8 bg-gray-600 rounded flex items-center justify-center">
-                  <span className="text-gray-300 text-sm font-medium">
-                    {service.name.charAt(0)}
-                  </span>
-                </div>
-              )}
               <div className="text-left">
                 <p className="font-medium text-white">{service.name}</p>
                 <p className="text-sm text-gray-400">{service.description}</p>
