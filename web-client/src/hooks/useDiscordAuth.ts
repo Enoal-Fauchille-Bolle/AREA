@@ -44,7 +44,7 @@ export const useDiscordAuth = () => {
         clientId,
         redirectUri,
         encodedRedirectUri,
-        origin: window.location.origin
+        origin: window.location.origin,
       });
 
       if (!clientId) {
@@ -57,7 +57,7 @@ export const useDiscordAuth = () => {
       const popup = window.open(
         discordAuthUrl,
         'discord-oauth',
-        'width=500,height=600,scrollbars=yes,resizable=yes'
+        'width=500,height=600,scrollbars=yes,resizable=yes',
       );
 
       if (!popup) {
@@ -77,9 +77,15 @@ export const useDiscordAuth = () => {
         }
 
         if (event.data.type === 'DISCORD_OAUTH_SUCCESS' && event.data.code) {
-          console.log('Received Discord OAuth success with code:', event.data.code);
+          console.log(
+            'Received Discord OAuth success with code:',
+            event.data.code,
+          );
           try {
-            console.log('Attempting to link Discord service with ID:', serviceId);
+            console.log(
+              'Attempting to link Discord service with ID:',
+              serviceId,
+            );
             await servicesApi.linkService(serviceId, event.data.code);
             console.log('Successfully linked Discord service');
             setIsConnected(true);
@@ -87,14 +93,14 @@ export const useDiscordAuth = () => {
               const profile = await servicesApi.getDiscordProfile();
               console.log('Discord profile received:', profile);
               setDiscordUser(profile);
-            } catch (error) {
+            } catch {
               console.log('Could not fetch Discord profile, using placeholder');
               setDiscordUser({
                 id: 'connected',
                 username: 'Discord User',
                 discriminator: '0000',
                 avatar: null,
-                email: undefined
+                email: undefined,
               });
             }
             popup.close();

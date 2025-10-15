@@ -235,6 +235,14 @@ export interface Variable {
   };
 }
 
+export interface DiscordUser {
+  id: string;
+  username: string;
+  discriminator: string;
+  avatar: string | null;
+  email?: string;
+}
+
 export interface AreaParameter {
   area_id: number;
   variable_id: number;
@@ -301,7 +309,10 @@ export const servicesApi = {
       throw new Error('No authentication token found');
     }
 
-    console.log('Linking service:', { serviceId, code: code ? 'present' : 'missing' });
+    console.log('Linking service:', {
+      serviceId,
+      code: code ? 'present' : 'missing',
+    });
 
     const response = await fetch(`${API_BASE_URL}/services/${serviceId}/link`, {
       method: 'POST',
@@ -345,7 +356,7 @@ export const servicesApi = {
     return handleResponse(response);
   },
 
-  async getDiscordProfile(): Promise<any> {
+  async getDiscordProfile(): Promise<DiscordUser> {
     const token = tokenService.getToken();
     if (!token) {
       throw new Error('No authentication token found');
@@ -368,13 +379,16 @@ export const servicesApi = {
       throw new Error('No authentication token found');
     }
 
-    const response = await fetch(`${API_BASE_URL}/services/${serviceName}/disconnect`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
+    const response = await fetch(
+      `${API_BASE_URL}/services/${serviceName}/disconnect`,
+      {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
       },
-    });
+    );
 
     if (!response.ok) {
       let errorMessage = `HTTP ${response.status}`;

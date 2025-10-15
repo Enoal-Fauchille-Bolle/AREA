@@ -12,7 +12,7 @@ const DiscordOAuthCallback: React.FC = () => {
           type: 'DISCORD_OAUTH_ERROR',
           error: error,
         },
-        window.location.origin
+        window.location.origin,
       );
     } else if (code) {
       window.opener?.postMessage(
@@ -20,7 +20,7 @@ const DiscordOAuthCallback: React.FC = () => {
           type: 'DISCORD_OAUTH_SUCCESS',
           code: code,
         },
-        window.location.origin
+        window.location.origin,
       );
     } else {
       window.opener?.postMessage(
@@ -28,7 +28,7 @@ const DiscordOAuthCallback: React.FC = () => {
           type: 'DISCORD_OAUTH_ERROR',
           error: 'No authorization code received',
         },
-        window.location.origin
+        window.location.origin,
       );
     }
 
