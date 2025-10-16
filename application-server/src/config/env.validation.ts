@@ -17,6 +17,8 @@ export const envValidationSchema = z.object({
   POSTGRES_DB: z.string().default('area_db'),
   DISCORD_CLIENT_ID: z.string().optional(),
   DISCORD_CLIENT_SECRET: z.string().optional(),
+  GITHUB_CLIENT_ID: z.string().optional(),
+  GITHUB_CLIENT_SECRET: z.string().optional(),
   WEB_SERVICE_REDIRECT_URI: z
     .string()
     .default('http://localhost:8081/service/callback'),
@@ -44,12 +46,20 @@ export function validateEnv(config: Record<string, unknown>) {
         'Discord OAuth2 must be set in production.',
       );
     }
+    if (!env.GITHUB_CLIENT_ID || !env.GITHUB_CLIENT_SECRET) {
+      throw new ConfigurationException(
+        'GitHub OAuth2 must be set in production.',
+      );
+    }
   } else {
     if (!env.JWT_SECRET) {
       console.warn('WARNING: Using default JWT secret for development.');
     }
     if (!env.DISCORD_CLIENT_ID || !env.DISCORD_CLIENT_SECRET) {
       console.warn('WARNING: Discord OAuth2 not set; server may crash.');
+    }
+    if (!env.GITHUB_CLIENT_ID || !env.GITHUB_CLIENT_SECRET) {
+      console.warn('WARNING: GitHub OAuth2 not set; server may crash.');
     }
   }
   return env;

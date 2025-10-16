@@ -24,6 +24,7 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
     await this.createClockService();
     await this.createEmailService();
     await this.createDiscordService();
+    await this.createGithubService();
   }
 
   private async createClockService(): Promise<void> {
@@ -364,5 +365,29 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
     console.log(
       'Discord service and send_message component created successfully',
     );
+  }
+
+  private async createGithubService(): Promise<void> {
+    try {
+      // Check if GitHub service already exists
+      await this.servicesService.findByName('GitHub');
+      console.log('GitHub service already exists, skipping creation');
+      return;
+    } catch {
+      // Service doesn't exist, create it
+      console.log('Creating GitHub service...');
+    }
+
+    // Create GitHub service
+    await this.servicesService.create({
+      name: 'GitHub',
+      description: 'Source code hosting and collaboration platform',
+      icon_path:
+        'https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg',
+      requires_auth: true,
+      is_active: true,
+    });
+
+    console.log('GitHub service created successfully');
   }
 }
