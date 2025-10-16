@@ -43,18 +43,19 @@ describe('DiscordOAuth2Service', () => {
   });
 
   describe('exchangeCodeForTokens', () => {
+    const mockDiscordTokenResponse = {
+      access_token: 'mock_access_token_123',
+      token_type: 'Bearer',
+      expires_in: 604800,
+      refresh_token: 'mock_refresh_token_456',
+      scope: 'identify email',
+    };
+
     it('should successfully exchange authorization code for tokens', async () => {
       const mockFetch = global.fetch as jest.Mock;
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: () =>
-          Promise.resolve({
-            access_token: 'mock_access_token_123',
-            token_type: 'Bearer',
-            expires_in: 604800,
-            refresh_token: 'mock_refresh_token_456',
-            scope: 'identify email',
-          }),
+        json: () => Promise.resolve(mockDiscordTokenResponse),
       });
 
       const result = await service.exchangeCodeForTokens(
