@@ -59,7 +59,10 @@ describe('DiscordOAuth2Service', () => {
         json: () => Promise.resolve(mockDiscordResponse),
       });
 
-      const result = await service.exchangeCodeForTokens('auth_code_123');
+      const result = await service.exchangeCodeForTokens(
+        'auth_code_123',
+        'http://localhost:8080/callback',
+      );
 
       expect(result.accessToken).toBe('mock_access_token_123');
       expect(result.refreshToken).toBe('mock_refresh_token_456');
@@ -103,7 +106,10 @@ describe('DiscordOAuth2Service', () => {
       });
 
       await expect(
-        service.exchangeCodeForTokens('invalid_code'),
+        service.exchangeCodeForTokens(
+          'invalid_code',
+          'http://localhost:8080/callback',
+        ),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -144,11 +150,17 @@ describe('DiscordOAuth2Service', () => {
         module.get<DiscordOAuth2Service>(DiscordOAuth2Service);
 
       await expect(
-        unconfiguredDiscordService.exchangeCodeForTokens('auth_code_123'),
+        unconfiguredDiscordService.exchangeCodeForTokens(
+          'auth_code_123',
+          'http://localhost:8080/callback',
+        ),
       ).rejects.toThrow(BadRequestException);
 
       await expect(
-        unconfiguredDiscordService.exchangeCodeForTokens('auth_code_123'),
+        unconfiguredDiscordService.exchangeCodeForTokens(
+          'auth_code_123',
+          'http://localhost:8080/callback',
+        ),
       ).rejects.toThrow('Discord OAuth2 is not configured');
     });
   });

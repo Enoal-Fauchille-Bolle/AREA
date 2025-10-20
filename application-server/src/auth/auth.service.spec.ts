@@ -4,6 +4,9 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from './auth.service';
+import { ServicesService } from '../services/services.service';
+import { UserServicesService } from '../user-services/user-services.service';
+import { GoogleOAuth2Service } from '../services/oauth2/google-oauth2.service';
 import { UsersService } from '../users/users.service';
 import { User } from '../users/entities/user.entity';
 import { UserResponseDto } from '../users/dto/user-response.dto';
@@ -55,6 +58,22 @@ describe('AuthService', () => {
     sign: jest.fn(),
   };
 
+  // Minimal mocks to satisfy DI for AuthService
+  const mockServicesService = {
+    findByName: jest.fn().mockResolvedValue({ id: 1, name: 'Google' }),
+  };
+
+  const mockUserServicesService = {
+    findUserServiceConnection: jest.fn(),
+    refreshToken: jest.fn(),
+    create: jest.fn(),
+  };
+
+  const mockGoogleOAuth2Service = {
+    exchangeCodeForTokens: jest.fn(),
+    getUserInfo: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -66,6 +85,18 @@ describe('AuthService', () => {
         {
           provide: JwtService,
           useValue: mockJwtService,
+        },
+        {
+          provide: ServicesService,
+          useValue: mockServicesService,
+        },
+        {
+          provide: UserServicesService,
+          useValue: mockUserServicesService,
+        },
+        {
+          provide: GoogleOAuth2Service,
+          useValue: mockGoogleOAuth2Service,
         },
         {
           provide: getRepositoryToken(User),
@@ -335,16 +366,33 @@ describe('AuthService', () => {
   });
 
   describe('OAuth2 methods', () => {
-    it('should throw error for OAuth2 login (not implemented)', async () => {
+    it('should reject when provider exchange fails for OAuth2 login', async () => {
+      // Simulate exchange failure from provider
+      mockGoogleOAuth2Service.exchangeCodeForTokens.mockRejectedValueOnce(
+        new Error('OAuth2 exchange failed'),
+      );
+
       await expect(
-        service.loginWithOAuth2('google', 'auth_code'),
-      ).rejects.toThrow('OAuth2 login not yet implemented');
+        service.loginWithOAuth2(
+          'google',
+          'auth_code',
+          'http://localhost:8080/callback',
+        ),
+      ).rejects.toThrow('OAuth2 exchange failed');
     });
 
-    it('should throw error for OAuth2 register (not implemented)', async () => {
+    it('should reject when provider exchange fails for OAuth2 register', async () => {
+      mockGoogleOAuth2Service.exchangeCodeForTokens.mockRejectedValueOnce(
+        new Error('OAuth2 exchange failed'),
+      );
+
       await expect(
-        service.registerWithOAuth2('google', 'auth_code'),
-      ).rejects.toThrow('OAuth2 registration not yet implemented');
+        service.registerWithOAuth2(
+          'google',
+          'auth_code',
+          'http://localhost:8080/callback',
+        ),
+      ).rejects.toThrow('OAuth2 exchange failed');
     });
   });
 });
