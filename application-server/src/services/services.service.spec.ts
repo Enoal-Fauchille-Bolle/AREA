@@ -16,6 +16,7 @@
 // } from '../variables/entities/variable.entity';
 // import { UserService } from '../user-services/entities/user-service.entity';
 // import { DiscordOAuth2Service } from './oauth2/discord-oauth2.service';
+// import { GithubOAuth2Service } from './oauth2/github-oauth2.service';
 // import { GoogleOAuth2Service } from './oauth2/google-oauth2.service';
 // describe('ServicesService', () => {
 //   let service: ServicesService;
@@ -606,10 +607,3 @@
 //     });
 //   });
 // });
-
-// Placeholder test to satisfy Jest requirement
-describe('ServicesService', () => {
-  it('placeholder test - full tests are commented out', () => {
-    expect(true).toBe(true);
-  });
-});

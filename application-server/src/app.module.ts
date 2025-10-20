@@ -28,6 +28,7 @@ import { AreaExecution } from './area-executions/entities/area-execution.entity'
 import { Area } from './areas/entities/area.entity';
 import { ClockModule } from './clock/clock.module';
 import { EmailModule } from './email/email.module';
+import { GithubModule } from './github/github.module';
 import { CommonModule } from './common/common.module';
 
 @Module({
@@ -84,6 +85,7 @@ import { CommonModule } from './common/common.module';
     AuthModule,
     ClockModule,
     EmailModule,
+    GithubModule,
     CommonModule,
   ],
   controllers: [AppController],

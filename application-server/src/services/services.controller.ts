@@ -89,7 +89,6 @@ export class ServicesController {
     @Body()
     body: {
       code: string;
-      code_verifier?: string;
       platform: 'web' | 'mobile';
     },
   ): Promise<void> {
