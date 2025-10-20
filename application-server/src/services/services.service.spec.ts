@@ -1,49 +1,49 @@
-// import { Test, TestingModule } from '@nestjs/testing';
-// import { getRepositoryToken } from '@nestjs/typeorm';
-// import { Repository } from 'typeorm';
-// import { ConfigService } from '@nestjs/config';
-// import { BadRequestException, NotFoundException } from '@nestjs/common';
-// import { ServicesService } from './services.service';
-// import { Service } from './entities/service.entity';
-// import {
-//   Component,
-//   ComponentType,
-// } from '../components/entities/component.entity';
-// import {
-//   Variable,
-//   VariableKind,
-//   VariableType,
-// } from '../variables/entities/variable.entity';
-// import { UserService } from '../user-services/entities/user-service.entity';
-// import { DiscordOAuth2Service } from './oauth2/discord-oauth2.service';
-// import { GoogleOAuth2Service } from './oauth2/google-oauth2.service';
-// describe('ServicesService', () => {
-//   let service: ServicesService;
-//   let _serviceRepository: Repository<Service>;
-//   let _componentRepository: Repository<Component>;
-//   let _variableRepository: Repository<Variable>;
-//   let _userServiceRepository: Repository<UserService>;
-//   let _configService: ConfigService;
-//   let _discordOAuth2Service: DiscordOAuth2Service;
-//   let _googleOAuth2Service: GoogleOAuth2Service;
+import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { ConfigService } from '@nestjs/config';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { ServicesService } from './services.service';
+import { Service } from './entities/service.entity';
+import {
+  Component,
+  ComponentType,
+} from '../components/entities/component.entity';
+import {
+  Variable,
+  VariableKind,
+  VariableType,
+} from '../variables/entities/variable.entity';
+import { UserService } from '../user-services/entities/user-service.entity';
+import { DiscordOAuth2Service } from './oauth2/discord-oauth2.service';
+import { GithubOAuth2Service } from './oauth2/github-oauth2.service';
+describe('ServicesService', () => {
+  let service: ServicesService;
+  let _serviceRepository: Repository<Service>;
+  let _componentRepository: Repository<Component>;
+  let _variableRepository: Repository<Variable>;
+  let _userServiceRepository: Repository<UserService>;
+  let _configService: ConfigService;
+  let _discordOAuth2Service: DiscordOAuth2Service;
+  let _githubOAuth2Service: GithubOAuth2Service;
 
-//   const mockService: Service = {
-//     id: 1,
-//     name: 'Discord',
-//     description: 'Communication platform',
-//     icon_path: 'assets/services/discord.svg',
-//     requires_auth: true,
-//     is_active: true,
-//   };
+  const mockService: Service = {
+    id: 1,
+    name: 'Discord',
+    description: 'Communication platform',
+    icon_path: 'assets/services/discord.svg',
+    requires_auth: true,
+    is_active: true,
+  };
 
-//   const mockServiceNoAuth: Service = {
-//     id: 2,
-//     name: 'Time',
-//     description: 'Time service',
-//     icon_path: null,
-//     requires_auth: false,
-//     is_active: true,
-//   };
+  const mockServiceNoAuth: Service = {
+    id: 2,
+    name: 'Clock',
+    description: 'Time-based trigger service',
+    icon_path: null,
+    requires_auth: false,
+    is_active: true,
+  };
 
 //   const mockComponent: Partial<Component> = {
 //     id: 1,
@@ -101,90 +101,89 @@
 //     delete: jest.fn(),
 //   };
 
-//   const mockConfigService = {
-//     get: jest.fn().mockReturnValue({
-//       serverUrl: 'http://localhost:8080',
-//       oauth2: {
-//         service: {
-//           web_redirect_uri: 'http://localhost:8081/service/callback',
-//           mobile_redirect_uri: 'area://service/callback',
-//         },
-//         discord: {
-//           clientId: 'mock_client_id',
-//           clientSecret: 'mock_client_secret',
-//           redirectUri: 'http://localhost:8080/callback',
-//         },
-//         google: {
-//           clientId: 'mock_google_client_id',
-//           clientSecret: 'mock_google_client_secret',
-//         },
-//       },
-//     }),
-//   };
+  const mockConfigService = {
+    get: jest.fn().mockReturnValue({
+      serverUrl: 'http://localhost:8080',
+      oauth2: {
+        service: {
+          web_redirect_uri: 'http://localhost:8081/service/callback',
+          mobile_redirect_uri: 'area://service/callback',
+        },
+        discord: {
+          clientId: 'mock_client_id',
+          clientSecret: 'mock_client_secret',
+        },
+        github: {
+          clientId: 'mock_github_client_id',
+          clientSecret: 'mock_github_client_secret',
+        },
+      },
+    }),
+  };
 
-//   const mockDiscordOAuth2Service = {
-//     exchangeCodeForTokens: jest.fn(),
-//     refreshAccessToken: jest.fn(),
-//   };
+  const mockDiscordOAuth2Service = {
+    exchangeCodeForTokens: jest.fn(),
+    refreshAccessToken: jest.fn(),
+  };
 
-//   const mockGoogleOAuth2Service = {
-//     exchangeCodeForTokens: jest.fn(),
-//     refreshAccessToken: jest.fn(),
-//   };
+  const mockGithubOAuth2Service = {
+    exchangeCodeForTokens: jest.fn(),
+    refreshAccessToken: jest.fn(),
+  };
 
-//   beforeEach(async () => {
-//     const module: TestingModule = await Test.createTestingModule({
-//       providers: [
-//         ServicesService,
-//         {
-//           provide: getRepositoryToken(Service),
-//           useValue: mockServiceRepository,
-//         },
-//         {
-//           provide: getRepositoryToken(Component),
-//           useValue: mockComponentRepository,
-//         },
-//         {
-//           provide: getRepositoryToken(Variable),
-//           useValue: mockVariableRepository,
-//         },
-//         {
-//           provide: getRepositoryToken(UserService),
-//           useValue: mockUserServiceRepository,
-//         },
-//         {
-//           provide: ConfigService,
-//           useValue: mockConfigService,
-//         },
-//         {
-//           provide: DiscordOAuth2Service,
-//           useValue: mockDiscordOAuth2Service,
-//         },
-//         {
-//           provide: GoogleOAuth2Service,
-//           useValue: mockGoogleOAuth2Service,
-//         },
-//       ],
-//     }).compile();
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        ServicesService,
+        {
+          provide: getRepositoryToken(Service),
+          useValue: mockServiceRepository,
+        },
+        {
+          provide: getRepositoryToken(Component),
+          useValue: mockComponentRepository,
+        },
+        {
+          provide: getRepositoryToken(Variable),
+          useValue: mockVariableRepository,
+        },
+        {
+          provide: getRepositoryToken(UserService),
+          useValue: mockUserServiceRepository,
+        },
+        {
+          provide: ConfigService,
+          useValue: mockConfigService,
+        },
+        {
+          provide: DiscordOAuth2Service,
+          useValue: mockDiscordOAuth2Service,
+        },
+        {
+          provide: GithubOAuth2Service,
+          useValue: mockGithubOAuth2Service,
+        },
+      ],
+    }).compile();
 
-//     service = module.get<ServicesService>(ServicesService);
-//     _serviceRepository = module.get<Repository<Service>>(
-//       getRepositoryToken(Service),
-//     );
-//     _componentRepository = module.get<Repository<Component>>(
-//       getRepositoryToken(Component),
-//     );
-//     _variableRepository = module.get<Repository<Variable>>(
-//       getRepositoryToken(Variable),
-//     );
-//     _userServiceRepository = module.get<Repository<UserService>>(
-//       getRepositoryToken(UserService),
-//     );
-//     _configService = module.get<ConfigService>(ConfigService);
-//     _discordOAuth2Service =
-//       module.get<DiscordOAuth2Service>(DiscordOAuth2Service);
-//     _googleOAuth2Service = module.get<GoogleOAuth2Service>(GoogleOAuth2Service);
-//   });
+    service = module.get<ServicesService>(ServicesService);
+    _serviceRepository = module.get<Repository<Service>>(
+      getRepositoryToken(Service),
+    );
+    _componentRepository = module.get<Repository<Component>>(
+      getRepositoryToken(Component),
+    );
+    _variableRepository = module.get<Repository<Variable>>(
+      getRepositoryToken(Variable),
+    );
+    _userServiceRepository = module.get<Repository<UserService>>(
+      getRepositoryToken(UserService),
+    );
+    _configService = module.get<ConfigService>(ConfigService);
+    _discordOAuth2Service =
+      module.get<DiscordOAuth2Service>(DiscordOAuth2Service);
+    _githubOAuth2Service = module.get<GithubOAuth2Service>(GithubOAuth2Service);
+  });
 
 //   afterEach(() => {
 //     jest.clearAllMocks();
@@ -387,27 +386,26 @@
 //       });
 //       mockUserServiceRepository.save.mockResolvedValue({});
 
-//       await service.linkService(1, 1, {
-//         code: 'authorization_code',
-//         platform: 'web',
-//       });
+      await service.linkService(1, 1, {
+        code: 'authorization_code',
+        platform: 'web',
+      });
 
-//       expect(
-//         mockDiscordOAuth2Service.exchangeCodeForTokens,
-//       ).toHaveBeenCalledWith(
-//         'authorization_code',
-//         expect.anything(),
-//         undefined,
-//       );
-//       expect(mockUserServiceRepository.create).toHaveBeenCalledWith({
-//         user_id: 1,
-//         service_id: 1,
-//         oauth_token: mockTokens.accessToken,
-//         refresh_token: mockTokens.refreshToken,
-//         token_expires_at: mockTokens.expiresAt,
-//       });
-//       expect(mockUserServiceRepository.save).toHaveBeenCalled();
-//     });
+      expect(
+        mockDiscordOAuth2Service.exchangeCodeForTokens,
+      ).toHaveBeenCalledWith(
+        'authorization_code',
+        'http://localhost:8081/service/callback',
+      );
+      expect(mockUserServiceRepository.create).toHaveBeenCalledWith({
+        user_id: 1,
+        service_id: 1,
+        oauth_token: mockTokens.accessToken,
+        refresh_token: mockTokens.refreshToken,
+        token_expires_at: mockTokens.expiresAt,
+      });
+      expect(mockUserServiceRepository.save).toHaveBeenCalled();
+    });
 
 //     it('should update existing service link with new OAuth2 tokens', async () => {
 //       const mockTokens = {
@@ -423,80 +421,45 @@
 //       );
 //       mockUserServiceRepository.save.mockResolvedValue({});
 
-//       await service.linkService(1, 1, {
-//         code: 'new_authorization_code',
-//         platform: 'web',
-//       });
+      await service.linkService(1, 1, {
+        code: 'new_authorization_code',
+        platform: 'web',
+      });
 
-//       expect(
-//         mockDiscordOAuth2Service.exchangeCodeForTokens,
-//       ).toHaveBeenCalledWith(
-//         'new_authorization_code',
-//         expect.anything(),
-//         undefined,
-//       );
-//       expect(mockUserService.oauth_token).toBe(mockTokens.accessToken);
-//       expect(mockUserService.refresh_token).toBe(mockTokens.refreshToken);
-//       expect(mockUserService.token_expires_at).toBe(mockTokens.expiresAt);
-//       expect(mockUserServiceRepository.save).toHaveBeenCalledWith(
-//         mockUserService,
-//       );
-//     });
+      expect(
+        mockDiscordOAuth2Service.exchangeCodeForTokens,
+      ).toHaveBeenCalledWith(
+        'new_authorization_code',
+        'http://localhost:8081/service/callback',
+      );
+      expect(mockUserService.oauth_token).toBe(mockTokens.accessToken);
+      expect(mockUserService.refresh_token).toBe(mockTokens.refreshToken);
+      expect(mockUserService.token_expires_at).toBe(mockTokens.expiresAt);
+      expect(mockUserServiceRepository.save).toHaveBeenCalledWith(
+        mockUserService,
+      );
+    });
 
 //     it('should throw NotFoundException when service does not exist', async () => {
 //       mockServiceRepository.findOne.mockResolvedValue(null);
 
-//       await expect(
-//         service.linkService(1, 999, { code: 'code', platform: 'web' }),
-//       ).rejects.toThrow(NotFoundException);
-//       await expect(
-//         service.linkService(1, 999, { code: 'code', platform: 'web' }),
-//       ).rejects.toThrow('Service with ID 999 not found');
-//     });
-
-//     it('should throw BadRequestException when no code provided and service not linked', async () => {
-//       mockServiceRepository.findOne.mockResolvedValue(mockService);
-//       mockUserServiceRepository.findOne.mockResolvedValue(null);
-
-//       mockDiscordOAuth2Service.exchangeCodeForTokens.mockRejectedValueOnce(
-//         new BadRequestException(
-//           'Discord service requires OAuth2 authentication code',
-//         ),
-//       );
-
-//       await expect(
-//         service.linkService(1, 1, { code: '', platform: 'web' }),
-//       ).rejects.toThrow(BadRequestException);
-//       await expect(
-//         service.linkService(1, 1, { code: '', platform: 'web' }),
-//       ).rejects.toThrow('Discord service requires OAuth2 authentication code');
-//     });
-
-//     it('should not throw error when service already linked and no code provided', async () => {
-//       mockServiceRepository.findOne.mockResolvedValue(mockService);
-//       mockUserServiceRepository.findOne.mockResolvedValue(mockUserService);
-
-//       mockDiscordOAuth2Service.exchangeCodeForTokens.mockResolvedValueOnce({
-//         accessToken: mockUserService.oauth_token,
-//         refreshToken: mockUserService.refresh_token,
-//         expiresAt: mockUserService.token_expires_at,
-//       });
-//       mockUserServiceRepository.save.mockResolvedValue({});
-
-//       await expect(
-//         service.linkService(1, 1, { code: '', platform: 'web' }),
-//       ).resolves.not.toThrow();
-//     });
+      await expect(
+        service.linkService(1, 999, { code: 'code', platform: 'web' }),
+      ).rejects.toThrow(NotFoundException);
+      await expect(
+        service.linkService(1, 999, { code: 'code', platform: 'web' }),
+      ).rejects.toThrow('Service with ID 999 not found');
+    });
 
 //     it('should handle non-OAuth2 services', async () => {
 //       mockServiceRepository.findOne.mockResolvedValue(mockServiceNoAuth);
 //       mockUserServiceRepository.findOne.mockResolvedValue(null);
 
-//       await expect(
-//         service.linkService(1, 2, { code: '', platform: 'web' }),
-//       ).rejects.toThrow(BadRequestException);
-//     });
-//   });
+      await expect(
+        service.linkService(1, 2, { code: 'code', platform: 'web' }),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
 
 //   describe('unlinkService', () => {
 //     it('should successfully unlink a service', async () => {
@@ -575,13 +538,13 @@
 //     it('should throw NotFoundException for non-Discord services', async () => {
 //       mockServiceRepository.findOne.mockResolvedValue(mockServiceNoAuth);
 
-//       await expect(service.refreshServiceToken(1, 2)).rejects.toThrow(
-//         NotFoundException,
-//       );
-//       await expect(service.refreshServiceToken(1, 2)).rejects.toThrow(
-//         'Service Time does not support token refresh',
-//       );
-//     });
+      await expect(service.refreshServiceToken(1, 2)).rejects.toThrow(
+        NotFoundException,
+      );
+      await expect(service.refreshServiceToken(1, 2)).rejects.toThrow(
+        'Service Clock does not support token refresh',
+      );
+    });
 
 //     it('should throw NotFoundException when user service link does not exist', async () => {
 //       mockServiceRepository.findOne.mockResolvedValue(mockService);
