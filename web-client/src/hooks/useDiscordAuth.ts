@@ -54,38 +54,23 @@ export const useDiscordAuth = () => {
       const discordAuthUrl = `https://discord.com/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodedRedirectUri}&response_type=code&scope=${scope}`;
       console.log('Discord auth URL:', discordAuthUrl);
 
-      const popup = window.open(
-        discordAuthUrl,
-        'discord-oauth',
-        'width=500,height=600,scrollbars=yes,resizable=yes',
-      );
-
-      if (!popup) {
-        throw new Error('Failed to open Discord OAuth2 popup');
-      }
-
-      const checkClosed = setInterval(() => {
-        if (popup.closed) {
-          clearInterval(checkClosed);
-          setIsConnecting(false);
-        }
-      }, 1000);
+      let popup: Window | null = null;
+      let checkClosed: NodeJS.Timeout;
 
       const messageListener = async (event: MessageEvent) => {
+        console.log('=== Message received in parent window ===');
+        console.log('Event origin:', event.origin);
+        console.log('Window origin:', window.location.origin);
+        console.log('Event data:', event.data);
         if (event.origin !== window.location.origin) {
+          console.log('Origin mismatch, ignoring message');
           return;
         }
 
         if (event.data.type === 'DISCORD_OAUTH_SUCCESS' && event.data.code) {
-          console.log(
-            'Received Discord OAuth success with code:',
-            event.data.code,
-          );
+          console.log('Received Discord OAuth success');
           try {
-            console.log(
-              'Attempting to link Discord service with ID:',
-              serviceId,
-            );
+            console.log('Attempting to link Discord service with ID:', serviceId);
             await servicesApi.linkService(serviceId, event.data.code);
             console.log('Successfully linked Discord service');
             setIsConnected(true);
@@ -103,29 +88,61 @@ export const useDiscordAuth = () => {
                 email: undefined,
               });
             }
-            popup.close();
+            if (popup && !popup.closed) {
+              popup.close();
+            }
             clearInterval(checkClosed);
             window.removeEventListener('message', messageListener);
+            setIsConnecting(false);
           } catch (error) {
             console.error('Failed to link Discord service:', error);
-            popup.close();
+            if (popup && !popup.closed) {
+              popup.close();
+            }
             clearInterval(checkClosed);
             window.removeEventListener('message', messageListener);
+            setIsConnecting(false);
             throw error;
           }
         } else if (event.data.type === 'DISCORD_OAUTH_ERROR') {
           console.error('Discord OAuth error:', event.data.error);
-          popup.close();
+          if (popup && !popup.closed) {
+            popup.close();
+          }
           clearInterval(checkClosed);
           window.removeEventListener('message', messageListener);
+          setIsConnecting(false);
           throw new Error(event.data.error || 'Discord OAuth2 failed');
         }
       };
 
       window.addEventListener('message', messageListener);
+      console.log('Message listener attached');
+
+      popup = window.open(
+        discordAuthUrl,
+        'discord-oauth',
+        'width=500,height=600,scrollbars=yes,resizable=yes',
+      );
+
+      if (!popup) {
+        window.removeEventListener('message', messageListener);
+        setIsConnecting(false);
+        throw new Error('Failed to open Discord OAuth2 popup');
+      }
+
+      checkClosed = setInterval(() => {
+        if (popup && popup.closed) {
+          console.log('Popup closed by user');
+          clearInterval(checkClosed);
+          window.removeEventListener('message', messageListener);
+          setIsConnecting(false);
+        }
+      }, 1000);
 
       setTimeout(() => {
-        if (!popup.closed) {
+        if (popup && !popup.closed) {
+          console.log('OAuth timeout, closing popup');
           popup.close();
         }
         clearInterval(checkClosed);

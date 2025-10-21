@@ -8,7 +8,7 @@ import Login from './Login.tsx';
 import UserProfile from './UserProfile.tsx';
 import CreateArea from './CreateArea.tsx';
 import Profile from './Profile.tsx';
-import ServiceCallback from '../../../../later/ServiceCallback.tsx';
+import ServiceCallback from './ServiceCallback.tsx';
 import ProtectedRoute from '../../components/ProtectedRoute.tsx';
 
 createRoot(document.getElementById('root')!).render(
