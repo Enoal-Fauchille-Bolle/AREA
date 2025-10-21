@@ -44,7 +44,10 @@ export class ReactionProcessorService {
           await this.fakeEmailService.processReaction(executionId, areaId);
           break;
         case 'send_message':
-          await this.discordService.processReaction(executionId, areaId);
+          await this.discordService.sendMessageReaction(executionId, areaId);
+          break;
+        case 'react_to_message':
+          await this.discordService.reactToMessageReaction(executionId, areaId);
           break;
         default:
           throw new Error(`Unknown reaction component: ${component.name}`);
