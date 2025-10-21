@@ -55,7 +55,6 @@ export const useDiscordAuth = () => {
       console.log('Discord auth URL:', discordAuthUrl);
 
       let popup: Window | null = null;
-      let checkClosed: NodeJS.Timeout;
 
       const messageListener = async (event: MessageEvent) => {
         console.log('=== Message received in parent window ===');
@@ -70,7 +69,10 @@ export const useDiscordAuth = () => {
         if (event.data.type === 'DISCORD_OAUTH_SUCCESS' && event.data.code) {
           console.log('Received Discord OAuth success');
           try {
-            console.log('Attempting to link Discord service with ID:', serviceId);
+            console.log(
+              'Attempting to link Discord service with ID:',
+              serviceId,
+            );
             await servicesApi.linkService(serviceId, event.data.code);
             console.log('Successfully linked Discord service');
             setIsConnected(true);
@@ -131,7 +133,7 @@ export const useDiscordAuth = () => {
         throw new Error('Failed to open Discord OAuth2 popup');
       }
 
-      checkClosed = setInterval(() => {
+      const checkClosed = setInterval(() => {
         if (popup && popup.closed) {
           console.log('Popup closed by user');
           clearInterval(checkClosed);

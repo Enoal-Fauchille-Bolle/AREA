@@ -6,17 +6,22 @@ const ServiceCallback: React.FC = () => {
     console.log('Full URL:', window.location.href);
     console.log('Window opener exists:', !!window.opener);
     console.log('Window origin:', window.location.origin);
-    
+
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
     const error = urlParams.get('error');
-    
-    console.log('OAuth params:', { code: code ? `${code.substring(0, 10)}...` : null, error });
+
+    console.log('OAuth params:', {
+      code: code ? `${code.substring(0, 10)}...` : null,
+      error,
+    });
 
     const service = 'DISCORD';
 
     if (!window.opener) {
-      console.error('ERROR: window.opener is null! Cannot send message to parent.');
+      console.error(
+        'ERROR: window.opener is null! Cannot send message to parent.',
+      );
       alert('Error: Parent window not found. Please try again.');
       return;
     }
@@ -56,9 +61,7 @@ const ServiceCallback: React.FC = () => {
     <div className="min-h-screen bg-gray-900 flex items-center justify-center">
       <div className="text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-        <p className="text-white">
-          Processing authentication...
-        </p>
+        <p className="text-white">Processing authentication...</p>
         <p className="text-gray-400 text-sm mt-2">
           This window will close automatically
         </p>
