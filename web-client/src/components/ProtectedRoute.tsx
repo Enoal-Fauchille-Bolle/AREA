@@ -12,16 +12,23 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const checkAuth = () => {
+    let isMounted = true;
+
+    const checkAuth = async () => {
+      await new Promise(resolve => setTimeout(resolve, 150));
+      if (!isMounted) return;
       const isAuthenticated = tokenService.isAuthenticated();
       if (!isAuthenticated) {
-        navigate('/login');
+        navigate('/login', { replace: true });
         return;
       }
       setIsChecking(false);
     };
 
     checkAuth();
+    return () => {
+      isMounted = false;
+    };
   }, [navigate]);
 
   if (isChecking) {
