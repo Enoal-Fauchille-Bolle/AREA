@@ -135,8 +135,11 @@ export class DiscordService {
         );
       }
 
-      // Get message parameters
-      const messageParams = await this.getMessageParameters(areaId);
+      // Get message parameters with variable interpolation
+      const messageParams = await this.getMessageParameters(
+        areaId,
+        executionId,
+      );
 
       if (!messageParams) {
         throw new Error('Send Discord message parameters not configured');
@@ -204,9 +207,24 @@ export class DiscordService {
 
   private async getMessageParameters(
     areaId: number,
+    executionId?: number,
   ): Promise<SendMessageParams | null> {
     try {
-      const parameters = await this.areaParametersService.findByArea(areaId);
+      // Get execution context for variable interpolation
+      let executionContext: Record<string, unknown> = {};
+      if (executionId) {
+        const execution = await this.areaExecutionsService.findOne(executionId);
+        if (execution.triggerData) {
+          executionContext = execution.triggerData;
+        }
+      }
+
+      // Get parameters with variable interpolation
+      const parameters =
+        await this.areaParametersService.findByAreaWithInterpolation(
+          areaId,
+          executionContext,
+        );
 
       const channelParam = parameters.find(
         (p) => p.variable?.name === 'channel_id',
@@ -279,7 +297,11 @@ export class DiscordService {
       }
 
       // Get reaction parameters
-      const reactionParams = await this.getReactionParameters(areaId);
+      // Get reaction parameters with variable interpolation
+      const reactionParams = await this.getReactionParameters(
+        areaId,
+        executionId,
+      );
 
       if (!reactionParams) {
         throw new Error('React to message parameters not configured');
@@ -439,9 +461,24 @@ export class DiscordService {
 
   private async getReactionParameters(
     areaId: number,
+    executionId?: number,
   ): Promise<ReactToMessageParams | null> {
     try {
-      const parameters = await this.areaParametersService.findByArea(areaId);
+      // Get execution context for variable interpolation
+      let executionContext: Record<string, unknown> = {};
+      if (executionId) {
+        const execution = await this.areaExecutionsService.findOne(executionId);
+        if (execution.triggerData) {
+          executionContext = execution.triggerData;
+        }
+      }
+
+      // Get parameters with variable interpolation
+      const parameters =
+        await this.areaParametersService.findByAreaWithInterpolation(
+          areaId,
+          executionContext,
+        );
 
       const channelParam = parameters.find(
         (p) => p.variable?.name === 'channel_id',
