@@ -10,4 +10,4 @@ import { UserOAuth2Account } from './entities/user-oauth2-account.entity';
   providers: [UserOAuth2AccountsService],
   exports: [UserOAuth2AccountsService],
 })
-export class UserServicesModule {}
+export class UserOAuth2AccountModule {}

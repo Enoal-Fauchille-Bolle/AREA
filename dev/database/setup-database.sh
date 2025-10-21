@@ -13,7 +13,7 @@ fi
 # Database configuration
 DB_NAME="area_db"
 DB_USER="area_user"
-DB_PASSWORD="area_password"
+POSTGRES_PASSWORD="area_password"
 
 echo "Creating database and user..."
 
@@ -23,7 +23,7 @@ sudo -u postgres psql << EOF
 CREATE DATABASE ${DB_NAME};
 
 -- Create user
-CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASSWORD}';
+CREATE USER ${DB_USER} WITH PASSWORD '${POSTGRES_PASSWORD}';
 
 -- Grant privileges
 GRANT ALL PRIVILEGES ON DATABASE ${DB_NAME} TO ${DB_USER};
@@ -89,18 +89,18 @@ echo "Database Information:"
 echo "====================="
 echo "Database: ${DB_NAME}"
 echo "User: ${DB_USER}"
-echo "Password: ${DB_PASSWORD}"
+echo "Password: ${POSTGRES_PASSWORD}"
 echo "Host: localhost"
 echo "Port: 5432"
 echo ""
-echo "Connection string: postgresql://${DB_USER}:${DB_PASSWORD}@localhost:5432/${DB_NAME}"
+echo "Connection string: postgresql://${DB_USER}:${POSTGRES_PASSWORD}@localhost:5432/${DB_NAME}"
 echo ""
 echo "To connect manually:"
 echo "psql -h localhost -U ${DB_USER} -d ${DB_NAME}"
 echo ""
 echo "Make sure your .env file contains the correct database configuration:"
-echo "DB_HOST=localhost"
-echo "DB_PORT=5432"
-echo "DB_USERNAME=${DB_USER}"
-echo "DB_PASSWORD=${DB_PASSWORD}"
-echo "DB_DATABASE=${DB_NAME}"
+echo "POSTGRES_HOST=localhost"
+echo "POSTGRES_PORT=5432"
+echo "POSTGRES_USER=${DB_USER}"
+echo "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}"
+echo "POSTGRES_DB=${DB_NAME}"

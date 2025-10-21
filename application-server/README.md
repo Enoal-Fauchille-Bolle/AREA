@@ -108,7 +108,7 @@ All fields are optional for updates:
 
 ### Create a user
 ```bash
-curl -X POST http://localhost:3000/users \
+curl -X POST http://localhost:8080/users \
   -H "Content-Type: application/json" \
   -d '{
     "email": "john.doe@example.com",
@@ -121,22 +121,22 @@ curl -X POST http://localhost:3000/users \
 
 ### Get all users
 ```bash
-curl http://localhost:3000/users
+curl http://localhost:8080/users
 ```
 
 ### Get user by ID
 ```bash
-curl http://localhost:3000/users/1
+curl http://localhost:8080/users/1
 ```
 
 ### Get user by username
 ```bash
-curl http://localhost:3000/users/by-username/johndoe
+curl http://localhost:8080/users/by-username/johndoe
 ```
 
 ### Update user
 ```bash
-curl -X PATCH http://localhost:3000/users/1 \
+curl -X PATCH http://localhost:8080/users/1 \
   -H "Content-Type: application/json" \
   -d '{
     "username": "janedoe",
@@ -146,12 +146,12 @@ curl -X PATCH http://localhost:3000/users/1 \
 
 ### Update last connection
 ```bash
-curl -X PATCH http://localhost:3000/users/1/last-connection
+curl -X PATCH http://localhost:8080/users/1/last-connection
 ```
 
 ### Delete user
 ```bash
-curl -X DELETE http://localhost:3000/users/1
+curl -X DELETE http://localhost:8080/users/1
 ```
 
 ## Security Features
@@ -215,7 +215,7 @@ src/
 
 ## Development
 
-The application runs on `http://localhost:3000` by default.
+The application runs on `http://localhost:8080` by default.
 
 ### Current Implementation
 

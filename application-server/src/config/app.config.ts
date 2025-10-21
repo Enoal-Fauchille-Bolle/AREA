@@ -1,19 +1,21 @@
 import { registerAs } from '@nestjs/config';
 
-export const appConfig = registerAs('app', () => {
-  const isProduction = process.env.NODE_ENV === 'production';
-  const jwtSecret = process.env.JWT_SECRET;
+type JwtExpiresIn =
+  | number
+  | `${number}${'h' | 'm' | 's' | 'ms' | 'd' | 'y' | 'w'}`
+  | `${number} ${'h' | 'm' | 's' | 'ms' | 'd' | 'y' | 'w'}`;
 
-  const secret =
-    jwtSecret ||
-    (() => {
-      console.warn('WARNING: Using default JWT secret for development.');
-      return 'dev-default-secret-key';
-    })();
+export const appConfig = registerAs('app', () => {
+  // Parse JWT_EXPIRES_IN - can be a number (seconds) or a time string
+  const jwtExpiresIn = process.env.JWT_EXPIRES_IN || '24h';
+  const jwtExpiresInValue: JwtExpiresIn = /^\d+$/.test(jwtExpiresIn)
+    ? parseInt(jwtExpiresIn, 10)
+    : (jwtExpiresIn as JwtExpiresIn);
 
   return {
     // Server Configuration
-    port: parseInt(process.env.PORT || '3000', 10),
+    serverUrl: process.env.SERVER_URL || 'http://127.0.0.1:8080',
+    port: parseInt(process.env.PORT || '8080', 10),
     nodeEnv: process.env.NODE_ENV || 'development',
 
     // Security
@@ -21,14 +23,14 @@ export const appConfig = registerAs('app', () => {
 
     // JWT Configuration
     jwt: {
-      secret,
-      expiresIn: process.env.JWT_EXPIRES_IN || '24h',
+      secret: process.env.JWT_SECRET || 'dev-default-secret-key',
+      expiresIn: jwtExpiresInValue,
     },
 
     // Database Configuration
     database: {
-      synchronize: !isProduction,
-      logging: !isProduction,
+      synchronize: process.env.NODE_ENV !== 'production',
+      logging: process.env.NODE_ENV !== 'production',
     },
 
     // Time Constants (in milliseconds)
@@ -36,6 +38,17 @@ export const appConfig = registerAs('app', () => {
       minuteInMs: 60 * 1000,
       hourInMs: 60 * 60 * 1000,
       dayInMs: 24 * 60 * 60 * 1000,
+    },
+
+    // OAuth2 Configuration
+    oauth2: {
+      discord: {
+        clientId: process.env.DISCORD_CLIENT_ID,
+        clientSecret: process.env.DISCORD_CLIENT_SECRET,
+        redirectUri:
+          process.env.DISCORD_REDIRECT_URI ||
+          'http://localhost:8081/auth/discord/callback',
+      },
     },
   };
 });

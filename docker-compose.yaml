@@ -1,0 +1,73 @@
+name: area
+services:
+  database:
+    image: postgres:16
+    container_name: database
+    restart: unless-stopped
+    env_file:
+      - path: ./application-server/.env
+        required: true
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # networks:
+    #   - default
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  server:
+    container_name: application-server
+    build:
+      context: .
+      dockerfile: ./application-server/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    env_file:
+      - path: ./application-server/.env
+        required: true
+    depends_on:
+      - database
+    # networks:
+    #   - default
+
+  client_web:
+    container_name: web-client
+    build:
+      context: .
+      dockerfile: ./web-client/Dockerfile
+      # args:
+      #   NEXT_PUBLIC_API_URL: "${NEXT_PUBLIC_API_URL:-http://server:8080}"
+    restart: unless-stopped
+    # env_file:
+    #   - path: ./web-client/.env
+    #     required: true
+    ports:
+      - "${FRONTEND_PORT:-8081}:80"
+    volumes:
+      - mobile-builds:/usr/share/nginx/html/mobile
+    # depends_on:
+      # - server
+      # - client_mobile
+    # networks:
+    #   - default
+
+  client_mobile:
+    container_name: mobile-client
+    build:
+      context: .
+      dockerfile: ./mobile-client/Dockerfile
+    volumes:
+      - mobile-builds:/app/build
+
+volumes:
+  mobile-builds:
+  pgdata:
+
+# networks:
+#   default:
+#     driver: bridge

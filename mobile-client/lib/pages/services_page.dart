@@ -1,0 +1,261 @@
+import 'package:flutter/material.dart';
+import '../services/service_api_service.dart';
+import '../services/discord_oauth_service.dart';
+import '../widgets/service_card.dart';
+import '../utils/app_logger.dart';
+
+class ServicesPage extends StatefulWidget {
+  const ServicesPage({super.key});
+
+  @override
+  State<ServicesPage> createState() => _ServicesPageState();
+}
+
+class _ServicesPageState extends State<ServicesPage> {
+  final ServiceApiService _serviceApi = ServiceApiService();
+  late Future<List<Map<String, dynamic>>> _servicesFuture;
+  Set<String> _linkedServiceIds = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadServices();
+  }
+
+  Future<void> _loadServices() async {
+    setState(() {
+      _servicesFuture = _loadAllServices();
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> _loadAllServices() async {
+    try {
+      // Load both available services and user's linked services
+      final services = await _serviceApi.fetchServices();
+      final userServices = await _serviceApi.fetchUserServices();
+
+      // Create a set of linked service IDs
+      // Note: userServices contains service_id field, not id
+      _linkedServiceIds = userServices
+          .map((s) => s['service_id']?.toString() ?? '')
+          .where((id) => id.isNotEmpty)
+          .toSet();
+
+      AppLogger.log('Loaded ${services.length} services');
+      AppLogger.log('Linked service IDs: $_linkedServiceIds');
+
+      return services;
+    } catch (e) {
+      AppLogger.error('Error loading services: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> _handleLinkToggle(
+      String serviceId, bool isLinked, String serviceName) async {
+    try {
+      bool success;
+      if (isLinked) {
+        success = await _serviceApi.unlinkService(serviceId);
+        if (success) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Service unlinked successfully')),
+            );
+          }
+          // Reload services to update the UI
+          await _loadServices();
+        }
+      } else {
+        // Handle Discord OAuth flow
+        if (serviceName.toLowerCase() == 'discord') {
+          if (mounted) {
+            // Open Discord OAuth in WebView
+            final code = await DiscordOAuthService.authorize(context);
+
+            if (code == null) {
+              // User cancelled or error occurred
+              return;
+            }
+
+            AppLogger.log('Got Discord authorization code, linking service...');
+
+            // Link service with the authorization code
+            success = await _serviceApi.linkService(serviceId, code: code);
+          } else {
+            return;
+          }
+        } else {
+          // For non-OAuth services, use simple linking
+          success = await _serviceApi.linkService(serviceId);
+        }
+
+        if (success) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Service linked successfully'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+          // Reload services to update the UI
+          await _loadServices();
+        }
+      }
+
+      if (!success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to ${isLinked ? 'unlink' : 'link'} service'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      AppLogger.error('Link toggle error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Services'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _loadServices,
+            tooltip: 'Refresh',
+          ),
+        ],
+      ),
+      body: FutureBuilder<List<Map<String, dynamic>>>(
+        future: _servicesFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Error loading services',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${snapshot.error}',
+                    style: TextStyle(color: Colors.grey[600]),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    onPressed: _loadServices,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Retry'),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          final services = snapshot.data ?? [];
+
+          if (services.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.apps, size: 64, color: Colors.grey[300]),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No services available',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return RefreshIndicator(
+            onRefresh: () async {
+              await _loadServices();
+            },
+            child: ListView(
+              children: [
+                // Linked services section
+                if (_linkedServiceIds.isNotEmpty) ...[
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(
+                      'Linked Services',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                  ),
+                  ...services
+                      .where(
+                          (s) => _linkedServiceIds.contains(s['id'].toString()))
+                      .map((service) => ServiceCard(
+                            name: service['name'] ?? 'Unknown',
+                            description: service['description'] ?? '',
+                            iconUrl: service['icon_url'],
+                            isLinked: true,
+                            isActive: service['is_active'] ?? true,
+                            onLinkToggle: () => _handleLinkToggle(
+                              service['id'].toString(),
+                              true,
+                              service['name'] ?? 'Unknown',
+                            ),
+                          )),
+                  const Divider(height: 32),
+                ],
+
+                // Available services section
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    'Available Services',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                ),
+                ...services
+                    .where(
+                        (s) => !_linkedServiceIds.contains(s['id'].toString()))
+                    .map((service) => ServiceCard(
+                          name: service['name'] ?? 'Unknown',
+                          description: service['description'] ?? '',
+                          iconUrl: service['icon_url'],
+                          isLinked: false,
+                          isActive: service['is_active'] ?? true,
+                          onLinkToggle: () => _handleLinkToggle(
+                            service['id'].toString(),
+                            false,
+                            service['name'] ?? 'Unknown',
+                          ),
+                        )),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}

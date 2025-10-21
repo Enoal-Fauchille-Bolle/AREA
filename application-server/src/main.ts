@@ -18,10 +18,20 @@ function setupSwagger(app: INestApplication): void {
 async function bootstrap(): Promise<void> {
   const app: INestApplication = await NestFactory.create(AppModule);
 
+  app.enableCors({
+    origin: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+  });
+
   setupSwagger(app);
 
   const configService = app.get(ConfigService);
   const appConfig = configService.get<AppConfig>('app');
+  if (!appConfig) {
+    throw new Error('App configuration is not properly loaded');
+  }
   const port = appConfig.port;
 
   await app.listen(port);

@@ -80,6 +80,7 @@ docker-compose.override.yml
 *.pid
 *.seed
 *.tgz
+package-lock.json
 
 # Sensitive keys and secrets
 secrets.*

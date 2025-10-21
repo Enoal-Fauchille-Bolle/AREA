@@ -18,7 +18,11 @@ export class UsersService {
     private usersRepository: Repository<User>,
     private configService: ConfigService,
   ) {
-    this.appConfig = this.configService.get<AppConfig>('app');
+    const appConfig = this.configService.get<AppConfig>('app');
+    if (!appConfig) {
+      throw new Error('App configuration is not properly loaded');
+    }
+    this.appConfig = appConfig;
   }
 
   async create(createUserDto: CreateUserDto): Promise<UserResponseDto> {
