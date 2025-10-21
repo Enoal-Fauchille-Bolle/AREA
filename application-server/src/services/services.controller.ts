@@ -122,4 +122,22 @@ export class ServicesController {
     }
     await this.servicesService.refreshServiceToken(req.user.id, parsedIntId);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('discord/profile')
+  async getDiscordProfile(
+    @Request() req: { user: { id: number } },
+  ): Promise<{ username: string; avatar: string | null; id: string }> {
+    return this.servicesService.getDiscordProfile(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete(':serviceName/disconnect')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async disconnectService(
+    @Request() req: { user: { id: number } },
+    @Param('serviceName') serviceName: string,
+  ): Promise<void> {
+    await this.servicesService.disconnectService(req.user.id, serviceName);
+  }
 }

@@ -235,6 +235,14 @@ export interface Variable {
   };
 }
 
+export interface DiscordUser {
+  id: string;
+  username: string;
+  discriminator: string;
+  avatar: string | null;
+  email?: string;
+}
+
 export interface AreaParameter {
   area_id: number;
   variable_id: number;
@@ -293,6 +301,110 @@ export const servicesApi = {
     });
 
     return handleResponse(response);
+  },
+
+  async linkService(serviceId: number, code?: string): Promise<void> {
+    const token = tokenService.getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    console.log('Linking service:', {
+      serviceId,
+      code: code ? 'present' : 'missing',
+    });
+
+    const response = await fetch(`${API_BASE_URL}/services/${serviceId}/link`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ code }),
+    });
+
+    console.log('Link service response:', response.status, response.statusText);
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to link service';
+      try {
+        const errorData = await response.json();
+        console.error('Link service error data:', errorData);
+        errorMessage = errorData.message || errorData.error || errorMessage;
+      } catch (e) {
+        console.error('Failed to parse error response:', e);
+        errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
+    }
+  },
+
+  async getUserServices(): Promise<Service[]> {
+    const token = tokenService.getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/services/me`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return handleResponse(response);
+  },
+
+  async getDiscordProfile(): Promise<DiscordUser> {
+    const token = tokenService.getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/services/discord/profile`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return handleResponse(response);
+  },
+
+  async disconnectService(serviceName: string): Promise<void> {
+    const token = tokenService.getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}/services/${serviceName}/disconnect`,
+      {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorMessage;
+      } catch {
+        errorMessage = 'Network error or invalid response';
+      }
+      throw new Error(errorMessage);
+    }
+
+    if (response.status === 204) {
+      return;
+    }
+    return response.json();
   },
 };
 

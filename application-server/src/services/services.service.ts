@@ -182,19 +182,16 @@ export class ServicesService {
       where: { user_id: userId, service_id: serviceId },
     });
 
-    // Handle Discord OAuth2 flow
     if (service.name.toLowerCase() === 'discord' && code) {
       const tokens =
         await this.discordOAuth2Service.exchangeCodeForTokens(code);
 
       if (existing) {
-        // Update existing user service with new tokens
         existing.oauth_token = tokens.accessToken;
         existing.refresh_token = tokens.refreshToken;
         existing.token_expires_at = tokens.expiresAt;
         await this.userServiceRepository.save(existing);
       } else {
-        // Create new user service link with tokens
         const userService = this.userServiceRepository.create({
           user_id: userId,
           service_id: serviceId,
@@ -265,5 +262,78 @@ export class ServicesService {
     userService.refresh_token = tokens.refreshToken;
     userService.token_expires_at = tokens.expiresAt;
     await this.userServiceRepository.save(userService);
+  }
+
+  async getDiscordProfile(
+    userId: number,
+  ): Promise<{ username: string; avatar: string | null; id: string }> {
+    const userService = await this.userServiceRepository.findOne({
+      where: { user_id: userId, service: { name: 'Discord' } },
+      relations: ['service'],
+    });
+
+    if (!userService || !userService.oauth_token) {
+      throw new NotFoundException('Discord account not connected');
+    }
+
+    try {
+      const response = await fetch('https://discord.com/api/users/@me', {
+        headers: {
+          Authorization: `Bearer ${userService.oauth_token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch Discord profile');
+      }
+
+      const profile = (await response.json()) as {
+        id: string;
+        username: string;
+        avatar: string | null;
+      };
+      return {
+        username: profile.username,
+        avatar: profile.avatar
+          ? `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png`
+          : null,
+        id: profile.id,
+      };
+    } catch {
+      throw new BadRequestException('Failed to retrieve Discord profile');
+    }
+  }
+
+  async disconnectService(userId: number, serviceName: string): Promise<void> {
+    const service = await this.serviceRepository.findOne({
+      where: [
+        { name: serviceName },
+        { name: serviceName.toLowerCase() },
+        {
+          name:
+            serviceName.charAt(0).toUpperCase() +
+            serviceName.slice(1).toLowerCase(),
+        },
+      ],
+    });
+
+    if (!service) {
+      throw new NotFoundException(`Service ${serviceName} not found`);
+    }
+
+    const userService = await this.userServiceRepository.findOne({
+      where: {
+        user_id: userId,
+        service_id: service.id,
+      },
+    });
+
+    if (!userService) {
+      throw new NotFoundException(
+        `No connection found to service ${serviceName}`,
+      );
+    }
+
+    await this.userServiceRepository.remove(userService);
   }
 }
