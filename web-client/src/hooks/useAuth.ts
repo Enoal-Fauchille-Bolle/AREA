@@ -15,11 +15,12 @@ export const useAuth = () => {
           setUser(userProfile);
         }
       } catch (err) {
-        console.error('Auth initialization error:', err);
         setError(
           err instanceof Error ? err.message : 'Failed to load user profile',
         );
-        tokenService.removeToken();
+        if (err instanceof Error && (err.message.includes('401') || err.message.includes('403') || err.message.includes('Unauthorized'))) {
+          tokenService.removeToken();
+        }
       } finally {
         setIsLoading(false);
       }

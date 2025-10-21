@@ -185,20 +185,21 @@ export class AuthService {
       );
     }
 
-    // 1. Exchange code for access token
-    const tokenData = await this.googleOAuth2Service.exchangeCodeForTokens(
-      code,
-      redirectUri,
-      codeVerifier,
-    );
+    try {
+      // 1. Exchange code for access token
+      const tokenData = await this.googleOAuth2Service.exchangeCodeForTokens(
+        code,
+        redirectUri,
+        codeVerifier,
+      );
 
-    // 2. Fetch user info from provider
-    const googleUser = await this.googleOAuth2Service.getUserInfo(
-      tokenData.accessToken,
-    );
+      // 2. Fetch user info from provider
+      const googleUser = await this.googleOAuth2Service.getUserInfo(
+        tokenData.accessToken,
+      );
 
-    // 3. Find Google service in database
-    const googleService = await this.servicesService.findByName('Google');
+      // 3. Find Google service in database
+      const googleService = await this.servicesService.findByName('Google');
 
     // 4. Check if user exists (by email)
     const existingUser = await this.usersService
@@ -290,6 +291,9 @@ export class AuthService {
     const token = this.jwtService.sign(payload);
 
     return new AuthResponseDto(token);
+    } catch (error) {
+      throw error;
+    }
   }
 
   async registerWithOAuth2(

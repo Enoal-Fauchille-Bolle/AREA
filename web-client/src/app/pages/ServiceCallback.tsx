@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { authApi, tokenService } from '../../services/api';
 import { googleOAuth } from '../../lib/googleOAuth';
@@ -8,9 +8,15 @@ function ServiceCallback() {
   const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
+  const hasHandledRef = useRef(false); // Persist across renders to prevent double execution
 
   useEffect(() => {
     const handleOAuthCallback = async () => {
+      if (hasHandledRef.current) {
+        return;
+      }
+      hasHandledRef.current = true;
+
       try {
         // Check for error in URL
         const error = googleOAuth.extractErrorFromUrl();
@@ -24,13 +30,6 @@ function ServiceCallback() {
           throw new Error('No authorization code received from Google');
         }
 
-        console.log('Received authorization code, exchanging for token...');
-        console.log('Sending to backend:', {
-          service: 'google',
-          code: code.substring(0, 20) + '...',
-          redirect_uri: googleOAuth.redirectUri,
-        });
-
         // Exchange code for token via backend
         const response = await authApi.loginWithOAuth2({
           service: 'google',
@@ -38,24 +37,25 @@ function ServiceCallback() {
           redirect_uri: googleOAuth.redirectUri,
         });
 
-        console.log('Received token from backend:', !!response.token);
-
         // Store token
         tokenService.setToken(response.token);
+        
+        if (!tokenService.getToken()) {
+          throw new Error('Failed to save authentication token');
+        }
+        
         setStatus('success');
 
         // Redirect to profile after a short delay
         setTimeout(() => {
-          navigate('/profile');
+          navigate('/profile', { replace: true });
         }, 1500);
       } catch (err) {
-        console.error('OAuth callback error:', err);
         setStatus('error');
         setErrorMessage(
           err instanceof Error ? err.message : 'An unexpected error occurred',
         );
 
-        // Redirect to login after error display
         setTimeout(() => {
           navigate('/login');
         }, 3000);
