@@ -17,6 +17,7 @@ export const envValidationSchema = z.object({
   POSTGRES_DB: z.string().default('area_db'),
   DISCORD_CLIENT_ID: z.string().optional(),
   DISCORD_CLIENT_SECRET: z.string().optional(),
+  DISCORD_BOT_TOKEN: z.string().optional(),
   GITHUB_CLIENT_ID: z.string().optional(),
   GITHUB_CLIENT_SECRET: z.string().optional(),
   WEB_SERVICE_REDIRECT_URI: z
@@ -46,6 +47,11 @@ export function validateEnv(config: Record<string, unknown>) {
         'Discord OAuth2 must be set in production.',
       );
     }
+    if (!env.DISCORD_BOT_TOKEN) {
+      throw new ConfigurationException(
+        'Discord Bot Token must be set in production.',
+      );
+    }
     if (!env.GITHUB_CLIENT_ID || !env.GITHUB_CLIENT_SECRET) {
       throw new ConfigurationException(
         'GitHub OAuth2 must be set in production.',
@@ -57,6 +63,11 @@ export function validateEnv(config: Record<string, unknown>) {
     }
     if (!env.DISCORD_CLIENT_ID || !env.DISCORD_CLIENT_SECRET) {
       console.warn('WARNING: Discord OAuth2 not set; server may crash.');
+    }
+    if (!env.DISCORD_BOT_TOKEN) {
+      console.warn(
+        'WARNING: Discord Bot Token not set; Discord REActions will not work.',
+      );
     }
     if (!env.GITHUB_CLIENT_ID || !env.GITHUB_CLIENT_SECRET) {
       console.warn('WARNING: GitHub OAuth2 not set; server may crash.');

@@ -52,6 +52,7 @@ export const appConfig = registerAs('app', () => {
       discord: {
         clientId: process.env.DISCORD_CLIENT_ID,
         clientSecret: process.env.DISCORD_CLIENT_SECRET,
+        botToken: process.env.DISCORD_BOT_TOKEN,
       },
       github: {
         clientId: process.env.GITHUB_CLIENT_ID,

@@ -249,6 +249,26 @@ export class AreasService {
           },
         ],
       },
+      {
+        componentName: 'send_message',
+        parameters: [
+          {
+            name: 'channel_id',
+            description: 'Discord channel ID where the message will be sent',
+            type: 'string',
+            required: true,
+            placeholder: '123456789012345678',
+            validation: '^[0-9]{17,19}$',
+          },
+          {
+            name: 'content',
+            description: 'Message content to send',
+            type: 'string',
+            required: true,
+            placeholder: 'Hello from AREA! 👋',
+          },
+        ],
+      },
     ];
   }
 

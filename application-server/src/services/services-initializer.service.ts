@@ -245,9 +245,10 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
     const discordService = await this.servicesService.create({
       name: 'Discord',
       description:
-        'Send messages and interact with Discord servers and channels',
-      icon_path: '/icons/discord.svg',
-      requires_auth: true, // Discord requires OAuth2
+        'Send messages to Discord channels using the AREA Discord Bot. The bot must be added to your server with appropriate permissions.',
+      icon_path:
+        'https://static.vecteezy.com/system/resources/previews/023/741/147/non_2x/discord-logo-icon-social-media-icon-free-png.png',
+      requires_auth: false, // Discord bot doesn't require user OAuth
       is_active: true,
     });
 
@@ -256,7 +257,8 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       service_id: discordService.id,
       type: ComponentType.REACTION,
       name: 'send_message',
-      description: 'Send a message to a Discord channel',
+      description:
+        'Send a message to a Discord channel using the AREA Discord Bot',
       is_active: true,
       // polling_interval not needed for reactions
     });
@@ -267,7 +269,8 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       this.variablesService.create({
         component_id: sendMessageComponent.id,
         name: 'channel_id',
-        description: 'Discord channel ID where the message will be sent',
+        description:
+          'Discord channel ID where the message will be sent. The AREA bot must have access to this channel.',
         kind: VariableKind.PARAMETER,
         type: VariableType.STRING,
         nullable: false,
@@ -287,80 +290,10 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
         placeholder: 'Hello from AREA! 👋',
         display_order: 2,
       }),
-
-      // Embed title parameter - optional
-      this.variablesService.create({
-        component_id: sendMessageComponent.id,
-        name: 'embed_title',
-        description: 'Optional embed title for rich message formatting',
-        kind: VariableKind.PARAMETER,
-        type: VariableType.STRING,
-        nullable: true,
-        placeholder: 'AREA Notification',
-        display_order: 3,
-      }),
-
-      // Embed description parameter - optional
-      this.variablesService.create({
-        component_id: sendMessageComponent.id,
-        name: 'embed_description',
-        description: 'Optional embed description for rich message formatting',
-        kind: VariableKind.PARAMETER,
-        type: VariableType.STRING,
-        nullable: true,
-        placeholder: 'Your automation was triggered successfully',
-        display_order: 4,
-      }),
-
-      // Embed color parameter - optional
-      this.variablesService.create({
-        component_id: sendMessageComponent.id,
-        name: 'embed_color',
-        description: 'Optional embed color in hexadecimal format (without #)',
-        kind: VariableKind.PARAMETER,
-        type: VariableType.STRING,
-        nullable: true,
-        placeholder: '5865F2',
-        validation_regex: '^[0-9A-Fa-f]{6}$', // Hex color without #
-        display_order: 5,
-      }),
     ]);
 
     // Create return values for the component
-    await Promise.all([
-      // Message ID return value
-      this.variablesService.create({
-        component_id: sendMessageComponent.id,
-        name: 'message_id',
-        description: 'ID of the sent Discord message',
-        kind: VariableKind.RETURN_VALUE,
-        type: VariableType.STRING,
-        nullable: false,
-        display_order: 1,
-      }),
-
-      // Message URL return value
-      this.variablesService.create({
-        component_id: sendMessageComponent.id,
-        name: 'message_url',
-        description: 'Direct URL to the sent Discord message',
-        kind: VariableKind.RETURN_VALUE,
-        type: VariableType.URL,
-        nullable: false,
-        display_order: 2,
-      }),
-
-      // Timestamp return value
-      this.variablesService.create({
-        component_id: sendMessageComponent.id,
-        name: 'sent_at',
-        description: 'Timestamp when the message was sent',
-        kind: VariableKind.RETURN_VALUE,
-        type: VariableType.DATE,
-        nullable: false,
-        display_order: 3,
-      }),
-    ]);
+    // await Promise.all([]);
 
     console.log(
       'Discord service and send_message component created successfully',
