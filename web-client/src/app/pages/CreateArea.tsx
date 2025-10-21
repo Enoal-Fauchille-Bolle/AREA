@@ -617,33 +617,38 @@ const CreateArea: React.FC = () => {
                   )}
                 </button>
               </div>
-            ) : (
-              <div className="bg-green-900 bg-opacity-50 border border-green-500 rounded-lg p-6 mb-6">
-                <div className="flex items-center space-x-3 mb-4">
-                  <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
-                    <svg
-                      className="w-5 h-5 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
+            ) : null}
+
+            {isConnected &&
+              !showDiscordAuth &&
+              (isDiscordService(formData.actionService) ||
+                isDiscordService(formData.reactionService)) && (
+                <div className="bg-green-900 bg-opacity-50 border border-green-500 rounded-lg p-6 mb-6">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                      <svg
+                        className="w-5 h-5 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-white font-semibold">
+                        Discord Connected Successfully
+                      </h3>
+                      <p className="text-green-200 text-sm">
+                        Your Discord account is connected and ready to use
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-white font-semibold">
-                      Discord Connected Successfully
-                    </h3>
-                    <p className="text-green-200 text-sm">
-                      Your Discord account is connected and ready to use
-                    </p>
-                  </div>
-                </div>
                 {discordUser && (
                   <div className="bg-green-800 bg-opacity-30 rounded-lg p-4 mb-3">
                     <div className="flex items-center space-x-3">
