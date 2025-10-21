@@ -17,6 +17,7 @@ import {
 import { UserService } from '../user-services/entities/user-service.entity';
 import { DiscordOAuth2Service } from './oauth2/discord-oauth2.service';
 import { GithubOAuth2Service } from './oauth2/github-oauth2.service';
+import { GoogleOAuth2Service } from './oauth2/google-oauth2.service';
 describe('ServicesService', () => {
   let service: ServicesService;
   let _serviceRepository: Repository<Service>;
@@ -26,6 +27,7 @@ describe('ServicesService', () => {
   let _configService: ConfigService;
   let _discordOAuth2Service: DiscordOAuth2Service;
   let _githubOAuth2Service: GithubOAuth2Service;
+  let _googleOAuth2Service: GoogleOAuth2Service;
 
   const mockService: Service = {
     id: 1,
@@ -45,61 +47,70 @@ describe('ServicesService', () => {
     is_active: true,
   };
 
-//   const mockComponent: Partial<Component> = {
-//     id: 1,
-//     service_id: 1,
-//     type: ComponentType.ACTION,
-//     name: 'New Message',
-//     description: 'Triggered when a new message is sent',
-//     webhook_endpoint: null,
-//     polling_interval: null,
-//     is_active: true,
-//   };
+  const mockGoogleService: Service = {
+    id: 3,
+    name: 'Google',
+    description: 'Google services platform',
+    icon_path: 'assets/services/google.svg',
+    requires_auth: true,
+    is_active: true,
+  };
 
-//   const mockVariable: Partial<Variable> = {
-//     id: 1,
-//     component_id: 1,
-//     name: 'channel_id',
-//     description: 'Channel ID',
-//     kind: VariableKind.PARAMETER,
-//     type: VariableType.STRING,
-//     nullable: false,
-//     placeholder: 'Enter channel ID',
-//     validation_regex: null,
-//     display_order: 1,
-//   };
+  const mockComponent: Partial<Component> = {
+    id: 1,
+    service_id: 1,
+    type: ComponentType.ACTION,
+    name: 'New Message',
+    description: 'Triggered when a new message is sent',
+    webhook_endpoint: null,
+    polling_interval: null,
+    is_active: true,
+  };
 
-//   const mockUserService: Partial<UserService> = {
-//     user_id: 1,
-//     service_id: 1,
-//     oauth_token: 'mock_access_token',
-//     refresh_token: 'mock_refresh_token',
-//     token_expires_at: new Date(Date.now() + 3600000),
-//     created_at: new Date(),
-//     updated_at: new Date(),
-//     service: mockService,
-//   };
+  const mockVariable: Partial<Variable> = {
+    id: 1,
+    component_id: 1,
+    name: 'channel_id',
+    description: 'Channel ID',
+    kind: VariableKind.PARAMETER,
+    type: VariableType.STRING,
+    nullable: false,
+    placeholder: 'Enter channel ID',
+    validation_regex: null,
+    display_order: 1,
+  };
 
-//   const mockServiceRepository = {
-//     find: jest.fn(),
-//     findOne: jest.fn(),
-//   };
+  const mockUserService: Partial<UserService> = {
+    user_id: 1,
+    service_id: 1,
+    oauth_token: 'mock_access_token',
+    refresh_token: 'mock_refresh_token',
+    token_expires_at: new Date(Date.now() + 3600000),
+    created_at: new Date(),
+    updated_at: new Date(),
+    service: mockService,
+  };
 
-//   const mockComponentRepository = {
-//     find: jest.fn(),
-//   };
+  const mockServiceRepository = {
+    find: jest.fn(),
+    findOne: jest.fn(),
+  };
 
-//   const mockVariableRepository = {
-//     find: jest.fn(),
-//   };
+  const mockComponentRepository = {
+    find: jest.fn(),
+  };
 
-//   const mockUserServiceRepository = {
-//     find: jest.fn(),
-//     findOne: jest.fn(),
-//     create: jest.fn(),
-//     save: jest.fn(),
-//     delete: jest.fn(),
-//   };
+  const mockVariableRepository = {
+    find: jest.fn(),
+  };
+
+  const mockUserServiceRepository = {
+    find: jest.fn(),
+    findOne: jest.fn(),
+    create: jest.fn(),
+    save: jest.fn(),
+    delete: jest.fn(),
+  };
 
   const mockConfigService = {
     get: jest.fn().mockReturnValue({
@@ -117,6 +128,10 @@ describe('ServicesService', () => {
           clientId: 'mock_github_client_id',
           clientSecret: 'mock_github_client_secret',
         },
+        google: {
+          clientId: 'mock_google_client_id',
+          clientSecret: 'mock_google_client_secret',
+        },
       },
     }),
   };
@@ -129,6 +144,12 @@ describe('ServicesService', () => {
   const mockGithubOAuth2Service = {
     exchangeCodeForTokens: jest.fn(),
     refreshAccessToken: jest.fn(),
+  };
+
+  const mockGoogleOAuth2Service = {
+    exchangeCodeForTokens: jest.fn(),
+    refreshAccessToken: jest.fn(),
+    getUserInfo: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -163,6 +184,10 @@ describe('ServicesService', () => {
           provide: GithubOAuth2Service,
           useValue: mockGithubOAuth2Service,
         },
+        {
+          provide: GoogleOAuth2Service,
+          useValue: mockGoogleOAuth2Service,
+        },
       ],
     }).compile();
 
@@ -183,208 +208,209 @@ describe('ServicesService', () => {
     _discordOAuth2Service =
       module.get<DiscordOAuth2Service>(DiscordOAuth2Service);
     _githubOAuth2Service = module.get<GithubOAuth2Service>(GithubOAuth2Service);
+    _googleOAuth2Service = module.get<GoogleOAuth2Service>(GoogleOAuth2Service);
   });
 
-//   afterEach(() => {
-//     jest.clearAllMocks();
-//   });
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
 
-//   it('should be defined', () => {
-//     expect(service).toBeDefined();
-//   });
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
 
-//   describe('findAll', () => {
-//     it('should return an array of services', async () => {
-//       mockServiceRepository.find.mockResolvedValue([
-//         mockService,
-//         mockServiceNoAuth,
-//       ]);
+  describe('findAll', () => {
+    it('should return an array of services', async () => {
+      mockServiceRepository.find.mockResolvedValue([
+        mockService,
+        mockServiceNoAuth,
+      ]);
 
-//       const result = await service.findAll();
+      const result = await service.findAll();
 
-//       expect(result).toHaveLength(2);
-//       expect(result[0].id).toBe(mockService.id);
-//       expect(result[0].name).toBe(mockService.name);
-//       expect(result[0].icon_url).toBe(
-//         'http://localhost:8080/assets/services/discord.svg',
-//       );
-//       expect(result[1].icon_url).toBeNull();
-//       expect(mockServiceRepository.find).toHaveBeenCalledWith({});
-//     });
+      expect(result).toHaveLength(2);
+      expect(result[0].id).toBe(mockService.id);
+      expect(result[0].name).toBe(mockService.name);
+      expect(result[0].icon_url).toBe(
+        'http://localhost:8080/assets/services/discord.svg',
+      );
+      expect(result[1].icon_url).toBeNull();
+      expect(mockServiceRepository.find).toHaveBeenCalledWith({});
+    });
 
-//     it('should return an empty array when no services exist', async () => {
-//       mockServiceRepository.find.mockResolvedValue([]);
+    it('should return an empty array when no services exist', async () => {
+      mockServiceRepository.find.mockResolvedValue([]);
 
-//       const result = await service.findAll();
+      const result = await service.findAll();
 
-//       expect(result).toHaveLength(0);
-//       expect(mockServiceRepository.find).toHaveBeenCalledWith({});
-//     });
-//   });
+      expect(result).toHaveLength(0);
+      expect(mockServiceRepository.find).toHaveBeenCalledWith({});
+    });
+  });
 
-//   describe('findOne', () => {
-//     it('should return a single service', async () => {
-//       mockServiceRepository.findOne.mockResolvedValue(mockService);
+  describe('findOne', () => {
+    it('should return a single service', async () => {
+      mockServiceRepository.findOne.mockResolvedValue(mockService);
 
-//       const result = await service.findOne(1);
+      const result = await service.findOne(1);
 
-//       expect(result.id).toBe(mockService.id);
-//       expect(result.name).toBe(mockService.name);
-//       expect(mockServiceRepository.findOne).toHaveBeenCalledWith({
-//         where: { id: 1 },
-//       });
-//     });
+      expect(result.id).toBe(mockService.id);
+      expect(result.name).toBe(mockService.name);
+      expect(mockServiceRepository.findOne).toHaveBeenCalledWith({
+        where: { id: 1 },
+      });
+    });
 
-//     it('should throw NotFoundException when service does not exist', async () => {
-//       mockServiceRepository.findOne.mockResolvedValue(null);
+    it('should throw NotFoundException when service does not exist', async () => {
+      mockServiceRepository.findOne.mockResolvedValue(null);
 
-//       await expect(service.findOne(999)).rejects.toThrow(NotFoundException);
-//       await expect(service.findOne(999)).rejects.toThrow(
-//         'Service with ID 999 not found',
-//       );
-//     });
-//   });
+      await expect(service.findOne(999)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(999)).rejects.toThrow(
+        'Service with ID 999 not found',
+      );
+    });
+  });
 
-//   describe('findAllActions', () => {
-//     it('should return all actions for a service', async () => {
-//       mockServiceRepository.findOne.mockResolvedValue(mockService);
-//       mockComponentRepository.find.mockResolvedValue([mockComponent]);
-//       mockVariableRepository.find.mockResolvedValue([mockVariable]);
+  describe('findAllActions', () => {
+    it('should return all actions for a service', async () => {
+      mockServiceRepository.findOne.mockResolvedValue(mockService);
+      mockComponentRepository.find.mockResolvedValue([mockComponent]);
+      mockVariableRepository.find.mockResolvedValue([mockVariable]);
 
-//       const result = await service.findAllActions(1);
+      const result = await service.findAllActions(1);
 
-//       expect(result).toBeDefined();
-//       expect(Array.isArray(result)).toBe(true);
-//       expect(result).toHaveLength(1);
-//       expect(mockComponentRepository.find).toHaveBeenCalledWith({
-//         where: { service_id: 1, type: ComponentType.ACTION },
-//       });
-//       expect(mockVariableRepository.find).toHaveBeenCalledWith({
-//         where: { component_id: 1 },
-//         order: { display_order: 'ASC' },
-//       });
-//     });
+      expect(result).toBeDefined();
+      expect(Array.isArray(result)).toBe(true);
+      expect(result).toHaveLength(1);
+      expect(mockComponentRepository.find).toHaveBeenCalledWith({
+        where: { service_id: 1, type: ComponentType.ACTION },
+      });
+      expect(mockVariableRepository.find).toHaveBeenCalledWith({
+        where: { component_id: 1 },
+        order: { display_order: 'ASC' },
+      });
+    });
 
-//     it('should throw NotFoundException when service does not exist', async () => {
-//       mockServiceRepository.findOne.mockResolvedValue(null);
+    it('should throw NotFoundException when service does not exist', async () => {
+      mockServiceRepository.findOne.mockResolvedValue(null);
 
-//       await expect(service.findAllActions(999)).rejects.toThrow(
-//         NotFoundException,
-//       );
-//       await expect(service.findAllActions(999)).rejects.toThrow(
-//         'Service with ID 999 not found',
-//       );
-//     });
+      await expect(service.findAllActions(999)).rejects.toThrow(
+        NotFoundException,
+      );
+      await expect(service.findAllActions(999)).rejects.toThrow(
+        'Service with ID 999 not found',
+      );
+    });
 
-//     it('should return empty array when service has no actions', async () => {
-//       mockServiceRepository.findOne.mockResolvedValue(mockService);
-//       mockComponentRepository.find.mockResolvedValue([]);
+    it('should return empty array when service has no actions', async () => {
+      mockServiceRepository.findOne.mockResolvedValue(mockService);
+      mockComponentRepository.find.mockResolvedValue([]);
 
-//       const result = await service.findAllActions(1);
+      const result = await service.findAllActions(1);
 
-//       expect(result).toHaveLength(0);
-//     });
-//   });
+      expect(result).toHaveLength(0);
+    });
+  });
 
-//   describe('findAllReactions', () => {
-//     it('should return all reactions for a service', async () => {
-//       const mockReaction: Partial<Component> = {
-//         ...mockComponent,
-//         type: ComponentType.REACTION,
-//       };
-//       mockServiceRepository.findOne.mockResolvedValue(mockService);
-//       mockComponentRepository.find.mockResolvedValue([mockReaction]);
-//       mockVariableRepository.find.mockResolvedValue([mockVariable]);
+  describe('findAllReactions', () => {
+    it('should return all reactions for a service', async () => {
+      const mockReaction: Partial<Component> = {
+        ...mockComponent,
+        type: ComponentType.REACTION,
+      };
+      mockServiceRepository.findOne.mockResolvedValue(mockService);
+      mockComponentRepository.find.mockResolvedValue([mockReaction]);
+      mockVariableRepository.find.mockResolvedValue([mockVariable]);
 
-//       const result = await service.findAllReactions(1);
+      const result = await service.findAllReactions(1);
 
-//       expect(result).toBeDefined();
-//       expect(Array.isArray(result)).toBe(true);
-//       expect(result).toHaveLength(1);
-//       expect(mockComponentRepository.find).toHaveBeenCalledWith({
-//         where: { service_id: 1, type: ComponentType.REACTION },
-//       });
-//     });
+      expect(result).toBeDefined();
+      expect(Array.isArray(result)).toBe(true);
+      expect(result).toHaveLength(1);
+      expect(mockComponentRepository.find).toHaveBeenCalledWith({
+        where: { service_id: 1, type: ComponentType.REACTION },
+      });
+    });
 
-//     it('should throw NotFoundException when service does not exist', async () => {
-//       mockServiceRepository.findOne.mockResolvedValue(null);
+    it('should throw NotFoundException when service does not exist', async () => {
+      mockServiceRepository.findOne.mockResolvedValue(null);
 
-//       await expect(service.findAllReactions(999)).rejects.toThrow(
-//         NotFoundException,
-//       );
-//     });
-//   });
+      await expect(service.findAllReactions(999)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
 
-//   describe('findAllComponents', () => {
-//     it('should return all components for a service', async () => {
-//       mockServiceRepository.findOne.mockResolvedValue(mockService);
-//       mockComponentRepository.find.mockResolvedValue([mockComponent]);
-//       mockVariableRepository.find.mockResolvedValue([mockVariable]);
+  describe('findAllComponents', () => {
+    it('should return all components for a service', async () => {
+      mockServiceRepository.findOne.mockResolvedValue(mockService);
+      mockComponentRepository.find.mockResolvedValue([mockComponent]);
+      mockVariableRepository.find.mockResolvedValue([mockVariable]);
 
-//       const result = await service.findAllComponents(1);
+      const result = await service.findAllComponents(1);
 
-//       expect(result).toBeDefined();
-//       expect(Array.isArray(result)).toBe(true);
-//       expect(result).toHaveLength(1);
-//       expect(mockComponentRepository.find).toHaveBeenCalledWith({
-//         where: { service_id: 1 },
-//       });
-//     });
+      expect(result).toBeDefined();
+      expect(Array.isArray(result)).toBe(true);
+      expect(result).toHaveLength(1);
+      expect(mockComponentRepository.find).toHaveBeenCalledWith({
+        where: { service_id: 1 },
+      });
+    });
 
-//     it('should throw NotFoundException when service does not exist', async () => {
-//       mockServiceRepository.findOne.mockResolvedValue(null);
+    it('should throw NotFoundException when service does not exist', async () => {
+      mockServiceRepository.findOne.mockResolvedValue(null);
 
-//       await expect(service.findAllComponents(999)).rejects.toThrow(
-//         NotFoundException,
-//       );
-//     });
-//   });
+      await expect(service.findAllComponents(999)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
 
-//   describe('findUserServices', () => {
-//     it('should return all services linked to a user', async () => {
-//       mockUserServiceRepository.find.mockResolvedValue([mockUserService]);
+  describe('findUserServices', () => {
+    it('should return all services linked to a user', async () => {
+      mockUserServiceRepository.find.mockResolvedValue([mockUserService]);
 
-//       const result = await service.findUserServices(1);
+      const result = await service.findUserServices(1);
 
-//       expect(result).toHaveLength(1);
-//       expect(result[0].id).toBe(mockService.id);
-//       expect(result[0].name).toBe(mockService.name);
-//       expect(mockUserServiceRepository.find).toHaveBeenCalledWith({
-//         where: { user_id: 1 },
-//         relations: ['service'],
-//       });
-//     });
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe(mockService.id);
+      expect(result[0].name).toBe(mockService.name);
+      expect(mockUserServiceRepository.find).toHaveBeenCalledWith({
+        where: { user_id: 1 },
+        relations: ['service'],
+      });
+    });
 
-//     it('should return empty array when user has no linked services', async () => {
-//       mockUserServiceRepository.find.mockResolvedValue([]);
+    it('should return empty array when user has no linked services', async () => {
+      mockUserServiceRepository.find.mockResolvedValue([]);
 
-//       const result = await service.findUserServices(1);
+      const result = await service.findUserServices(1);
 
-//       expect(result).toHaveLength(0);
-//     });
-//   });
+      expect(result).toHaveLength(0);
+    });
+  });
 
-//   describe('linkService - Discord OAuth2', () => {
-//     it('should create new service link with OAuth2 code', async () => {
-//       const mockTokens = {
-//         accessToken: 'new_access_token',
-//         refreshToken: 'new_refresh_token',
-//         expiresAt: new Date(Date.now() + 3600000),
-//       };
+  describe('linkService - Discord OAuth2', () => {
+    it('should create new service link with OAuth2 code', async () => {
+      const mockTokens = {
+        accessToken: 'new_access_token',
+        refreshToken: 'new_refresh_token',
+        expiresAt: new Date(Date.now() + 3600000),
+      };
 
-//       mockServiceRepository.findOne.mockResolvedValue(mockService);
-//       mockUserServiceRepository.findOne.mockResolvedValue(null);
-//       mockDiscordOAuth2Service.exchangeCodeForTokens.mockResolvedValue(
-//         mockTokens,
-//       );
-//       mockUserServiceRepository.create.mockReturnValue({
-//         user_id: 1,
-//         service_id: 1,
-//         oauth_token: mockTokens.accessToken,
-//         refresh_token: mockTokens.refreshToken,
-//         token_expires_at: mockTokens.expiresAt,
-//       });
-//       mockUserServiceRepository.save.mockResolvedValue({});
+      mockServiceRepository.findOne.mockResolvedValue(mockService);
+      mockUserServiceRepository.findOne.mockResolvedValue(null);
+      mockDiscordOAuth2Service.exchangeCodeForTokens.mockResolvedValue(
+        mockTokens,
+      );
+      mockUserServiceRepository.create.mockReturnValue({
+        user_id: 1,
+        service_id: 1,
+        oauth_token: mockTokens.accessToken,
+        refresh_token: mockTokens.refreshToken,
+        token_expires_at: mockTokens.expiresAt,
+      });
+      mockUserServiceRepository.save.mockResolvedValue({});
 
       await service.linkService(1, 1, {
         code: 'authorization_code',
@@ -407,19 +433,19 @@ describe('ServicesService', () => {
       expect(mockUserServiceRepository.save).toHaveBeenCalled();
     });
 
-//     it('should update existing service link with new OAuth2 tokens', async () => {
-//       const mockTokens = {
-//         accessToken: 'updated_access_token',
-//         refreshToken: 'updated_refresh_token',
-//         expiresAt: new Date(Date.now() + 3600000),
-//       };
+    it('should update existing service link with new OAuth2 tokens', async () => {
+      const mockTokens = {
+        accessToken: 'updated_access_token',
+        refreshToken: 'updated_refresh_token',
+        expiresAt: new Date(Date.now() + 3600000),
+      };
 
-//       mockServiceRepository.findOne.mockResolvedValue(mockService);
-//       mockUserServiceRepository.findOne.mockResolvedValue(mockUserService);
-//       mockDiscordOAuth2Service.exchangeCodeForTokens.mockResolvedValue(
-//         mockTokens,
-//       );
-//       mockUserServiceRepository.save.mockResolvedValue({});
+      mockServiceRepository.findOne.mockResolvedValue(mockService);
+      mockUserServiceRepository.findOne.mockResolvedValue(mockUserService);
+      mockDiscordOAuth2Service.exchangeCodeForTokens.mockResolvedValue(
+        mockTokens,
+      );
+      mockUserServiceRepository.save.mockResolvedValue({});
 
       await service.linkService(1, 1, {
         code: 'new_authorization_code',
@@ -440,8 +466,8 @@ describe('ServicesService', () => {
       );
     });
 
-//     it('should throw NotFoundException when service does not exist', async () => {
-//       mockServiceRepository.findOne.mockResolvedValue(null);
+    it('should throw NotFoundException when service does not exist', async () => {
+      mockServiceRepository.findOne.mockResolvedValue(null);
 
       await expect(
         service.linkService(1, 999, { code: 'code', platform: 'web' }),
@@ -451,9 +477,9 @@ describe('ServicesService', () => {
       ).rejects.toThrow('Service with ID 999 not found');
     });
 
-//     it('should handle non-OAuth2 services', async () => {
-//       mockServiceRepository.findOne.mockResolvedValue(mockServiceNoAuth);
-//       mockUserServiceRepository.findOne.mockResolvedValue(null);
+    it('should handle non-OAuth2 services', async () => {
+      mockServiceRepository.findOne.mockResolvedValue(mockServiceNoAuth);
+      mockUserServiceRepository.findOne.mockResolvedValue(null);
 
       await expect(
         service.linkService(1, 2, { code: 'code', platform: 'web' }),
@@ -461,82 +487,82 @@ describe('ServicesService', () => {
     });
   });
 
-//   describe('unlinkService', () => {
-//     it('should successfully unlink a service', async () => {
-//       mockServiceRepository.findOne.mockResolvedValue(mockService);
-//       mockUserServiceRepository.delete.mockResolvedValue({ affected: 1 });
+  describe('unlinkService', () => {
+    it('should successfully unlink a service', async () => {
+      mockServiceRepository.findOne.mockResolvedValue(mockService);
+      mockUserServiceRepository.delete.mockResolvedValue({ affected: 1 });
 
-//       await service.unlinkService(1, 1);
+      await service.unlinkService(1, 1);
 
-//       expect(mockUserServiceRepository.delete).toHaveBeenCalledWith({
-//         user_id: 1,
-//         service_id: 1,
-//       });
-//     });
+      expect(mockUserServiceRepository.delete).toHaveBeenCalledWith({
+        user_id: 1,
+        service_id: 1,
+      });
+    });
 
-//     it('should throw NotFoundException when service does not exist', async () => {
-//       mockServiceRepository.findOne.mockResolvedValue(null);
+    it('should throw NotFoundException when service does not exist', async () => {
+      mockServiceRepository.findOne.mockResolvedValue(null);
 
-//       await expect(service.unlinkService(1, 999)).rejects.toThrow(
-//         NotFoundException,
-//       );
-//       await expect(service.unlinkService(1, 999)).rejects.toThrow(
-//         'Service with ID 999 not found',
-//       );
-//     });
+      await expect(service.unlinkService(1, 999)).rejects.toThrow(
+        NotFoundException,
+      );
+      await expect(service.unlinkService(1, 999)).rejects.toThrow(
+        'Service with ID 999 not found',
+      );
+    });
 
-//     it('should throw NotFoundException when user service link does not exist', async () => {
-//       mockServiceRepository.findOne.mockResolvedValue(mockService);
-//       mockUserServiceRepository.delete.mockResolvedValue({ affected: 0 });
+    it('should throw NotFoundException when user service link does not exist', async () => {
+      mockServiceRepository.findOne.mockResolvedValue(mockService);
+      mockUserServiceRepository.delete.mockResolvedValue({ affected: 0 });
 
-//       await expect(service.unlinkService(1, 1)).rejects.toThrow(
-//         NotFoundException,
-//       );
-//       await expect(service.unlinkService(1, 1)).rejects.toThrow(
-//         'User service link not found for user 1 and service 1',
-//       );
-//     });
-//   });
+      await expect(service.unlinkService(1, 1)).rejects.toThrow(
+        NotFoundException,
+      );
+      await expect(service.unlinkService(1, 1)).rejects.toThrow(
+        'User service link not found for user 1 and service 1',
+      );
+    });
+  });
 
-//   describe('refreshServiceToken', () => {
-//     it('should successfully refresh Discord access token', async () => {
-//       const mockTokens = {
-//         accessToken: 'refreshed_access_token',
-//         refreshToken: 'new_refresh_token',
-//         expiresAt: new Date(Date.now() + 3600000),
-//       };
+  describe('refreshServiceToken', () => {
+    it('should successfully refresh Discord access token', async () => {
+      const mockTokens = {
+        accessToken: 'refreshed_access_token',
+        refreshToken: 'new_refresh_token',
+        expiresAt: new Date(Date.now() + 3600000),
+      };
 
-//       const userServiceCopy: Partial<UserService> = { ...mockUserService };
-//       const originalRefreshToken = userServiceCopy.refresh_token;
+      const userServiceCopy: Partial<UserService> = { ...mockUserService };
+      const originalRefreshToken = userServiceCopy.refresh_token;
 
-//       mockServiceRepository.findOne.mockResolvedValue(mockService);
-//       mockUserServiceRepository.findOne.mockResolvedValue(userServiceCopy);
-//       mockDiscordOAuth2Service.refreshAccessToken.mockResolvedValue(mockTokens);
-//       mockUserServiceRepository.save.mockResolvedValue({});
+      mockServiceRepository.findOne.mockResolvedValue(mockService);
+      mockUserServiceRepository.findOne.mockResolvedValue(userServiceCopy);
+      mockDiscordOAuth2Service.refreshAccessToken.mockResolvedValue(mockTokens);
+      mockUserServiceRepository.save.mockResolvedValue({});
 
-//       await service.refreshServiceToken(1, 1);
+      await service.refreshServiceToken(1, 1);
 
-//       expect(mockDiscordOAuth2Service.refreshAccessToken).toHaveBeenCalledWith(
-//         originalRefreshToken,
-//       );
-//       expect(userServiceCopy.oauth_token).toBe(mockTokens.accessToken);
-//       expect(userServiceCopy.refresh_token).toBe(mockTokens.refreshToken);
-//       expect(userServiceCopy.token_expires_at).toBe(mockTokens.expiresAt);
-//       expect(mockUserServiceRepository.save).toHaveBeenCalledWith(
-//         userServiceCopy,
-//       );
-//     });
+      expect(mockDiscordOAuth2Service.refreshAccessToken).toHaveBeenCalledWith(
+        originalRefreshToken,
+      );
+      expect(userServiceCopy.oauth_token).toBe(mockTokens.accessToken);
+      expect(userServiceCopy.refresh_token).toBe(mockTokens.refreshToken);
+      expect(userServiceCopy.token_expires_at).toBe(mockTokens.expiresAt);
+      expect(mockUserServiceRepository.save).toHaveBeenCalledWith(
+        userServiceCopy,
+      );
+    });
 
-//     it('should throw NotFoundException when service does not exist', async () => {
-//       mockServiceRepository.findOne.mockResolvedValue(null);
+    it('should throw NotFoundException when service does not exist', async () => {
+      mockServiceRepository.findOne.mockResolvedValue(null);
 
-//       await expect(service.refreshServiceToken(1, 999)).rejects.toThrow(
-//         NotFoundException,
-//       );
-//     });
+      await expect(service.refreshServiceToken(1, 999)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
 
-//     it('should throw NotFoundException for non-Discord services', async () => {
-//       mockServiceRepository.findOne.mockResolvedValue(mockServiceNoAuth);
+    it('should throw NotFoundException for non-Discord services', async () => {
+      mockServiceRepository.findOne.mockResolvedValue(mockServiceNoAuth);
 
       await expect(service.refreshServiceToken(1, 2)).rejects.toThrow(
         NotFoundException,
@@ -546,33 +572,260 @@ describe('ServicesService', () => {
       );
     });
 
-//     it('should throw NotFoundException when user service link does not exist', async () => {
-//       mockServiceRepository.findOne.mockResolvedValue(mockService);
-//       mockUserServiceRepository.findOne.mockResolvedValue(null);
+    it('should throw NotFoundException when user service link does not exist', async () => {
+      mockServiceRepository.findOne.mockResolvedValue(mockService);
+      mockUserServiceRepository.findOne.mockResolvedValue(null);
 
-//       await expect(service.refreshServiceToken(1, 1)).rejects.toThrow(
-//         NotFoundException,
-//       );
-//       await expect(service.refreshServiceToken(1, 1)).rejects.toThrow(
-//         'User service link not found or no refresh token available',
-//       );
-//     });
+      await expect(service.refreshServiceToken(1, 1)).rejects.toThrow(
+        NotFoundException,
+      );
+      await expect(service.refreshServiceToken(1, 1)).rejects.toThrow(
+        'User service link not found or no refresh token available',
+      );
+    });
 
-//     it('should throw NotFoundException when no refresh token available', async () => {
-//       const userServiceNoRefresh = { ...mockUserService, refresh_token: null };
-//       mockServiceRepository.findOne.mockResolvedValue(mockService);
-//       mockUserServiceRepository.findOne.mockResolvedValue(userServiceNoRefresh);
+    it('should throw NotFoundException when no refresh token available', async () => {
+      const userServiceNoRefresh = { ...mockUserService, refresh_token: null };
+      mockServiceRepository.findOne.mockResolvedValue(mockService);
+      mockUserServiceRepository.findOne.mockResolvedValue(userServiceNoRefresh);
 
-//       await expect(service.refreshServiceToken(1, 1)).rejects.toThrow(
-//         NotFoundException,
-//       );
-//     });
-//   });
-// });
+      await expect(service.refreshServiceToken(1, 1)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
 
-// Placeholder test to satisfy Jest requirement
-describe('ServicesService', () => {
-  it('placeholder test - full tests are commented out', () => {
-    expect(true).toBe(true);
+  describe('linkService - Google OAuth2', () => {
+    it('should create new Google service link with OAuth2 code', async () => {
+      const mockTokens = {
+        accessToken: 'new_google_access_token',
+        refreshToken: 'new_google_refresh_token',
+        expiresAt: new Date(Date.now() + 3600000),
+      };
+
+      mockServiceRepository.findOne.mockResolvedValue(mockGoogleService);
+      mockUserServiceRepository.findOne.mockResolvedValue(null);
+      mockGoogleOAuth2Service.exchangeCodeForTokens.mockResolvedValue(
+        mockTokens,
+      );
+      mockUserServiceRepository.create.mockReturnValue({
+        user_id: 1,
+        service_id: 3,
+        oauth_token: mockTokens.accessToken,
+        refresh_token: mockTokens.refreshToken,
+        token_expires_at: mockTokens.expiresAt,
+      });
+      mockUserServiceRepository.save.mockResolvedValue({});
+
+      await service.linkService(1, 3, {
+        code: 'google_authorization_code',
+        platform: 'web',
+      });
+
+      expect(
+        mockGoogleOAuth2Service.exchangeCodeForTokens,
+      ).toHaveBeenCalledWith(
+        'google_authorization_code',
+        'http://localhost:8081/service/callback',
+        undefined,
+      );
+      expect(mockUserServiceRepository.create).toHaveBeenCalledWith({
+        user_id: 1,
+        service_id: 3,
+        oauth_token: mockTokens.accessToken,
+        refresh_token: mockTokens.refreshToken,
+        token_expires_at: mockTokens.expiresAt,
+      });
+      expect(mockUserServiceRepository.save).toHaveBeenCalled();
+    });
+
+    it('should create new Google service link with PKCE code_verifier', async () => {
+      const mockTokens = {
+        accessToken: 'new_google_access_token',
+        refreshToken: 'new_google_refresh_token',
+        expiresAt: new Date(Date.now() + 3600000),
+      };
+
+      mockServiceRepository.findOne.mockResolvedValue(mockGoogleService);
+      mockUserServiceRepository.findOne.mockResolvedValue(null);
+      mockGoogleOAuth2Service.exchangeCodeForTokens.mockResolvedValue(
+        mockTokens,
+      );
+      mockUserServiceRepository.create.mockReturnValue({
+        user_id: 1,
+        service_id: 3,
+        oauth_token: mockTokens.accessToken,
+        refresh_token: mockTokens.refreshToken,
+        token_expires_at: mockTokens.expiresAt,
+      });
+      mockUserServiceRepository.save.mockResolvedValue({});
+
+      await service.linkService(1, 3, {
+        code: 'google_authorization_code',
+        code_verifier: 'pkce_code_verifier_value',
+        platform: 'mobile',
+      });
+
+      expect(
+        mockGoogleOAuth2Service.exchangeCodeForTokens,
+      ).toHaveBeenCalledWith(
+        'google_authorization_code',
+        'area://service/callback',
+        'pkce_code_verifier_value',
+      );
+      expect(mockUserServiceRepository.create).toHaveBeenCalledWith({
+        user_id: 1,
+        service_id: 3,
+        oauth_token: mockTokens.accessToken,
+        refresh_token: mockTokens.refreshToken,
+        token_expires_at: mockTokens.expiresAt,
+      });
+      expect(mockUserServiceRepository.save).toHaveBeenCalled();
+    });
+
+    it('should update existing Google service link with new OAuth2 tokens', async () => {
+      const mockTokens = {
+        accessToken: 'updated_google_access_token',
+        refreshToken: 'updated_google_refresh_token',
+        expiresAt: new Date(Date.now() + 3600000),
+      };
+
+      const mockGoogleUserService: Partial<UserService> = {
+        user_id: 1,
+        service_id: 3,
+        oauth_token: 'old_google_token',
+        refresh_token: 'old_google_refresh',
+        token_expires_at: new Date(Date.now() + 1800000),
+        created_at: new Date(),
+        updated_at: new Date(),
+        service: mockGoogleService,
+      };
+
+      mockServiceRepository.findOne.mockResolvedValue(mockGoogleService);
+      mockUserServiceRepository.findOne.mockResolvedValue(
+        mockGoogleUserService,
+      );
+      mockGoogleOAuth2Service.exchangeCodeForTokens.mockResolvedValue(
+        mockTokens,
+      );
+      mockUserServiceRepository.save.mockResolvedValue({});
+
+      await service.linkService(1, 3, {
+        code: 'new_google_authorization_code',
+        platform: 'web',
+      });
+
+      expect(
+        mockGoogleOAuth2Service.exchangeCodeForTokens,
+      ).toHaveBeenCalledWith(
+        'new_google_authorization_code',
+        'http://localhost:8081/service/callback',
+        undefined,
+      );
+      expect(mockGoogleUserService.oauth_token).toBe(mockTokens.accessToken);
+      expect(mockGoogleUserService.refresh_token).toBe(mockTokens.refreshToken);
+      expect(mockGoogleUserService.token_expires_at).toBe(mockTokens.expiresAt);
+      expect(mockUserServiceRepository.save).toHaveBeenCalledWith(
+        mockGoogleUserService,
+      );
+    });
+
+    it('should throw BadRequestException when Google OAuth2 exchange fails', async () => {
+      mockServiceRepository.findOne.mockResolvedValue(mockGoogleService);
+      mockUserServiceRepository.findOne.mockResolvedValue(null);
+      mockGoogleOAuth2Service.exchangeCodeForTokens.mockRejectedValue(
+        new BadRequestException('Invalid authorization code'),
+      );
+
+      await expect(
+        service.linkService(1, 3, {
+          code: 'invalid_code',
+          platform: 'web',
+        }),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.linkService(1, 3, {
+          code: 'invalid_code',
+          platform: 'web',
+        }),
+      ).rejects.toThrow('Invalid authorization code');
+    });
+  });
+
+  describe('refreshServiceToken - Google OAuth2', () => {
+    it('should successfully refresh Google access token', async () => {
+      const mockTokens = {
+        accessToken: 'refreshed_google_access_token',
+        refreshToken: 'new_google_refresh_token',
+        expiresAt: new Date(Date.now() + 3600000),
+      };
+
+      const googleUserServiceCopy: Partial<UserService> = {
+        user_id: 1,
+        service_id: 3,
+        oauth_token: 'old_google_token',
+        refresh_token: 'google_refresh_token',
+        token_expires_at: new Date(Date.now() - 1000),
+        created_at: new Date(),
+        updated_at: new Date(),
+        service: mockGoogleService,
+      };
+      const originalRefreshToken = googleUserServiceCopy.refresh_token;
+
+      mockServiceRepository.findOne.mockResolvedValue(mockGoogleService);
+      mockUserServiceRepository.findOne.mockResolvedValue(
+        googleUserServiceCopy,
+      );
+      mockGoogleOAuth2Service.refreshAccessToken.mockResolvedValue(mockTokens);
+      mockUserServiceRepository.save.mockResolvedValue({});
+
+      await service.refreshServiceToken(1, 3);
+
+      expect(mockGoogleOAuth2Service.refreshAccessToken).toHaveBeenCalledWith(
+        originalRefreshToken,
+      );
+      expect(googleUserServiceCopy.oauth_token).toBe(mockTokens.accessToken);
+      expect(googleUserServiceCopy.refresh_token).toBe(mockTokens.refreshToken);
+      expect(googleUserServiceCopy.token_expires_at).toBe(mockTokens.expiresAt);
+      expect(mockUserServiceRepository.save).toHaveBeenCalledWith(
+        googleUserServiceCopy,
+      );
+    });
+
+    it('should throw NotFoundException when Google user service link does not exist', async () => {
+      mockServiceRepository.findOne.mockResolvedValue(mockGoogleService);
+      mockUserServiceRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.refreshServiceToken(1, 3)).rejects.toThrow(
+        NotFoundException,
+      );
+      await expect(service.refreshServiceToken(1, 3)).rejects.toThrow(
+        'User service link not found or no refresh token available',
+      );
+    });
+
+    it('should throw NotFoundException when Google refresh token is not available', async () => {
+      const googleUserServiceNoRefresh = {
+        user_id: 1,
+        service_id: 3,
+        oauth_token: 'google_token',
+        refresh_token: null,
+        token_expires_at: new Date(Date.now() + 3600000),
+        created_at: new Date(),
+        updated_at: new Date(),
+        service: mockGoogleService,
+      };
+      mockServiceRepository.findOne.mockResolvedValue(mockGoogleService);
+      mockUserServiceRepository.findOne.mockResolvedValue(
+        googleUserServiceNoRefresh,
+      );
+
+      await expect(service.refreshServiceToken(1, 3)).rejects.toThrow(
+        NotFoundException,
+      );
+      await expect(service.refreshServiceToken(1, 3)).rejects.toThrow(
+        'User service link not found or no refresh token available',
+      );
+    });
   });
 });
