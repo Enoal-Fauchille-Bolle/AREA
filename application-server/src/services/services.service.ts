@@ -192,7 +192,11 @@ export class ServicesService {
   async linkService(
     userId: number,
     serviceId: number,
-    body: { code: string; platform: 'web' | 'mobile' },
+    body: {
+      code: string;
+      platform: 'web' | 'mobile';
+      code_verifier?: string;
+    },
   ): Promise<void> {
     const service = await this.serviceRepository.findOne({
       where: { id: serviceId },
@@ -248,6 +252,30 @@ export class ServicesService {
           user_id: userId,
           service_id: serviceId,
           oauth_token: tokens.accessToken,
+        });
+        await this.userServiceRepository.save(userService);
+      }
+    } else if (service.name.toLowerCase() === 'google') {
+      const tokens = await this.googleOAuth2Service.exchangeCodeForTokens(
+        body.code,
+        redirectUri,
+        body.code_verifier,
+      );
+
+      if (existing) {
+        // Update existing user service with new tokens
+        existing.oauth_token = tokens.accessToken;
+        existing.refresh_token = tokens.refreshToken;
+        existing.token_expires_at = tokens.expiresAt;
+        await this.userServiceRepository.save(existing);
+      } else {
+        // Create new user service link with tokens
+        const userService = this.userServiceRepository.create({
+          user_id: userId,
+          service_id: serviceId,
+          oauth_token: tokens.accessToken,
+          refresh_token: tokens.refreshToken,
+          token_expires_at: tokens.expiresAt,
         });
         await this.userServiceRepository.save(userService);
       }

@@ -81,6 +81,15 @@
 //     service: mockService,
 //   };
 
+//   const mockGoogleService: Service = {
+//     id: 3,
+//     name: 'Google',
+//     description: 'Google services platform',
+//     icon_path: 'assets/services/google.svg',
+//     requires_auth: true,
+//     is_active: true,
+//   };
+
 //   const mockServiceRepository = {
 //     find: jest.fn(),
 //     findOne: jest.fn(),
