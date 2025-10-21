@@ -269,6 +269,33 @@ export class AreasService {
           },
         ],
       },
+      {
+        componentName: 'message_posted',
+        parameters: [
+          {
+            name: 'channel_id',
+            description: 'Discord channel ID to monitor for new messages',
+            type: 'string',
+            required: true,
+            placeholder: '123456789012345678',
+            validation: '^[0-9]{17,19}$',
+          },
+          {
+            name: 'author_filter',
+            description: 'Filter messages by author username (optional)',
+            type: 'string',
+            required: false,
+            placeholder: 'username',
+          },
+          {
+            name: 'content_filter',
+            description: 'Filter messages containing this text (optional)',
+            type: 'string',
+            required: false,
+            placeholder: 'hello',
+          },
+        ],
+      },
     ];
   }
 

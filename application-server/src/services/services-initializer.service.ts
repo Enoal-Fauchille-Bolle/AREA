@@ -260,10 +260,18 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       description:
         'Send a message to a Discord channel using the AREA Discord Bot',
       is_active: true,
-      // polling_interval not needed for reactions
     });
 
-    // Create component parameters
+    // Create message_posted action component
+    const messagePostedComponent = await this.componentsService.create({
+      service_id: discordService.id,
+      type: ComponentType.ACTION,
+      name: 'message_posted',
+      description: 'Triggers when a new message is posted in a Discord channel',
+      is_active: true,
+    });
+
+    // Create component parameters for send_message
     await Promise.all([
       // Channel ID parameter - required
       this.variablesService.create({
@@ -292,8 +300,95 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       }),
     ]);
 
-    // Create return values for the component
-    // await Promise.all([]);
+    // Create component parameters for message_posted
+    await Promise.all([
+      // Channel ID parameter - required
+      this.variablesService.create({
+        component_id: messagePostedComponent.id,
+        name: 'channel_id',
+        description:
+          'Discord channel ID to monitor for new messages. The AREA bot must have access to this channel.',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: false,
+        placeholder: '123456789012345678',
+        validation_regex: '^[0-9]{17,19}$', // Discord snowflake ID pattern
+        display_order: 1,
+      }),
+
+      // Author filter parameter - optional
+      this.variablesService.create({
+        component_id: messagePostedComponent.id,
+        name: 'author_filter',
+        description:
+          'Filter messages by author username (optional, case-insensitive)',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: true,
+        placeholder: 'username',
+        display_order: 2,
+      }),
+
+      // Content filter parameter - optional
+      this.variablesService.create({
+        component_id: messagePostedComponent.id,
+        name: 'content_filter',
+        description:
+          'Filter messages containing this text (optional, case-insensitive)',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: true,
+        placeholder: 'hello',
+        display_order: 3,
+      }),
+    ]);
+
+    // Create return values for message_posted
+    await Promise.all([
+      // Author name return value
+      this.variablesService.create({
+        component_id: messagePostedComponent.id,
+        name: 'author_name',
+        description: 'Username of the message author',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 1,
+      }),
+
+      // Author ID return value
+      this.variablesService.create({
+        component_id: messagePostedComponent.id,
+        name: 'author_id',
+        description: 'Discord user ID of the message author',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 2,
+      }),
+
+      // Message content return value
+      this.variablesService.create({
+        component_id: messagePostedComponent.id,
+        name: 'message_content',
+        description: 'Content of the posted message',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 3,
+      }),
+
+      // Current time return value
+      this.variablesService.create({
+        component_id: messagePostedComponent.id,
+        name: 'current_time',
+        description: 'Timestamp when the message was posted (ISO format)',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 4,
+      }),
+    ]);
 
     console.log(
       'Discord service and send_message component created successfully',
