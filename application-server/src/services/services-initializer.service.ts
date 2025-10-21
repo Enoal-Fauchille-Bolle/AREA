@@ -378,6 +378,17 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
         display_order: 3,
       }),
 
+      // Message ID return value
+      this.variablesService.create({
+        component_id: messagePostedComponent.id,
+        name: 'message_id',
+        description: 'Discord message ID of the posted message',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 4,
+      }),
+
       // Current time return value
       this.variablesService.create({
         component_id: messagePostedComponent.id,

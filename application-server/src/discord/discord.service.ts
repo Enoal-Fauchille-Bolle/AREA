@@ -369,6 +369,7 @@ export class DiscordService {
               author_name: message.author.username,
               author_id: message.author.id,
               message_content: message.content,
+              message_id: message.id,
               current_time: message.createdAt.toISOString(),
             },
             startedAt: new Date(),
