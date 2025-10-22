@@ -361,6 +361,45 @@ export class AreasService {
           },
         ],
       },
+      {
+        componentName: 'push_event',
+        parameters: [
+          {
+            name: 'repository',
+            description:
+              'GitHub repository (owner/repo) - leave empty for all repositories',
+            type: 'string',
+            required: false,
+            placeholder: 'octocat/Hello-World',
+          },
+        ],
+      },
+      {
+        componentName: 'pull_request_event',
+        parameters: [
+          {
+            name: 'repository',
+            description:
+              'GitHub repository (owner/repo) - leave empty for all repositories',
+            type: 'string',
+            required: false,
+            placeholder: 'octocat/Hello-World',
+          },
+        ],
+      },
+      {
+        componentName: 'issue_event',
+        parameters: [
+          {
+            name: 'repository',
+            description:
+              'GitHub repository (owner/repo) - leave empty for all repositories',
+            type: 'string',
+            required: false,
+            placeholder: 'octocat/Hello-World',
+          },
+        ],
+      },
     ];
   }
 
