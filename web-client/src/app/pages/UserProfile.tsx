@@ -46,6 +46,10 @@ function UserProfile() {
     }
   };
 
+  const handleEditArea = (id: number) => {
+    navigate(`/edit/${id}`);
+  };
+
   const handleExplore = () => {
     navigate('/');
   };
@@ -263,6 +267,7 @@ function UserProfile() {
                 area={area}
                 onToggleStatus={handleToggleArea}
                 onDelete={handleDeleteArea}
+                onEdit={handleEditArea}
               />
             ))}
           </div>

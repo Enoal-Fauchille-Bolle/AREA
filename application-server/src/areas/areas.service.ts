@@ -273,6 +273,7 @@ export class AreasService {
   async findAll(userId: number): Promise<Area[]> {
     return this.areasRepository.find({
       where: { user_id: userId },
+      relations: ['componentAction', 'componentAction.service', 'componentReaction', 'componentReaction.service'],
       order: { created_at: 'DESC' },
     });
   }
