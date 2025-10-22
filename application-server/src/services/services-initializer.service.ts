@@ -397,7 +397,7 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
         kind: VariableKind.RETURN_VALUE,
         type: VariableType.STRING,
         nullable: false,
-        display_order: 4,
+        display_order: 5,
       }),
     ]);
 
