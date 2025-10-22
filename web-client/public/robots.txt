@@ -1,0 +1,15 @@
+
+User-agent: *
+Allow: /
+
+Disallow: /login
+Disallow: /signup
+Disallow: /auth/
+Disallow: /oauth/
+
+Disallow: /profile
+Disallow: /edit/*
+Disallow: /settings
+
+Disallow: /api/
+
