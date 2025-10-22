@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { VariableInterpolationService } from '../common/variable-interpolation.service';
+import { VariableInterpolationService } from './variable-interpolation.service';
 
 describe('VariableInterpolationService', () => {
   let service: VariableInterpolationService;
