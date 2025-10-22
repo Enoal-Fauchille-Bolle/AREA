@@ -117,19 +117,21 @@ const Profile: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
-      <div className="bg-gray-800 shadow-lg">
+      <div className="bg-gray-700 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => navigate('/profile')}
-                className="flex items-center text-gray-300 hover:text-white transition-colors"
+                className="flex items-center text-gray-100 hover:text-white transition-colors"
+                aria-label="Back to Areas"
               >
                 <svg
                   className="w-5 h-5 mr-2"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
                 >
                   <path
                     strokeLinecap="round"
@@ -159,17 +161,18 @@ const Profile: React.FC = () => {
           </div>
         )}
 
-        <div className="bg-gray-800 rounded-lg shadow-lg p-6">
+        <div className="bg-gray-700 rounded-lg shadow-lg p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-white">
               Connected Services
             </h2>
-            <div className="flex items-center space-x-2 text-sm text-gray-400">
+            <div className="flex items-center space-x-2 text-sm text-gray-200">
               <svg
                 className="w-4 h-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
+                aria-hidden="true"
               >
                 <path
                   strokeLinecap="round"
@@ -186,12 +189,13 @@ const Profile: React.FC = () => {
           </div>
           {connectedServices.length === 0 ? (
             <div className="text-center py-12">
-              <div className="text-gray-400 mb-4">
+              <div className="text-gray-200 mb-4">
                 <svg
                   className="w-16 h-16 mx-auto"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
                 >
                   <path
                     strokeLinecap="round"
@@ -201,16 +205,17 @@ const Profile: React.FC = () => {
                   />
                 </svg>
               </div>
-              <h3 className="text-lg font-medium text-gray-300 mb-2">
+              <h3 className="text-lg font-medium text-gray-100 mb-2">
                 No services connected
               </h3>
-              <p className="text-gray-400 mb-6">
+              <p className="text-gray-200 mb-6">
                 Connect external services to unlock more automation
                 possibilities for your AREAs.
               </p>
               <button
                 onClick={() => navigate('/create')}
                 className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors whitespace-nowrap"
+                aria-label="Create Your First AREA"
               >
                 Create Your First AREA
               </button>
@@ -220,11 +225,11 @@ const Profile: React.FC = () => {
               {connectedServices.map((service) => (
                 <div
                   key={service.id}
-                  className="bg-gray-700 rounded-lg p-6 border border-gray-600 hover:border-gray-500 transition-colors"
+                  className="bg-gray-600 rounded-lg p-6 border border-gray-500 hover:border-gray-400 transition-colors"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-4">
-                      <div className="flex items-center justify-center w-12 h-12 bg-gray-600 rounded-lg">
+                      <div className="flex items-center justify-center w-12 h-12 bg-gray-700 rounded-lg">
                         {typeof service.icon === 'string' ? (
                           <span className="text-2xl">{service.icon}</span>
                         ) : (
@@ -246,7 +251,7 @@ const Profile: React.FC = () => {
                                 />
                               )}
                               <div>
-                                <span className="text-base font-medium text-gray-200">
+                                <span className="text-base font-medium text-gray-100">
                                   {service.user.discriminator &&
                                   service.user.discriminator !== '0' &&
                                   service.user.discriminator !== '0000'
@@ -254,13 +259,13 @@ const Profile: React.FC = () => {
                                     : service.user.username}
                                 </span>
                                 {service.user.email && (
-                                  <p className="text-sm text-gray-400">
+                                  <p className="text-sm text-gray-200">
                                     {service.user.email}
                                   </p>
                                 )}
                               </div>
                             </div>
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm text-gray-300">
                               Connected on {formatDate(service.connectedAt)}
                             </p>
                           </div>
@@ -272,7 +277,7 @@ const Profile: React.FC = () => {
                         onClick={() =>
                           handleDisconnectService(service.displayName)
                         }
-                        className="text-red-400 hover:text-red-300 transition-colors text-sm font-medium py-2 px-4 border border-red-400 hover:border-red-300 rounded-lg hover:bg-red-900 hover:bg-opacity-20"
+                        className="bg-red-600 hover:bg-red-700 text-white transition-colors text-sm font-medium py-2 px-4 border border-red-500 hover:border-red-600 rounded-lg"
                       >
                         Disconnect
                       </button>
@@ -283,13 +288,13 @@ const Profile: React.FC = () => {
             </div>
           )}
 
-          <div className="mt-8 p-6 bg-gray-700 bg-opacity-50 rounded-lg border border-gray-600">
+          <div className="mt-8 p-6 bg-gray-600 bg-opacity-70 rounded-lg border border-gray-500">
             <div className="flex items-center justify-between gap-6">
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-200 mb-2">
+                <h3 className="text-lg font-semibold text-gray-100 mb-2">
                   Connect More Services
                 </h3>
-                <p className="text-sm text-gray-400">
+                <p className="text-sm text-gray-200">
                   Expand your automation possibilities by connecting additional
                   external services when creating new AREAs.
                 </p>
@@ -297,6 +302,7 @@ const Profile: React.FC = () => {
               <button
                 onClick={() => navigate('/create')}
                 className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors whitespace-nowrap flex-shrink-0"
+                aria-label="Create New AREA"
               >
                 Create New AREA
               </button>
