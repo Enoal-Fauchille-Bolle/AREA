@@ -676,7 +676,7 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       this.variablesService.create({
         component_id: issueEventComponent.id,
         name: 'issue_milestone',
-        description: 'Milestone associated with the issue (empty if none)',
+        description: 'Milestone associated with the issue (null if none)',
         kind: VariableKind.RETURN_VALUE,
         type: VariableType.STRING,
         nullable: true,
