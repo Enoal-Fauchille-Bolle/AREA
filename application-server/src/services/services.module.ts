@@ -10,6 +10,7 @@ import { UserService } from '../user-services/entities/user-service.entity';
 import { DiscordOAuth2Service } from './oauth2/discord-oauth2.service';
 import { GoogleOAuth2Service } from './oauth2/google-oauth2.service';
 import { GithubOAuth2Service } from './oauth2/github-oauth2.service';
+import { TwitchOAuth2Service } from './oauth2/twitch-oauth2.service';
 import { ComponentsModule } from '../components/components.module';
 import { VariablesModule } from '../variables/variables.module';
 
@@ -26,7 +27,13 @@ import { VariablesModule } from '../variables/variables.module';
     DiscordOAuth2Service,
     GoogleOAuth2Service,
     GithubOAuth2Service,
+    TwitchOAuth2Service,
   ],
-  exports: [ServicesService, DiscordOAuth2Service, GoogleOAuth2Service],
+  exports: [
+    ServicesService,
+    DiscordOAuth2Service,
+    GoogleOAuth2Service,
+    TwitchOAuth2Service,
+  ],
 })
 export class ServicesModule {}

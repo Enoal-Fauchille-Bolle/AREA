@@ -30,7 +30,7 @@ export const appConfig = registerAs('app', () => {
     // Database Configuration
     database: {
       synchronize: process.env.NODE_ENV !== 'production',
-      logging: process.env.NODE_ENV !== 'production',
+      logging: true,
     },
 
     // Time Constants (in milliseconds)
@@ -60,6 +60,10 @@ export const appConfig = registerAs('app', () => {
       github: {
         clientId: process.env.GITHUB_CLIENT_ID,
         clientSecret: process.env.GITHUB_CLIENT_SECRET,
+      },
+      twitch: {
+        clientId: process.env.TWITCH_CLIENT_ID,
+        clientSecret: process.env.TWITCH_CLIENT_SECRET,
       },
     },
   };

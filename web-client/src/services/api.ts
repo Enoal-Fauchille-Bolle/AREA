@@ -301,6 +301,37 @@ export const servicesApi = {
 
     return handleResponse(response);
   },
+
+  async linkService(
+    serviceId: number,
+    code: string,
+    platform: 'web' | 'mobile' = 'web',
+  ): Promise<void> {
+    const token = tokenService.getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/services/${serviceId}/link`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ code, platform }),
+    });
+
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}`;
+      try {
+        const errorData = await response.json();
+        errorMessage = JSON.stringify(errorData);
+      } catch {
+        errorMessage = await response.text();
+      }
+      throw new Error(`Failed to exchange code for tokens: ${errorMessage}`);
+    }
+  },
 };
 
 export const componentsApi = {

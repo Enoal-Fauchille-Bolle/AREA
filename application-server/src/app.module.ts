@@ -29,6 +29,8 @@ import { Area } from './areas/entities/area.entity';
 import { ClockModule } from './clock/clock.module';
 import { EmailModule } from './email/email.module';
 import { CommonModule } from './common/common.module';
+import { GmailModule } from './gmail/gmail.module';
+import { TwitchModule } from './twitch/twitch.module';
 
 @Module({
   imports: [
@@ -85,6 +87,8 @@ import { CommonModule } from './common/common.module';
     ClockModule,
     EmailModule,
     CommonModule,
+    GmailModule,
+    TwitchModule,
   ],
   controllers: [AppController],
   providers: [AppService],

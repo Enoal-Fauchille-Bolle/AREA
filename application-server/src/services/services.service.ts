@@ -30,6 +30,7 @@ type OAuthTokens = {
   expiresAt: Date;
 };
 import { GithubOAuth2Service } from './oauth2/github-oauth2.service';
+import { TwitchOAuth2Service } from './oauth2/twitch-oauth2.service';
 import { AppConfig } from 'src/config';
 
 @Injectable()
@@ -50,6 +51,7 @@ export class ServicesService {
     private readonly discordOAuth2Service: DiscordOAuth2Service,
     private readonly googleOAuth2Service: GoogleOAuth2Service,
     private readonly githubOAuth2Service: GithubOAuth2Service,
+    private readonly twitchOAuth2Service: TwitchOAuth2Service,
   ) {
     const appConfig = this.configService.get<AppConfig>('app');
     if (!appConfig) {
@@ -279,6 +281,54 @@ export class ServicesService {
         });
         await this.userServiceRepository.save(userService);
       }
+    } else if (service.name.toLowerCase() === 'gmail') {
+      // Gmail uses the same Google OAuth2 flow
+      const tokens = await this.googleOAuth2Service.exchangeCodeForTokens(
+        body.code,
+        redirectUri,
+        body.code_verifier,
+      );
+
+      if (existing) {
+        // Update existing user service with new tokens
+        existing.oauth_token = tokens.accessToken;
+        existing.refresh_token = tokens.refreshToken;
+        existing.token_expires_at = tokens.expiresAt;
+        await this.userServiceRepository.save(existing);
+      } else {
+        // Create new user service link with tokens
+        const userService = this.userServiceRepository.create({
+          user_id: userId,
+          service_id: serviceId,
+          oauth_token: tokens.accessToken,
+          refresh_token: tokens.refreshToken,
+          token_expires_at: tokens.expiresAt,
+        });
+        await this.userServiceRepository.save(userService);
+      }
+    } else if (service.name.toLowerCase() === 'twitch') {
+      const tokens = await this.twitchOAuth2Service.exchangeCodeForTokens(
+        body.code,
+        redirectUri,
+      );
+
+      if (existing) {
+        // Update existing user service with new tokens
+        existing.oauth_token = tokens.accessToken;
+        existing.refresh_token = tokens.refreshToken;
+        existing.token_expires_at = tokens.expiresAt;
+        await this.userServiceRepository.save(existing);
+      } else {
+        // Create new user service link with tokens
+        const userService = this.userServiceRepository.create({
+          user_id: userId,
+          service_id: serviceId,
+          oauth_token: tokens.accessToken,
+          refresh_token: tokens.refreshToken,
+          token_expires_at: tokens.expiresAt,
+        });
+        await this.userServiceRepository.save(userService);
+      }
     } else if (!existing) {
       throw new BadRequestException(
         `Cannot link service "${service.name}". The service may not be implemented or is not supported for linking.`,
@@ -314,11 +364,11 @@ export class ServicesService {
       throw new NotFoundException(`Service with ID ${serviceId} not found`);
     }
 
-    // Support token refresh for Discord and Google
-    const provider = service.name.toLowerCase();
+    // Support token refresh for Discord, Google, Gmail, and Twitch
+    const provider = (service.name || '').toLowerCase();
 
-    if (provider !== 'discord' && provider !== 'google') {
-      throw new NotFoundException(
+    if (!['discord', 'google', 'gmail', 'twitch'].includes(provider)) {
+      throw new BadRequestException(
         `Service ${service.name} does not support token refresh`,
       );
     }
@@ -338,10 +388,16 @@ export class ServicesService {
       tokens = (await this.discordOAuth2Service.refreshAccessToken(
         userService.refresh_token,
       )) as OAuthTokens;
-    } else {
+    } else if (provider === 'google' || provider === 'gmail') {
       tokens = (await this.googleOAuth2Service.refreshAccessToken(
         userService.refresh_token,
       )) as OAuthTokens;
+    } else if (provider === 'twitch') {
+      tokens = (await this.twitchOAuth2Service.refreshAccessToken(
+        userService.refresh_token,
+      )) as OAuthTokens;
+    } else {
+      throw new NotFoundException(`Unknown provider: ${provider}`);
     }
 
     userService.oauth_token = tokens.accessToken;
