@@ -13,10 +13,6 @@ export class AppService {
     private readonly variablesService: VariablesService,
   ) {}
 
-  getHello(): string {
-    return 'Hello World!';
-  }
-
   async getAbout(request: Request): Promise<any> {
     const clientHost = this.getIpAddress(request);
     const currentTime = Math.floor(Date.now() / 1000); // Unix timestamp
