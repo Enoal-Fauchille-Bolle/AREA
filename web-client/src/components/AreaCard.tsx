@@ -81,7 +81,7 @@ export const AreaCard = ({ area, onToggleStatus, onDelete, onEdit }: AreaCardPro
   };
 
   return (
-    <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-gray-600 transition-all duration-300 hover:shadow-lg">
+    <div className="bg-gray-700 rounded-lg p-6 border border-gray-600 hover:border-gray-500 transition-all duration-300 hover:shadow-lg">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center space-x-3">
           <span className="text-2xl">{getAreaIcon(area.name)}</span>
@@ -91,7 +91,7 @@ export const AreaCard = ({ area, onToggleStatus, onDelete, onEdit }: AreaCardPro
               <span
                 className={`inline-block w-2 h-2 rounded-full ${getStatusColor(area.is_active)}`}
               ></span>
-              <span className="text-sm text-gray-400">
+              <span className="text-sm text-gray-200">
                 {getStatusText(area.is_active)}
               </span>
             </div>
@@ -167,29 +167,29 @@ export const AreaCard = ({ area, onToggleStatus, onDelete, onEdit }: AreaCardPro
       </div>
 
       {area.description && (
-        <p className="text-gray-300 text-sm mb-4 line-clamp-2">
+        <p className="text-gray-100 text-sm mb-4 line-clamp-2">
           {area.description}
         </p>
       )}
 
       <div className="mb-4 space-y-3">
         {area.componentAction && (
-          <div className="bg-gray-900/50 rounded-lg p-3 border border-gray-700/50">
+          <div className="bg-gray-800/80 rounded-lg p-3 border border-gray-600/50">
             <div className="flex items-start space-x-2">
               <span className="text-blue-400 text-sm font-semibold mt-0.5">IF</span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center space-x-2">
                   {getServiceIcon(area.componentAction.service?.name)}
-                  <span className="text-sm font-medium text-gray-300">
+                  <span className="text-sm font-medium text-gray-100">
                     {area.componentAction.service?.name || 'Service'}
                   </span>
-                  <span className="text-gray-500">•</span>
-                  <span className="text-sm text-gray-400 truncate">
+                  <span className="text-gray-400">•</span>
+                  <span className="text-sm text-gray-200 truncate">
                     {area.componentAction.name}
                   </span>
                 </div>
                 {area.componentAction.description && (
-                  <p className="text-xs text-gray-500 mt-1 line-clamp-1">
+                  <p className="text-xs text-gray-300 mt-1 line-clamp-1">
                     {area.componentAction.description}
                   </p>
                 )}
@@ -199,22 +199,22 @@ export const AreaCard = ({ area, onToggleStatus, onDelete, onEdit }: AreaCardPro
         )}
 
         {area.componentReaction && (
-          <div className="bg-gray-900/50 rounded-lg p-3 border border-gray-700/50">
+          <div className="bg-gray-800/80 rounded-lg p-3 border border-gray-600/50">
             <div className="flex items-start space-x-2">
               <span className="text-green-400 text-sm font-semibold mt-0.5">THEN</span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center space-x-2">
                   {getServiceIcon(area.componentReaction.service?.name)}
-                  <span className="text-sm font-medium text-gray-300">
+                  <span className="text-sm font-medium text-gray-100">
                     {area.componentReaction.service?.name || 'Service'}
                   </span>
-                  <span className="text-gray-500">•</span>
-                  <span className="text-sm text-gray-400 truncate">
+                  <span className="text-gray-400">•</span>
+                  <span className="text-sm text-gray-200 truncate">
                     {area.componentReaction.name}
                   </span>
                 </div>
                 {area.componentReaction.description && (
-                  <p className="text-xs text-gray-500 mt-1 line-clamp-1">
+                  <p className="text-xs text-gray-300 mt-1 line-clamp-1">
                     {area.componentReaction.description}
                   </p>
                 )}
@@ -224,7 +224,7 @@ export const AreaCard = ({ area, onToggleStatus, onDelete, onEdit }: AreaCardPro
         )}
       </div>
 
-      <div className="flex items-center justify-between text-sm text-gray-400">
+      <div className="flex items-center justify-between text-sm text-gray-200">
         <div className="flex items-center space-x-4">
           <span>Triggered: {area.triggered_count} times</span>
           {area.last_triggered_at && (

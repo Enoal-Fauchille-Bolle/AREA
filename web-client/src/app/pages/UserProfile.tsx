@@ -117,13 +117,21 @@ function UserProfile() {
       <header className="p-6">
         <div className="flex justify-between items-center">
           <div className="flex items-center">
-            <span className="text-4xl font-bold">AREA</span>
+            <h1 className="text-4xl font-bold">AREA</h1>
           </div>
 
           <div className="flex items-center space-x-6">
             <button
               onClick={handleExplore}
+              className="text-xl font-semibold text-white hover:text-gray-100 hover:scale-105 transform transition-all duration-300"
+              aria-label="Explore services"
+            >
+              Explore
+            </button>
+            <button
+              onClick={handleExplore}
               className="text-xl font-semibold text-gray-300 hover:text-white hover:scale-105 transform transition-all duration-300"
+              aria-label="Explore services"
             >
               Explore
             </button>
@@ -133,6 +141,7 @@ function UserProfile() {
             <button
               onClick={handleCreateArea}
               className="bg-white text-black hover:bg-gray-200 px-4 py-2 rounded-lg text-xl font-semibold hover:scale-105 transform transition-all duration-300"
+              aria-label="Create new area"
             >
               Create
             </button>
@@ -140,11 +149,15 @@ function UserProfile() {
               <button
                 onClick={toggleProfileMenu}
                 className="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center hover:bg-gray-500 transition-colors"
+                aria-label="Open profile menu"
+                aria-expanded={isProfileMenuOpen}
+                aria-haspopup="true"
               >
                 <svg
                   className="w-6 h-6 text-gray-300"
                   fill="currentColor"
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
                 >
                   <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
                 </svg>
@@ -171,12 +184,14 @@ function UserProfile() {
                       navigate('/profile/settings');
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors flex items-center"
+                    aria-label="Go to profile settings"
                   >
                     <svg
                       className="w-4 h-4 mr-3"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
+                      aria-hidden="true"
                     >
                       <path
                         strokeLinecap="round"
@@ -193,12 +208,14 @@ function UserProfile() {
                       handleLogout();
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-700 hover:text-red-300 transition-colors flex items-center"
+                    aria-label="Logout from account"
                   >
                     <svg
                       className="w-4 h-4 mr-3"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
+                      aria-hidden="true"
                     >
                       <path
                         strokeLinecap="round"
@@ -218,20 +235,25 @@ function UserProfile() {
 
       <main className="px-6 pb-6">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold mb-6">My Areas</h1>
+          <h2 className="text-3xl font-bold mb-6">My Areas</h2>
           <div className="relative max-w-md mx-auto">
+            <label htmlFor="search-areas" className="sr-only">
+              Search your areas
+            </label>
             <input
+              id="search-areas"
               type="text"
               placeholder="Search your areas..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 pr-10 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+              className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 pr-10 text-white placeholder-gray-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
             />
             <svg
-              className="absolute right-3 top-3.5 w-5 h-5 text-gray-400"
+              className="absolute right-3 top-3.5 w-5 h-5 text-gray-200"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
+              aria-hidden="true"
             >
               <path
                 strokeLinecap="round"
