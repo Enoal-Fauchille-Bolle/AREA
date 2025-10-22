@@ -313,7 +313,7 @@ export class GithubService {
               issue_body: payload.issue.body || '',
               issue_link: payload.issue.html_url,
               issue_author_username: payload.issue.user.login,
-              issue_milestone: payload.issue.milestone?.title || '',
+              issue_milestone: payload.issue.milestone?.title ?? null,
               issue_labels: payload.issue.labels.map((l) => l.name).join(', '),
 
               // Legacy support (keep for backwards compatibility)
@@ -423,4 +423,74 @@ export class GithubService {
       throw error;
     }
   }
+
+  // ==================== TYPE GUARDS ====================
+
+  /**
+   * Type guard to validate GitHub push event payload
+   */
+  static isValidPushEvent(payload: unknown): payload is GitHubPushEvent {
+    if (!payload || typeof payload !== 'object') return false;
+
+    const p = payload as Record<string, unknown>;
+
+    return (
+      typeof p.ref === 'string' &&
+      typeof p.repository === 'object' &&
+      p.repository !== null &&
+      typeof (p.repository as Record<string, unknown>).full_name === 'string' &&
+      typeof p.pusher === 'object' &&
+      p.pusher !== null &&
+      typeof (p.pusher as Record<string, unknown>).name === 'string' &&
+      Array.isArray(p.commits)
+    );
+  }
+
+  /**
+   * Type guard to validate GitHub pull request event payload
+   */
+  static isValidPullRequestEvent(
+    payload: unknown,
+  ): payload is GitHubPullRequestEvent {
+    if (!payload || typeof payload !== 'object') return false;
+
+    const p = payload as Record<string, unknown>;
+
+    return (
+      typeof p.action === 'string' &&
+      typeof p.number === 'number' &&
+      typeof p.pull_request === 'object' &&
+      p.pull_request !== null &&
+      typeof (p.pull_request as Record<string, unknown>).title === 'string' &&
+      typeof (p.pull_request as Record<string, unknown>).html_url ===
+        'string' &&
+      typeof p.repository === 'object' &&
+      p.repository !== null &&
+      typeof (p.repository as Record<string, unknown>).full_name === 'string'
+    );
+  }
+
+  /**
+   * Type guard to validate GitHub issue event payload
+   */
+  static isValidIssueEvent(payload: unknown): payload is GitHubIssueEvent {
+    if (!payload || typeof payload !== 'object') return false;
+
+    const p = payload as Record<string, unknown>;
+
+    return (
+      typeof p.action === 'string' &&
+      typeof p.issue === 'object' &&
+      p.issue !== null &&
+      typeof (p.issue as Record<string, unknown>).title === 'string' &&
+      typeof (p.issue as Record<string, unknown>).html_url === 'string' &&
+      typeof (p.issue as Record<string, unknown>).number === 'number' &&
+      typeof p.repository === 'object' &&
+      p.repository !== null &&
+      typeof (p.repository as Record<string, unknown>).full_name === 'string'
+    );
+  }
 }
+
+// Export interfaces for use in controller
+export type { GitHubPushEvent, GitHubPullRequestEvent, GitHubIssueEvent };

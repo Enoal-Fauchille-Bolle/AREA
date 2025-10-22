@@ -35,15 +35,30 @@ export class GithubController {
     try {
       switch (event) {
         case 'push':
-          await this.githubService.handlePushEvent(payload as never);
+          if (!GithubService.isValidPushEvent(payload)) {
+            throw new BadRequestException(
+              'Invalid payload structure for push event',
+            );
+          }
+          await this.githubService.handlePushEvent(payload);
           break;
 
         case 'pull_request':
-          await this.githubService.handlePullRequestEvent(payload as never);
+          if (!GithubService.isValidPullRequestEvent(payload)) {
+            throw new BadRequestException(
+              'Invalid payload structure for pull_request event',
+            );
+          }
+          await this.githubService.handlePullRequestEvent(payload);
           break;
 
         case 'issues':
-          await this.githubService.handleIssueEvent(payload as never);
+          if (!GithubService.isValidIssueEvent(payload)) {
+            throw new BadRequestException(
+              'Invalid payload structure for issues event',
+            );
+          }
+          await this.githubService.handleIssueEvent(payload);
           break;
 
         case 'ping':
