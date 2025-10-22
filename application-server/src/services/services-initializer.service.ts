@@ -398,6 +398,7 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       webhook_endpoint: '/webhooks/github',
     });
 
+    // Create repository parameter for push_event
     await this.variablesService.create({
       component_id: pushEventComponent.id,
       name: 'repository',
@@ -409,6 +410,99 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       placeholder: 'octocat/Hello-World',
       display_order: 1,
     });
+
+    // Create output variables for push_event
+    await Promise.all([
+      this.variablesService.create({
+        component_id: pushEventComponent.id,
+        name: 'head_commit_branch',
+        description: 'Branch name where the push occurred',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 1,
+      }),
+
+      this.variablesService.create({
+        component_id: pushEventComponent.id,
+        name: 'head_commit_message',
+        description: 'Commit message of the latest push',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 2,
+      }),
+
+      this.variablesService.create({
+        component_id: pushEventComponent.id,
+        name: 'head_commit_date',
+        description: 'Date and time when the commit was made',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.DATE,
+        nullable: false,
+        display_order: 3,
+      }),
+
+      this.variablesService.create({
+        component_id: pushEventComponent.id,
+        name: 'head_commit_url',
+        description: 'Direct URL to the commit on GitHub',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.URL,
+        nullable: false,
+        display_order: 4,
+      }),
+
+      this.variablesService.create({
+        component_id: pushEventComponent.id,
+        name: 'head_commit_id',
+        description: 'Full SHA hash of the commit',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 5,
+      }),
+
+      this.variablesService.create({
+        component_id: pushEventComponent.id,
+        name: 'head_commit_author_username',
+        description: 'GitHub username of the commit author',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 6,
+      }),
+
+      this.variablesService.create({
+        component_id: pushEventComponent.id,
+        name: 'repository_name',
+        description: 'Full repository name (owner/repo)',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 7,
+      }),
+
+      this.variablesService.create({
+        component_id: pushEventComponent.id,
+        name: 'pusher_name',
+        description: 'Name of the person who pushed',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 8,
+      }),
+
+      this.variablesService.create({
+        component_id: pushEventComponent.id,
+        name: 'commits_count',
+        description: 'Number of commits in this push',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.NUMBER,
+        nullable: false,
+        display_order: 9,
+      }),
+    ]);
 
     // Create pull_request_event action component
     const pullRequestEventComponent = await this.componentsService.create({
@@ -432,6 +526,89 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       display_order: 1,
     });
 
+    // Create output variables for pull_request_event
+    await Promise.all([
+      this.variablesService.create({
+        component_id: pullRequestEventComponent.id,
+        name: 'pr_title',
+        description: 'Title of the pull request',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 1,
+      }),
+
+      this.variablesService.create({
+        component_id: pullRequestEventComponent.id,
+        name: 'pr_body',
+        description: 'Body/description of the pull request',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 2,
+      }),
+
+      this.variablesService.create({
+        component_id: pullRequestEventComponent.id,
+        name: 'pr_link',
+        description: 'Direct URL to the pull request on GitHub',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.URL,
+        nullable: false,
+        display_order: 3,
+      }),
+
+      this.variablesService.create({
+        component_id: pullRequestEventComponent.id,
+        name: 'pr_author_username',
+        description: 'GitHub username of the pull request author',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 4,
+      }),
+
+      this.variablesService.create({
+        component_id: pullRequestEventComponent.id,
+        name: 'pr_head_branch',
+        description: 'Source branch of the pull request',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 5,
+      }),
+
+      this.variablesService.create({
+        component_id: pullRequestEventComponent.id,
+        name: 'pr_base_branch',
+        description: 'Target branch of the pull request',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 6,
+      }),
+
+      this.variablesService.create({
+        component_id: pullRequestEventComponent.id,
+        name: 'repository_name',
+        description: 'Full repository name (owner/repo)',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 7,
+      }),
+
+      this.variablesService.create({
+        component_id: pullRequestEventComponent.id,
+        name: 'pr_number',
+        description: 'Pull request number',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.NUMBER,
+        nullable: false,
+        display_order: 8,
+      }),
+    ]);
+
     // Create issue_event action component
     const issueEventComponent = await this.componentsService.create({
       service_id: githubService.id,
@@ -453,6 +630,89 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       placeholder: 'octocat/Hello-World',
       display_order: 1,
     });
+
+    // Create output variables for issue_event
+    await Promise.all([
+      this.variablesService.create({
+        component_id: issueEventComponent.id,
+        name: 'issue_title',
+        description: 'Title of the issue',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 1,
+      }),
+
+      this.variablesService.create({
+        component_id: issueEventComponent.id,
+        name: 'issue_body',
+        description: 'Body/description of the issue',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 2,
+      }),
+
+      this.variablesService.create({
+        component_id: issueEventComponent.id,
+        name: 'issue_link',
+        description: 'Direct URL to the issue on GitHub',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.URL,
+        nullable: false,
+        display_order: 3,
+      }),
+
+      this.variablesService.create({
+        component_id: issueEventComponent.id,
+        name: 'issue_author_username',
+        description: 'GitHub username of the issue author',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 4,
+      }),
+
+      this.variablesService.create({
+        component_id: issueEventComponent.id,
+        name: 'issue_milestone',
+        description: 'Milestone associated with the issue (empty if none)',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: true,
+        display_order: 5,
+      }),
+
+      this.variablesService.create({
+        component_id: issueEventComponent.id,
+        name: 'issue_labels',
+        description: 'Comma-separated list of issue labels',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 6,
+      }),
+
+      this.variablesService.create({
+        component_id: issueEventComponent.id,
+        name: 'repository_name',
+        description: 'Full repository name (owner/repo)',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 7,
+      }),
+
+      this.variablesService.create({
+        component_id: issueEventComponent.id,
+        name: 'issue_number',
+        description: 'Issue number',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.NUMBER,
+        nullable: false,
+        display_order: 8,
+      }),
+    ]);
 
     console.log(
       'GitHub service and webhook action components created successfully',
