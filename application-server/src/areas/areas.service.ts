@@ -249,6 +249,56 @@ export class AreasService {
           },
         ],
       },
+      {
+        componentName: 'get_push_github',
+        parameters: [
+          {
+            name: 'repository',
+            description: 'GitHub repository (owner/repo)',
+            type: 'string',
+            required: true,
+            placeholder: 'octocat/Hello-World',
+          },
+        ],
+      },
+      {
+        componentName: 'create_issue_github',
+        parameters: [
+          {
+            name: 'repository',
+            description: 'GitHub repository (owner/repo)',
+            type: 'string',
+            required: true,
+            placeholder: 'octocat/Hello-World',
+          },
+          {
+            name: 'title',
+            description: 'Issue title',
+            type: 'string',
+            required: true,
+            placeholder: 'New issue title',
+          },
+          {
+            name: 'body',
+            description: 'Issue body',
+            type: 'string',
+            required: false,
+            placeholder: 'Detailed description of the issue',
+          },
+        ],
+      },
+      {
+        componentName: 'get_pull_request_github',
+        parameters: [
+          {
+            name: 'repository',
+            description: 'GitHub repository (owner/repo)',
+            type: 'string',
+            required: true,
+            placeholder: 'octocat/Hello-World',
+          },
+        ],
+      },
     ];
   }
 

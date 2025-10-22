@@ -379,7 +379,7 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
     }
 
     // Create GitHub service
-    await this.servicesService.create({
+    const githubService = await this.servicesService.create({
       name: 'GitHub',
       description: 'Source code hosting and collaboration platform',
       icon_path:
@@ -388,6 +388,74 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       is_active: true,
     });
 
-    console.log('GitHub service created successfully');
+    // Create push_event action component
+    const pushEventComponent = await this.componentsService.create({
+      service_id: githubService.id,
+      type: ComponentType.ACTION,
+      name: 'push_event',
+      description: 'Triggers when a push is made to a repository (any branch)',
+      is_active: true,
+      webhook_endpoint: '/webhooks/github',
+    });
+
+    await this.variablesService.create({
+      component_id: pushEventComponent.id,
+      name: 'repository',
+      description:
+        'Full repository name (owner/repo, e.g., "octocat/Hello-World"). Leave empty to match all repositories.',
+      kind: VariableKind.PARAMETER,
+      type: VariableType.STRING,
+      nullable: true,
+      placeholder: 'octocat/Hello-World',
+      display_order: 1,
+    });
+
+    // Create pull_request_event action component
+    const pullRequestEventComponent = await this.componentsService.create({
+      service_id: githubService.id,
+      type: ComponentType.ACTION,
+      name: 'pull_request_event',
+      description: 'Triggers when a new pull request is opened',
+      is_active: true,
+      webhook_endpoint: '/webhooks/github',
+    });
+
+    await this.variablesService.create({
+      component_id: pullRequestEventComponent.id,
+      name: 'repository',
+      description:
+        'Full repository name (owner/repo, e.g., "octocat/Hello-World"). Leave empty to match all repositories.',
+      kind: VariableKind.PARAMETER,
+      type: VariableType.STRING,
+      nullable: true,
+      placeholder: 'octocat/Hello-World',
+      display_order: 1,
+    });
+
+    // Create issue_event action component
+    const issueEventComponent = await this.componentsService.create({
+      service_id: githubService.id,
+      type: ComponentType.ACTION,
+      name: 'issue_event',
+      description: 'Triggers when a new issue is created',
+      is_active: true,
+      webhook_endpoint: '/webhooks/github',
+    });
+
+    await this.variablesService.create({
+      component_id: issueEventComponent.id,
+      name: 'repository',
+      description:
+        'Full repository name (owner/repo, e.g., "octocat/Hello-World"). Leave empty to match all repositories.',
+      kind: VariableKind.PARAMETER,
+      type: VariableType.STRING,
+      nullable: true,
+      placeholder: 'octocat/Hello-World',
+      display_order: 1,
+    });
+
+    console.log(
+      'GitHub service and webhook action components created successfully',
+    );
   }
 }
