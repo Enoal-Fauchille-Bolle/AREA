@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
 import { FakeEmailService } from '../email/email.service';
 import { RealEmailService } from '../email/real-email.service';
 import { ComponentsService } from '../components/components.service';
@@ -12,6 +12,7 @@ export class ReactionProcessorService {
     private readonly fakeEmailService: FakeEmailService,
     private readonly realEmailService: RealEmailService,
     private readonly componentsService: ComponentsService,
+    @Inject(forwardRef(() => DiscordService))
     private readonly discordService: DiscordService,
   ) {}
 
@@ -43,7 +44,10 @@ export class ReactionProcessorService {
           await this.fakeEmailService.processReaction(executionId, areaId);
           break;
         case 'send_message':
-          await this.discordService.processReaction(executionId, areaId);
+          await this.discordService.sendMessageReaction(executionId, areaId);
+          break;
+        case 'react_to_message':
+          await this.discordService.reactToMessageReaction(executionId, areaId);
           break;
         default:
           throw new Error(`Unknown reaction component: ${component.name}`);

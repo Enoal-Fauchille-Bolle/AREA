@@ -249,6 +249,118 @@ export class AreasService {
           },
         ],
       },
+      {
+        componentName: 'send_message',
+        parameters: [
+          {
+            name: 'channel_id',
+            description: 'Discord channel ID where the message will be sent',
+            type: 'string',
+            required: true,
+            placeholder: '123456789012345678',
+            validation: '^[0-9]{17,19}$',
+          },
+          {
+            name: 'content',
+            description: 'Message content to send',
+            type: 'string',
+            required: true,
+            placeholder: 'Hello from AREA! 👋',
+          },
+        ],
+      },
+      {
+        componentName: 'message_posted',
+        parameters: [
+          {
+            name: 'channel_id',
+            description: 'Discord channel ID to monitor for new messages',
+            type: 'string',
+            required: true,
+            placeholder: '123456789012345678',
+            validation: '^[0-9]{17,19}$',
+          },
+          {
+            name: 'author_filter',
+            description: 'Filter messages by author username (optional)',
+            type: 'string',
+            required: false,
+            placeholder: 'username',
+          },
+          {
+            name: 'content_filter',
+            description: 'Filter messages containing this text (optional)',
+            type: 'string',
+            required: false,
+            placeholder: 'hello',
+          },
+        ],
+      },
+      {
+        componentName: 'react_to_message',
+        parameters: [
+          {
+            name: 'channel_id',
+            description: 'Discord channel ID where the message is located',
+            type: 'string',
+            required: true,
+            placeholder: '123456789012345678',
+            validation: '^[0-9]{17,19}$',
+          },
+          {
+            name: 'message_id',
+            description: 'Discord message ID to react to',
+            type: 'string',
+            required: true,
+            placeholder: '123456789012345678',
+            validation: '^[0-9]{17,19}$',
+          },
+          {
+            name: 'emoji',
+            description:
+              'Emoji to react with (Unicode emoji or custom emoji name)',
+            type: 'string',
+            required: true,
+            placeholder: '👍',
+          },
+        ],
+      },
+      {
+        componentName: 'reaction_added',
+        parameters: [
+          {
+            name: 'channel_id',
+            description: 'Discord channel ID to monitor for reactions',
+            type: 'string',
+            required: true,
+            placeholder: '123456789012345678',
+            validation: '^[0-9]{17,19}$',
+          },
+          {
+            name: 'message_id',
+            description:
+              'Specific message ID to monitor for reactions (optional)',
+            type: 'string',
+            required: false,
+            placeholder: '123456789012345678',
+            validation: '^[0-9]{17,19}$',
+          },
+          {
+            name: 'emoji_filter',
+            description: 'Filter reactions by emoji (optional)',
+            type: 'string',
+            required: false,
+            placeholder: '👍',
+          },
+          {
+            name: 'user_filter',
+            description: 'Filter reactions by username (optional)',
+            type: 'string',
+            required: false,
+            placeholder: 'username',
+          },
+        ],
+      },
     ];
   }
 
