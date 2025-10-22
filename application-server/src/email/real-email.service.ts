@@ -28,8 +28,6 @@ export class RealEmailService {
         'SMTP_USER and SMTP_PASS not set - real email sending will fail',
       );
     }
-    console.log('SMTP_USER:', smtpUser);
-    console.log('SMTP_PASS:', smtpPass);
 
     this.transporter = createTransport({
       service: 'gmail',
