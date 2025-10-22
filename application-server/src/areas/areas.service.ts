@@ -250,51 +250,40 @@ export class AreasService {
         ],
       },
       {
-        componentName: 'get_push_github',
+        componentName: 'push_event',
         parameters: [
           {
             name: 'repository',
-            description: 'GitHub repository (owner/repo)',
-            type: 'string',
-            required: true,
-            placeholder: 'octocat/Hello-World',
-          },
-        ],
-      },
-      {
-        componentName: 'create_issue_github',
-        parameters: [
-          {
-            name: 'repository',
-            description: 'GitHub repository (owner/repo)',
-            type: 'string',
-            required: true,
-            placeholder: 'octocat/Hello-World',
-          },
-          {
-            name: 'title',
-            description: 'Issue title',
-            type: 'string',
-            required: true,
-            placeholder: 'New issue title',
-          },
-          {
-            name: 'body',
-            description: 'Issue body',
+            description:
+              'GitHub repository (owner/repo) - leave empty for all repositories',
             type: 'string',
             required: false,
-            placeholder: 'Detailed description of the issue',
+            placeholder: 'octocat/Hello-World',
           },
         ],
       },
       {
-        componentName: 'get_pull_request_github',
+        componentName: 'pull_request_event',
         parameters: [
           {
             name: 'repository',
-            description: 'GitHub repository (owner/repo)',
+            description:
+              'GitHub repository (owner/repo) - leave empty for all repositories',
             type: 'string',
-            required: true,
+            required: false,
+            placeholder: 'octocat/Hello-World',
+          },
+        ],
+      },
+      {
+        componentName: 'issue_event',
+        parameters: [
+          {
+            name: 'repository',
+            description:
+              'GitHub repository (owner/repo) - leave empty for all repositories',
+            type: 'string',
+            required: false,
             placeholder: 'octocat/Hello-World',
           },
         ],
