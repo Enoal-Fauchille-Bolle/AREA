@@ -67,7 +67,7 @@ export const useAreas = () => {
       const updatedArea = await areasApi.updateArea(id, {
         is_active: !area.is_active,
       });
-      setAreas((prev) => prev.map((a) => (a.id === id ? updatedArea : a)));
+      setAreas((prev) => prev.map((a) => (a.id === id ? { ...a, ...updatedArea } : a)));
       return updatedArea;
     } catch (err) {
       console.error('Failed to toggle area status:', err);

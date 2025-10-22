@@ -182,7 +182,7 @@ function EditArea() {
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Description (Optional)
+                Description
               </label>
               <textarea
                 value={formData.description}
@@ -193,42 +193,6 @@ function EditArea() {
                 placeholder="Describe what this area does"
                 rows={4}
               />
-            </div>
-
-            <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-700/50">
-              <h3 className="text-sm font-medium text-gray-300 mb-3">
-                Action & Reaction
-              </h3>
-              <div className="space-y-3">
-                {area.componentAction && (
-                  <div className="flex items-center space-x-2 text-sm">
-                    <span className="text-blue-400 font-semibold">IF</span>
-                    <span className="text-gray-400">
-                      {area.componentAction.service?.name || 'Service'}
-                    </span>
-                    <span className="text-gray-600">•</span>
-                    <span className="text-gray-300">
-                      {area.componentAction.name}
-                    </span>
-                  </div>
-                )}
-                {area.componentReaction && (
-                  <div className="flex items-center space-x-2 text-sm">
-                    <span className="text-green-400 font-semibold">THEN</span>
-                    <span className="text-gray-400">
-                      {area.componentReaction.service?.name || 'Service'}
-                    </span>
-                    <span className="text-gray-600">•</span>
-                    <span className="text-gray-300">
-                      {area.componentReaction.name}
-                    </span>
-                  </div>
-                )}
-              </div>
-              <p className="text-xs text-gray-500 mt-3">
-                Note: Action and reaction components cannot be changed after
-                creation
-              </p>
             </div>
 
             {actionVariables.length > 0 && (
