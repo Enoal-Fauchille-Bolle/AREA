@@ -26,7 +26,7 @@ export class FakeEmailService {
       );
 
       // Get email parameters from the area
-      const emailParams = await this.getEmailParameters(areaId);
+      const emailParams = await this.getEmailParameters(areaId, executionId);
 
       if (!emailParams) {
         throw new Error('Email parameters not configured');
@@ -64,10 +64,24 @@ export class FakeEmailService {
 
   private async getEmailParameters(
     areaId: number,
+    executionId?: number,
   ): Promise<EmailParams | null> {
     try {
-      // Get all parameters for this area
-      const parameters = await this.areaParametersService.findByArea(areaId);
+      // Get execution context for variable interpolation
+      let executionContext: Record<string, unknown> = {};
+      if (executionId) {
+        const execution = await this.areaExecutionsService.findOne(executionId);
+        if (execution.triggerData) {
+          executionContext = execution.triggerData;
+        }
+      }
+
+      // Get parameters with variable interpolation
+      const parameters =
+        await this.areaParametersService.findByAreaWithInterpolation(
+          areaId,
+          executionContext,
+        );
 
       const toParam = parameters.find((p) => p.variable?.name === 'to');
       const subjectParam = parameters.find(
