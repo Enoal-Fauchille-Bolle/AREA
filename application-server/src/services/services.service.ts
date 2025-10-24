@@ -6,20 +6,18 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Service } from './entities/service.entity';
-import {
-  Component,
-  ComponentType,
-} from '../components/entities/component.entity';
-import { Variable } from '../variables/entities/variable.entity';
-import { UserService } from '../user-services/entities/user-service.entity';
+import { ComponentsService } from '../components/components.service';
+import { VariablesService } from '../variables/variables.service';
+import { UserServicesService } from './user-services/user-services.service';
+import { ConfigService } from '@nestjs/config';
 import {
   ServiceActionsResponseDto,
   ServiceReactionsResponseDto,
   ServiceComponentsResponseDto,
   ServiceResponseDto,
   CreateServiceDto,
+  LinkServiceDto,
 } from './dto';
-import { ConfigService } from '@nestjs/config';
 import { DiscordOAuth2Service } from './oauth2/discord-oauth2.service';
 import { GoogleOAuth2Service } from './oauth2/google-oauth2.service';
 
@@ -30,7 +28,6 @@ type OAuthTokens = {
   expiresAt: Date;
 };
 import { GithubOAuth2Service } from './oauth2/github-oauth2.service';
-import { AppConfig } from 'src/config';
 
 @Injectable()
 export class ServicesService {
@@ -40,22 +37,15 @@ export class ServicesService {
   constructor(
     @InjectRepository(Service)
     private readonly serviceRepository: Repository<Service>,
-    @InjectRepository(Component)
-    private readonly componentRepository: Repository<Component>,
-    @InjectRepository(Variable)
-    private readonly variableRepository: Repository<Variable>,
-    @InjectRepository(UserService)
-    private readonly userServiceRepository: Repository<UserService>,
+    private readonly componentService: ComponentsService,
+    private readonly variableService: VariablesService,
+    private readonly userServiceService: UserServicesService,
     private readonly configService: ConfigService,
     private readonly discordOAuth2Service: DiscordOAuth2Service,
     private readonly googleOAuth2Service: GoogleOAuth2Service,
     private readonly githubOAuth2Service: GithubOAuth2Service,
   ) {
-    const appConfig = this.configService.get<AppConfig>('app');
-    if (!appConfig) {
-      // Unreachable
-      throw new Error('App configuration is not properly loaded');
-    }
+    const appConfig = this.configService.get('app');
     this.webRedirectUri = appConfig.oauth2.service.web_redirect_uri;
     this.mobileRedirectUri = appConfig.oauth2.service.mobile_redirect_uri;
   }
@@ -102,19 +92,21 @@ export class ServicesService {
       throw new NotFoundException(`Service with ID ${id} not found`);
     }
 
-    const components = await this.componentRepository.find({
-      where: { service_id: id, type: ComponentType.ACTION },
-    });
+    const components = await this.componentService.findActions();
+    const filteredComponents = components.filter(
+      (component) => component.service_id === id,
+    );
 
     const result: ServiceActionsResponseDto[] = [];
 
-    for (const component of components) {
-      const variables = await this.variableRepository.find({
-        where: { component_id: component.id },
-        order: { display_order: 'ASC' },
-      });
+    for (const component of filteredComponents) {
+      const variables = await this.variableService.findByComponent(
+        component.id,
+      );
 
-      result.push(ServiceActionsResponseDto.fromEntity(component, variables));
+      result.push(
+        ServiceActionsResponseDto.fromResponseDto(component, variables),
+      );
     }
 
     return result;
@@ -126,19 +118,21 @@ export class ServicesService {
       throw new NotFoundException(`Service with ID ${id} not found`);
     }
 
-    const components = await this.componentRepository.find({
-      where: { service_id: id, type: ComponentType.REACTION },
-    });
+    const components = await this.componentService.findReactions();
+    const filteredComponents = components.filter(
+      (component) => component.service_id === id,
+    );
 
     const result: ServiceReactionsResponseDto[] = [];
 
-    for (const component of components) {
-      const variables = await this.variableRepository.find({
-        where: { component_id: component.id },
-        order: { display_order: 'ASC' },
-      });
+    for (const component of filteredComponents) {
+      const variables = await this.variableService.findByComponent(
+        component.id,
+      );
 
-      result.push(ServiceReactionsResponseDto.fromEntity(component, variables));
+      result.push(
+        ServiceReactionsResponseDto.fromResponseDto(component, variables),
+      );
     }
 
     return result;
@@ -150,20 +144,17 @@ export class ServicesService {
       throw new NotFoundException(`Service with ID ${id} not found`);
     }
 
-    const components = await this.componentRepository.find({
-      where: { service_id: id },
-    });
+    const components = await this.componentService.findByService(id);
 
     const result: ServiceComponentsResponseDto[] = [];
 
     for (const component of components) {
-      const variables = await this.variableRepository.find({
-        where: { component_id: component.id },
-        order: { display_order: 'ASC' },
-      });
+      const variables = await this.variableService.findByComponent(
+        component.id,
+      );
 
       result.push(
-        ServiceComponentsResponseDto.fromEntity(component, variables),
+        ServiceComponentsResponseDto.fromResponseDto(component, variables),
       );
     }
 
@@ -171,13 +162,20 @@ export class ServicesService {
   }
 
   async findUserServices(userId: number): Promise<ServiceResponseDto[]> {
-    const userServices = await this.userServiceRepository.find({
-      where: { user_id: userId },
-      relations: ['service'],
-    });
+    const userServices = await this.userServiceService.findByUser(userId);
 
-    return userServices.map((us) =>
-      ServiceResponseDto.fromEntity(us.service, this.configService),
+    return await Promise.all(
+      userServices.map(async (us) => {
+        const service = await this.serviceRepository.findOne({
+          where: { id: us.service.id },
+        });
+        if (!service) {
+          throw new NotFoundException(
+            `Service with ID ${us.service.id} not found`,
+          );
+        }
+        return ServiceResponseDto.fromEntity(service, this.configService);
+      }),
     );
   }
 
@@ -192,11 +190,7 @@ export class ServicesService {
   async linkService(
     userId: number,
     serviceId: number,
-    body: {
-      code: string;
-      platform: 'web' | 'mobile';
-      code_verifier?: string;
-    },
+    body?: LinkServiceDto,
   ): Promise<void> {
     const service = await this.serviceRepository.findOne({
       where: { id: serviceId },
@@ -294,59 +288,6 @@ export class ServicesService {
       throw new NotFoundException(`Service with ID ${serviceId} not found`);
     }
 
-    const result = await this.userServiceRepository.delete({
-      user_id: userId,
-      service_id: serviceId,
-    });
-
-    if (result.affected === 0) {
-      throw new NotFoundException(
-        `User service link not found for user ${userId} and service ${serviceId}`,
-      );
-    }
-  }
-
-  async refreshServiceToken(userId: number, serviceId: number): Promise<void> {
-    const service = await this.serviceRepository.findOne({
-      where: { id: serviceId },
-    });
-    if (!service) {
-      throw new NotFoundException(`Service with ID ${serviceId} not found`);
-    }
-
-    // Support token refresh for Discord and Google
-    const provider = service.name.toLowerCase();
-
-    if (provider !== 'discord' && provider !== 'google') {
-      throw new NotFoundException(
-        `Service ${service.name} does not support token refresh`,
-      );
-    }
-
-    const userService = await this.userServiceRepository.findOne({
-      where: { user_id: userId, service_id: serviceId },
-    });
-
-    if (!userService || !userService.refresh_token) {
-      throw new NotFoundException(
-        `User service link not found or no refresh token available`,
-      );
-    }
-
-    let tokens: OAuthTokens;
-    if (provider === 'discord') {
-      tokens = (await this.discordOAuth2Service.refreshAccessToken(
-        userService.refresh_token,
-      )) as OAuthTokens;
-    } else {
-      tokens = (await this.googleOAuth2Service.refreshAccessToken(
-        userService.refresh_token,
-      )) as OAuthTokens;
-    }
-
-    userService.oauth_token = tokens.accessToken;
-    userService.refresh_token = tokens.refreshToken;
-    userService.token_expires_at = tokens.expiresAt;
-    await this.userServiceRepository.save(userService);
+    await this.userServiceService.removeOne(userId, serviceId);
   }
 }

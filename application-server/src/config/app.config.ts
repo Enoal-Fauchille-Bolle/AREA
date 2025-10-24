@@ -29,19 +29,24 @@ export const appConfig = registerAs('app', () => {
 
     // Database Configuration
     database: {
+      host: process.env.POSTGRES_HOST || 'localhost',
+      port: parseInt(process.env.POSTGRES_PORT || '5432', 10),
+      username: process.env.POSTGRES_USER || 'area_user',
+      password: process.env.POSTGRES_PASSWORD || 'area_password',
+      database: process.env.POSTGRES_DB || 'area_db',
       synchronize: process.env.NODE_ENV !== 'production',
       logging: process.env.NODE_ENV !== 'production',
     },
 
-    // Time Constants (in milliseconds)
-    time: {
-      minuteInMs: 60 * 1000,
-      hourInMs: 60 * 60 * 1000,
-      dayInMs: 24 * 60 * 60 * 1000,
-    },
-
     // OAuth2 Configuration
     oauth2: {
+      auth: {
+        web_redirect_uri:
+          process.env.WEB_SERVICE_REDIRECT_URI ||
+          'http://localhost:8081/auth/callback',
+        mobile_redirect_uri:
+          process.env.MOBILE_SERVICE_REDIRECT_URI || 'area://auth/callback',
+      },
       service: {
         web_redirect_uri:
           process.env.WEB_SERVICE_REDIRECT_URI ||
@@ -63,15 +68,13 @@ export const appConfig = registerAs('app', () => {
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       },
     },
-  };
-});
 
-// Debug logging
-console.log('[app.config] Google OAuth2 Environment Variables:', {
-  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID
-    ? `${process.env.GOOGLE_CLIENT_ID.substring(0, 20)}...`
-    : 'undefined',
-  GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET ? 'set' : 'undefined',
+    // Email Configuration
+    email: {
+      smtpUser: process.env.SMTP_USER,
+      smtpPass: process.env.SMTP_PASS,
+    },
+  };
 });
 
 export type AppConfig = ReturnType<typeof appConfig>;

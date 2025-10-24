@@ -17,6 +17,7 @@ import {
   UpdateProfileDto,
   OAuthLoginDto,
   AuthResponseDto,
+  OAuthRegisterDto,
 } from './dto';
 import { UserResponseDto } from '../users/dto/user-response.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -48,25 +49,15 @@ export class AuthController {
   async loginOAuth2(
     @Body() oauthLoginDto: OAuthLoginDto,
   ): Promise<AuthResponseDto> {
-    return this.authService.loginWithOAuth2(
-      oauthLoginDto.service,
-      oauthLoginDto.code,
-      oauthLoginDto.redirect_uri,
-      oauthLoginDto.code_verifier,
-    );
+    return this.authService.loginWithOAuth2(oauthLoginDto);
   }
 
   @Post('register-oauth2')
   @HttpCode(HttpStatus.CREATED)
   async registerOAuth2(
-    @Body() oauthLoginDto: OAuthLoginDto,
+    @Body() oauthLoginDto: OAuthRegisterDto,
   ): Promise<AuthResponseDto> {
-    return this.authService.registerWithOAuth2(
-      oauthLoginDto.service,
-      oauthLoginDto.code,
-      oauthLoginDto.redirect_uri,
-      oauthLoginDto.code_verifier,
-    );
+    return this.authService.registerWithOAuth2(oauthLoginDto);
   }
 
   @UseGuards(JwtAuthGuard)

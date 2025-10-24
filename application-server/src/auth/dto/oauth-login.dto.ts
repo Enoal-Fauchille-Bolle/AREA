@@ -1,6 +1,7 @@
 export class OAuthLoginDto {
-  service: string;
   code: string;
+  provider: string;
   redirect_uri: string;
-  code_verifier?: string; // Optional for PKCE flow
 }
+
+export class OAuthRegisterDto extends OAuthLoginDto {}

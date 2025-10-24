@@ -6,15 +6,16 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
+import { ServicesService } from '../services/services.service';
 import {
   RegisterDto,
+  OAuthRegisterDto,
   LoginDto,
+  OAuthLoginDto,
   UpdateProfileDto,
   AuthResponseDto,
 } from './dto';
 import { UserResponseDto } from '../users/dto/user-response.dto';
-import { ServicesService } from '../services/services.service';
-import { UserServicesService } from '../user-services/user-services.service';
 import { GoogleOAuth2Service } from '../services/oauth2/google-oauth2.service';
 import * as bcrypt from 'bcrypt';
 
@@ -22,13 +23,11 @@ import * as bcrypt from 'bcrypt';
 export class AuthService {
   constructor(
     private usersService: UsersService,
-    private jwtService: JwtService,
     private servicesService: ServicesService,
-    private userServicesService: UserServicesService,
     private googleOAuth2Service: GoogleOAuth2Service,
+    private jwtService: JwtService,
   ) {}
 
-  // Replace 'UserEntity' with the actual user type used in your project
   async validateUser(
     email: string,
     password: string,
@@ -173,19 +172,14 @@ export class AuthService {
   }
 
   // OAuth2 methods
-  async loginWithOAuth2(
-    service: string,
-    code: string,
-    redirectUri: string,
-    codeVerifier?: string,
-  ): Promise<AuthResponseDto> {
-    if (service.toLowerCase() !== 'google') {
-      throw new UnauthorizedException(
-        `OAuth2 login for ${service} not yet implemented`,
+  async loginWithOAuth2(body: OAuthLoginDto): Promise<AuthResponseDto> {
+    const provider = getOAuthProviderFromString(body.provider);
+    if (!provider) {
+      throw new BadRequestException(
+        `Unsupported OAuth2 provider: ${body.provider}`,
       );
     }
 
-    try {
       // 1. Exchange code for access token
       const tokenData = await this.googleOAuth2Service.exchangeCodeForTokens(
         code,
@@ -291,19 +285,8 @@ export class AuthService {
     const token = this.jwtService.sign(payload);
 
     return new AuthResponseDto(token);
-    } catch (error) {
-      throw error;
-    }
   }
 
-  async registerWithOAuth2(
-    service: string,
-    code: string,
-    redirectUri: string,
-    codeVerifier?: string,
-  ): Promise<AuthResponseDto> {
-    // For OAuth2, login and register are essentially the same
-    // We auto-create the account if it doesn't exist
-    return this.loginWithOAuth2(service, code, redirectUri, codeVerifier);
+  async registerWithOAuth2(body: OAuthRegisterDto): Promise<AuthResponseDto> {
   }
 }

@@ -1,30 +1,23 @@
 import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
+import { UsersModule } from '../users';
+import { ServicesModule } from '../services';
 import { PassportModule } from '@nestjs/passport';
+import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
-import { UsersModule } from '../users/users.module';
-import { ServicesModule } from '../services/services.module';
-import { UserServicesModule } from '../user-services/user-services.module';
 import { LocalStrategy } from './strategies/local.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
-import type { AppConfig } from '../config';
 
 @Module({
   imports: [
     UsersModule,
     ServicesModule,
-    UserServicesModule,
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
-        const appConfig = configService.get<AppConfig>('app');
-        if (!appConfig) {
-          throw new Error('App configuration is not properly loaded');
-        }
-
+        const appConfig = configService.get('app');
         return {
           secret: appConfig.jwt.secret,
           signOptions: {

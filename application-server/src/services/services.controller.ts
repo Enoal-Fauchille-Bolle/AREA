@@ -17,6 +17,7 @@ import {
   ServiceActionsResponseDto,
   ServiceReactionsResponseDto,
   ServiceComponentsResponseDto,
+  LinkServiceDto,
 } from './dto';
 import { parseIdParam } from '../common/constants';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -86,22 +87,11 @@ export class ServicesController {
   async linkService(
     @Request() req: { user: { id: number } },
     @Param('id') id: string,
-    @Body()
-    body: {
-      code: string;
-      platform: 'web' | 'mobile';
-    },
+    @Body() body?: LinkServiceDto,
   ): Promise<void> {
     const parsedIntId = parseIdParam(id);
     if (isNaN(parsedIntId)) {
       throw new BadRequestException('Invalid ID format');
-    }
-    if (
-      !body.code ||
-      !body.platform ||
-      (body.platform != 'web' && body.platform != 'mobile')
-    ) {
-      throw new BadRequestException(`Invalid request body`);
     }
     await this.servicesService.linkService(req.user.id, parsedIntId, body);
   }
@@ -118,19 +108,5 @@ export class ServicesController {
       throw new BadRequestException('Invalid ID format');
     }
     await this.servicesService.unlinkService(req.user.id, parsedIntId);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Post(':id/refresh-token')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async refreshToken(
-    @Request() req: { user: { id: number } },
-    @Param('id') id: string,
-  ): Promise<void> {
-    const parsedIntId = parseIdParam(id);
-    if (isNaN(parsedIntId)) {
-      throw new BadRequestException('Invalid ID format');
-    }
-    await this.servicesService.refreshServiceToken(req.user.id, parsedIntId);
   }
 }
