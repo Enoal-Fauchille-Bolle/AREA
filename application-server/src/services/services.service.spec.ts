@@ -14,10 +14,7 @@
 //   VariableKind,
 //   VariableType,
 // } from '../variables/entities/variable.entity';
-// import { UserService } from '../user-services/entities/user-service.entity';
-// import { DiscordOAuth2Service } from './oauth2/discord-oauth2.service';
-// import { GithubOAuth2Service } from './oauth2/github-oauth2.service';
-// import { GoogleOAuth2Service } from './oauth2/google-oauth2.service';
+// import { UserService } from './user-services/entities/user-service.entity';
 // describe('ServicesService', () => {
 //   let service: ServicesService;
 //   let _serviceRepository: Repository<Service>;
@@ -25,8 +22,6 @@
 //   let _variableRepository: Repository<Variable>;
 //   let _userServiceRepository: Repository<UserService>;
 //   let _configService: ConfigService;
-//   let _discordOAuth2Service: DiscordOAuth2Service;
-//   let _googleOAuth2Service: GoogleOAuth2Service;
 
 //   const mockService: Service = {
 //     id: 1,
@@ -39,10 +34,19 @@
 
 //   const mockServiceNoAuth: Service = {
 //     id: 2,
-//     name: 'Time',
-//     description: 'Time service',
+//     name: 'Clock',
+//     description: 'Time-based trigger service',
 //     icon_path: null,
 //     requires_auth: false,
+//     is_active: true,
+//   };
+
+//   const mockGoogleService: Service = {
+//     id: 3,
+//     name: 'Google',
+//     description: 'Google services platform',
+//     icon_path: 'assets/services/google.svg',
+//     requires_auth: true,
 //     is_active: true,
 //   };
 
@@ -81,15 +85,6 @@
 //     service: mockService,
 //   };
 
-//   const mockGoogleService: Service = {
-//     id: 3,
-//     name: 'Google',
-//     description: 'Google services platform',
-//     icon_path: 'assets/services/google.svg',
-//     requires_auth: true,
-//     is_active: true,
-//   };
-
 //   const mockServiceRepository = {
 //     find: jest.fn(),
 //     findOne: jest.fn(),
@@ -122,7 +117,10 @@
 //         discord: {
 //           clientId: 'mock_client_id',
 //           clientSecret: 'mock_client_secret',
-//           redirectUri: 'http://localhost:8080/callback',
+//         },
+//         github: {
+//           clientId: 'mock_github_client_id',
+//           clientSecret: 'mock_github_client_secret',
 //         },
 //         google: {
 //           clientId: 'mock_google_client_id',
@@ -130,16 +128,6 @@
 //         },
 //       },
 //     }),
-//   };
-
-//   const mockDiscordOAuth2Service = {
-//     exchangeCodeForTokens: jest.fn(),
-//     refreshAccessToken: jest.fn(),
-//   };
-
-//   const mockGoogleOAuth2Service = {
-//     exchangeCodeForTokens: jest.fn(),
-//     refreshAccessToken: jest.fn(),
 //   };
 
 //   beforeEach(async () => {
@@ -166,14 +154,6 @@
 //           provide: ConfigService,
 //           useValue: mockConfigService,
 //         },
-//         {
-//           provide: DiscordOAuth2Service,
-//           useValue: mockDiscordOAuth2Service,
-//         },
-//         {
-//           provide: GoogleOAuth2Service,
-//           useValue: mockGoogleOAuth2Service,
-//         },
 //       ],
 //     }).compile();
 
@@ -191,9 +171,6 @@
 //       getRepositoryToken(UserService),
 //     );
 //     _configService = module.get<ConfigService>(ConfigService);
-//     _discordOAuth2Service =
-//       module.get<DiscordOAuth2Service>(DiscordOAuth2Service);
-//     _googleOAuth2Service = module.get<GoogleOAuth2Service>(GoogleOAuth2Service);
 //   });
 
 //   afterEach(() => {
@@ -406,8 +383,7 @@
 //         mockDiscordOAuth2Service.exchangeCodeForTokens,
 //       ).toHaveBeenCalledWith(
 //         'authorization_code',
-//         expect.anything(),
-//         undefined,
+//         'http://localhost:8081/service/callback',
 //       );
 //       expect(mockUserServiceRepository.create).toHaveBeenCalledWith({
 //         user_id: 1,
@@ -442,8 +418,7 @@
 //         mockDiscordOAuth2Service.exchangeCodeForTokens,
 //       ).toHaveBeenCalledWith(
 //         'new_authorization_code',
-//         expect.anything(),
-//         undefined,
+//         'http://localhost:8081/service/callback',
 //       );
 //       expect(mockUserService.oauth_token).toBe(mockTokens.accessToken);
 //       expect(mockUserService.refresh_token).toBe(mockTokens.refreshToken);
@@ -464,46 +439,12 @@
 //       ).rejects.toThrow('Service with ID 999 not found');
 //     });
 
-//     it('should throw BadRequestException when no code provided and service not linked', async () => {
-//       mockServiceRepository.findOne.mockResolvedValue(mockService);
-//       mockUserServiceRepository.findOne.mockResolvedValue(null);
-
-//       mockDiscordOAuth2Service.exchangeCodeForTokens.mockRejectedValueOnce(
-//         new BadRequestException(
-//           'Discord service requires OAuth2 authentication code',
-//         ),
-//       );
-
-//       await expect(
-//         service.linkService(1, 1, { code: '', platform: 'web' }),
-//       ).rejects.toThrow(BadRequestException);
-//       await expect(
-//         service.linkService(1, 1, { code: '', platform: 'web' }),
-//       ).rejects.toThrow('Discord service requires OAuth2 authentication code');
-//     });
-
-//     it('should not throw error when service already linked and no code provided', async () => {
-//       mockServiceRepository.findOne.mockResolvedValue(mockService);
-//       mockUserServiceRepository.findOne.mockResolvedValue(mockUserService);
-
-//       mockDiscordOAuth2Service.exchangeCodeForTokens.mockResolvedValueOnce({
-//         accessToken: mockUserService.oauth_token,
-//         refreshToken: mockUserService.refresh_token,
-//         expiresAt: mockUserService.token_expires_at,
-//       });
-//       mockUserServiceRepository.save.mockResolvedValue({});
-
-//       await expect(
-//         service.linkService(1, 1, { code: '', platform: 'web' }),
-//       ).resolves.not.toThrow();
-//     });
-
 //     it('should handle non-OAuth2 services', async () => {
 //       mockServiceRepository.findOne.mockResolvedValue(mockServiceNoAuth);
 //       mockUserServiceRepository.findOne.mockResolvedValue(null);
 
 //       await expect(
-//         service.linkService(1, 2, { code: '', platform: 'web' }),
+//         service.linkService(1, 2, { code: 'code', platform: 'web' }),
 //       ).rejects.toThrow(BadRequestException);
 //     });
 //   });
@@ -589,7 +530,7 @@
 //         NotFoundException,
 //       );
 //       await expect(service.refreshServiceToken(1, 2)).rejects.toThrow(
-//         'Service Time does not support token refresh',
+//         'Service Clock does not support token refresh',
 //       );
 //     });
 
@@ -612,6 +553,240 @@
 
 //       await expect(service.refreshServiceToken(1, 1)).rejects.toThrow(
 //         NotFoundException,
+//       );
+//     });
+//   });
+
+//   describe('linkService - Google OAuth2', () => {
+//     it('should create new Google service link with OAuth2 code', async () => {
+//       const mockTokens = {
+//         accessToken: 'new_google_access_token',
+//         refreshToken: 'new_google_refresh_token',
+//         expiresAt: new Date(Date.now() + 3600000),
+//       };
+
+//       mockServiceRepository.findOne.mockResolvedValue(mockGoogleService);
+//       mockUserServiceRepository.findOne.mockResolvedValue(null);
+//       mockGoogleOAuth2Service.exchangeCodeForTokens.mockResolvedValue(
+//         mockTokens,
+//       );
+//       mockUserServiceRepository.create.mockReturnValue({
+//         user_id: 1,
+//         service_id: 3,
+//         oauth_token: mockTokens.accessToken,
+//         refresh_token: mockTokens.refreshToken,
+//         token_expires_at: mockTokens.expiresAt,
+//       });
+//       mockUserServiceRepository.save.mockResolvedValue({});
+
+//       await service.linkService(1, 3, {
+//         code: 'google_authorization_code',
+//         platform: 'web',
+//       });
+
+//       expect(
+//         mockGoogleOAuth2Service.exchangeCodeForTokens,
+//       ).toHaveBeenCalledWith(
+//         'google_authorization_code',
+//         'http://localhost:8081/service/callback',
+//         undefined,
+//       );
+//       expect(mockUserServiceRepository.create).toHaveBeenCalledWith({
+//         user_id: 1,
+//         service_id: 3,
+//         oauth_token: mockTokens.accessToken,
+//         refresh_token: mockTokens.refreshToken,
+//         token_expires_at: mockTokens.expiresAt,
+//       });
+//       expect(mockUserServiceRepository.save).toHaveBeenCalled();
+//     });
+
+//     it('should create new Google service link with PKCE code_verifier', async () => {
+//       const mockTokens = {
+//         accessToken: 'new_google_access_token',
+//         refreshToken: 'new_google_refresh_token',
+//         expiresAt: new Date(Date.now() + 3600000),
+//       };
+
+//       mockServiceRepository.findOne.mockResolvedValue(mockGoogleService);
+//       mockUserServiceRepository.findOne.mockResolvedValue(null);
+//       mockGoogleOAuth2Service.exchangeCodeForTokens.mockResolvedValue(
+//         mockTokens,
+//       );
+//       mockUserServiceRepository.create.mockReturnValue({
+//         user_id: 1,
+//         service_id: 3,
+//         oauth_token: mockTokens.accessToken,
+//         refresh_token: mockTokens.refreshToken,
+//         token_expires_at: mockTokens.expiresAt,
+//       });
+//       mockUserServiceRepository.save.mockResolvedValue({});
+
+//       await service.linkService(1, 3, {
+//         code: 'google_authorization_code',
+//         code_verifier: 'pkce_code_verifier_value',
+//         platform: 'mobile',
+//       });
+
+//       expect(
+//         mockGoogleOAuth2Service.exchangeCodeForTokens,
+//       ).toHaveBeenCalledWith(
+//         'google_authorization_code',
+//         'area://service/callback',
+//         'pkce_code_verifier_value',
+//       );
+//       expect(mockUserServiceRepository.create).toHaveBeenCalledWith({
+//         user_id: 1,
+//         service_id: 3,
+//         oauth_token: mockTokens.accessToken,
+//         refresh_token: mockTokens.refreshToken,
+//         token_expires_at: mockTokens.expiresAt,
+//       });
+//       expect(mockUserServiceRepository.save).toHaveBeenCalled();
+//     });
+
+//     it('should update existing Google service link with new OAuth2 tokens', async () => {
+//       const mockTokens = {
+//         accessToken: 'updated_google_access_token',
+//         refreshToken: 'updated_google_refresh_token',
+//         expiresAt: new Date(Date.now() + 3600000),
+//       };
+
+//       const mockGoogleUserService: Partial<UserService> = {
+//         user_id: 1,
+//         service_id: 3,
+//         oauth_token: 'old_google_token',
+//         refresh_token: 'old_google_refresh',
+//         token_expires_at: new Date(Date.now() + 1800000),
+//         created_at: new Date(),
+//         updated_at: new Date(),
+//         service: mockGoogleService,
+//       };
+
+//       mockServiceRepository.findOne.mockResolvedValue(mockGoogleService);
+//       mockUserServiceRepository.findOne.mockResolvedValue(
+//         mockGoogleUserService,
+//       );
+//       mockGoogleOAuth2Service.exchangeCodeForTokens.mockResolvedValue(
+//         mockTokens,
+//       );
+//       mockUserServiceRepository.save.mockResolvedValue({});
+
+//       await service.linkService(1, 3, {
+//         code: 'new_google_authorization_code',
+//         platform: 'web',
+//       });
+
+//       expect(
+//         mockGoogleOAuth2Service.exchangeCodeForTokens,
+//       ).toHaveBeenCalledWith(
+//         'new_google_authorization_code',
+//         'http://localhost:8081/service/callback',
+//         undefined,
+//       );
+//       expect(mockGoogleUserService.oauth_token).toBe(mockTokens.accessToken);
+//       expect(mockGoogleUserService.refresh_token).toBe(mockTokens.refreshToken);
+//       expect(mockGoogleUserService.token_expires_at).toBe(mockTokens.expiresAt);
+//       expect(mockUserServiceRepository.save).toHaveBeenCalledWith(
+//         mockGoogleUserService,
+//       );
+//     });
+
+//     it('should throw BadRequestException when Google OAuth2 exchange fails', async () => {
+//       mockServiceRepository.findOne.mockResolvedValue(mockGoogleService);
+//       mockUserServiceRepository.findOne.mockResolvedValue(null);
+//       mockGoogleOAuth2Service.exchangeCodeForTokens.mockRejectedValue(
+//         new BadRequestException('Invalid authorization code'),
+//       );
+
+//       await expect(
+//         service.linkService(1, 3, {
+//           code: 'invalid_code',
+//           platform: 'web',
+//         }),
+//       ).rejects.toThrow(BadRequestException);
+//       await expect(
+//         service.linkService(1, 3, {
+//           code: 'invalid_code',
+//           platform: 'web',
+//         }),
+//       ).rejects.toThrow('Invalid authorization code');
+//     });
+//   });
+
+//   describe('refreshServiceToken - Google OAuth2', () => {
+//     it('should successfully refresh Google access token', async () => {
+//       const mockTokens = {
+//         accessToken: 'refreshed_google_access_token',
+//         refreshToken: 'new_google_refresh_token',
+//         expiresAt: new Date(Date.now() + 3600000),
+//       };
+
+//       const googleUserServiceCopy: Partial<UserService> = {
+//         user_id: 1,
+//         service_id: 3,
+//         oauth_token: 'old_google_token',
+//         refresh_token: 'google_refresh_token',
+//         token_expires_at: new Date(Date.now() - 1000),
+//         created_at: new Date(),
+//         updated_at: new Date(),
+//         service: mockGoogleService,
+//       };
+//       const originalRefreshToken = googleUserServiceCopy.refresh_token;
+
+//       mockServiceRepository.findOne.mockResolvedValue(mockGoogleService);
+//       mockUserServiceRepository.findOne.mockResolvedValue(
+//         googleUserServiceCopy,
+//       );
+//       mockGoogleOAuth2Service.refreshAccessToken.mockResolvedValue(mockTokens);
+//       mockUserServiceRepository.save.mockResolvedValue({});
+
+//       await service.refreshServiceToken(1, 3);
+
+//       expect(mockGoogleOAuth2Service.refreshAccessToken).toHaveBeenCalledWith(
+//         originalRefreshToken,
+//       );
+//       expect(googleUserServiceCopy.oauth_token).toBe(mockTokens.accessToken);
+//       expect(googleUserServiceCopy.refresh_token).toBe(mockTokens.refreshToken);
+//       expect(googleUserServiceCopy.token_expires_at).toBe(mockTokens.expiresAt);
+//       expect(mockUserServiceRepository.save).toHaveBeenCalledWith(
+//         googleUserServiceCopy,
+//       );
+//     });
+
+//     it('should throw NotFoundException when Google user service link does not exist', async () => {
+//       mockServiceRepository.findOne.mockResolvedValue(mockGoogleService);
+//       mockUserServiceRepository.findOne.mockResolvedValue(null);
+
+//       await expect(service.refreshServiceToken(1, 3)).rejects.toThrow(
+//         NotFoundException,
+//       );
+//       await expect(service.refreshServiceToken(1, 3)).rejects.toThrow(
+//         'User service link not found or no refresh token available',
+//       );
+//     });
+
+//     it('should throw NotFoundException when Google refresh token is not available', async () => {
+//       const googleUserServiceNoRefresh = {
+//         user_id: 1,
+//         service_id: 3,
+//         oauth_token: 'google_token',
+//         refresh_token: null,
+//         token_expires_at: new Date(Date.now() + 3600000),
+//         created_at: new Date(),
+//         updated_at: new Date(),
+//         service: mockGoogleService,
+//       };
+//       mockServiceRepository.findOne.mockResolvedValue(mockGoogleService);
+//       mockUserServiceRepository.findOne.mockResolvedValue(
+//         googleUserServiceNoRefresh,
+//       );
+
+//       await expect(service.refreshServiceToken(1, 3)).rejects.toThrow(
+//         NotFoundException,
+//       );
+//       await expect(service.refreshServiceToken(1, 3)).rejects.toThrow(
+//         'User service link not found or no refresh token available',
 //       );
 //     });
 //   });
