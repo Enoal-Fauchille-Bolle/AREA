@@ -3,11 +3,14 @@ import {
   ConflictException,
   UnauthorizedException,
   NotFoundException,
+  BadRequestException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import { ServicesService } from '../services/services.service';
 import { UserOAuth2AccountsService } from './user-oauth2-account/user-oauth2-account.service';
+import { OAuth2Service } from '../oauth2/oauth2.service';
 import {
   RegisterDto,
   OAuthRegisterDto,
@@ -17,7 +20,11 @@ import {
   AuthResponseDto,
 } from './dto';
 import { UserResponseDto } from '../users/dto/user-response.dto';
-import { GoogleOAuth2Service } from '../services/oauth2/google-oauth2.service';
+import {
+  getOAuthProviderFromString,
+  OAuthProviderServiceNameMap,
+  createUsernameFromProviderInfo,
+} from '../oauth2/dto';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -25,8 +32,8 @@ export class AuthService {
   constructor(
     private usersService: UsersService,
     private servicesService: ServicesService,
-    private googleOAuth2Service: GoogleOAuth2Service,
     private userOAuth2AccountsService: UserOAuth2AccountsService,
+    private oauth2Service: OAuth2Service,
     private jwtService: JwtService,
   ) {}
 
@@ -182,11 +189,62 @@ export class AuthService {
       );
     }
 
+    const userInfo = await this.oauth2Service.exchangeCodeAndGetUserInfo({
+      code: body.code,
+      provider: provider,
+      redirect_uri: body.redirect_uri,
+    });
+
+    // Can't only capitalize the provider to get service name because of GitHub.
+    const service = await this.servicesService.findByName(
+      OAuthProviderServiceNameMap[provider],
+    );
+
+    const userAccount =
+      await this.userOAuth2AccountsService.findByServiceAccountId(
+        service.id,
+        userInfo.id,
       );
 
+    if (userAccount) {
+      if (userInfo.email && userAccount.email !== userInfo.email) {
+        // Update email if it has changed
+        await this.userOAuth2AccountsService.updateEmail(
+          userAccount.user.id,
+          service.id,
+          userInfo.email,
+        );
+      }
+      await this.usersService.updateLastConnection(userAccount.user.id);
+      return new AuthResponseDto(
+        this.jwtService.sign({
+          email: userAccount.user.email,
+          sub: userAccount.user.id,
+          username: userAccount.user.username,
+        }),
       );
     }
 
+    if (!userInfo.email) {
+      throw new UnauthorizedException(
+        'OAuth2 provider did not return an email address: cannot proceed without email verification',
+      );
+    }
+
+    const user = await this.usersService.findByEmail(userInfo.email);
+    if (!user) {
+      throw new UnauthorizedException(
+        'No account associated with this OAuth2 account. Please register first.',
+      );
+    }
+
+    // Create OAuth2 account link
+    await this.userOAuth2AccountsService.create({
+      service_id: service.id,
+      oauth2_provider_user_id: userInfo.id,
+      user_id: user.id,
+      email: userInfo.email,
+    });
     await this.usersService.updateLastConnection(user.id);
 
     const payload = {
@@ -200,5 +258,75 @@ export class AuthService {
   }
 
   async registerWithOAuth2(body: OAuthRegisterDto): Promise<AuthResponseDto> {
+    const provider = getOAuthProviderFromString(body.provider);
+    if (!provider) {
+      throw new BadRequestException(
+        `Unsupported OAuth2 provider: ${body.provider}`,
+      );
+    }
+
+    const userInfo = await this.oauth2Service.exchangeCodeAndGetUserInfo({
+      code: body.code,
+      provider: provider,
+      redirect_uri: body.redirect_uri,
+    });
+
+    if (!userInfo.email) {
+      throw new UnauthorizedException(
+        'OAuth2 provider did not return an email address: cannot proceed without email verification',
+      );
+    }
+
+    // Check if user already exists
+    const user = await this.usersService.findByEmail(userInfo.email);
+    if (user) {
+      throw new ConflictException(
+        'An account with this email already exists. Please login instead.',
+      );
+    }
+
+    let username = createUsernameFromProviderInfo(userInfo.rawData);
+    // Should not happen
+    if (!username) {
+      throw new InternalServerErrorException(
+        'Failed to generate a username from OAuth2 provider data',
+      );
+    }
+
+    if (await this.usersService.findByUsername(username)) {
+      username = `${provider}_user_${userInfo.id}`;
+      if (await this.usersService.findByUsername(username)) {
+        throw new ConflictException(
+          'Generated username from OAuth2 provider data already exists. Please choose a different registration method.',
+        );
+      }
+    }
+
+    // Create new user
+    const newUser = await this.usersService.createWithoutPassword({
+      email: userInfo.email,
+      username: username,
+    });
+
+    // Create OAuth2 account link
+    const service = await this.servicesService.findByName(
+      OAuthProviderServiceNameMap[provider],
+    );
+
+    await this.userOAuth2AccountsService.create({
+      service_id: service.id,
+      oauth2_provider_user_id: userInfo.id,
+      user_id: newUser.id,
+      email: userInfo.email,
+    });
+
+    const payload = {
+      email: newUser.email,
+      sub: newUser.id,
+      username: newUser.username,
+    };
+    const token = this.jwtService.sign(payload);
+
+    return new AuthResponseDto(token);
   }
 }

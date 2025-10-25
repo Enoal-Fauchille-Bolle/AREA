@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserOAuth2Account } from './user-oauth2-account';
 import { UsersModule } from '../users';
 import { ServicesModule } from '../services';
+import { OAuth2Module } from '../oauth2';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -17,6 +18,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     TypeOrmModule.forFeature([UserOAuth2Account]),
     UsersModule,
     ServicesModule,
+    OAuth2Module,
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],

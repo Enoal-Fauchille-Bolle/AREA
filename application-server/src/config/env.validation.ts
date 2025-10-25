@@ -22,6 +22,10 @@ export const envValidationSchema = z.object({
   GOOGLE_CLIENT_SECRET: z.string().optional(),
   GITHUB_CLIENT_ID: z.string().optional(),
   GITHUB_CLIENT_SECRET: z.string().optional(),
+  SPOTIFY_CLIENT_ID: z.string().optional(),
+  SPOTIFY_CLIENT_SECRET: z.string().optional(),
+  TWITCH_CLIENT_ID: z.string().optional(),
+  TWITCH_CLIENT_SECRET: z.string().optional(),
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
   WEB_AUTH_REDIRECT_URI: z
@@ -66,6 +70,16 @@ export function validateEnv(config: Record<string, unknown>) {
         'GitHub OAuth2 must be set in production.',
       );
     }
+    if (!env.SPOTIFY_CLIENT_ID || !env.SPOTIFY_CLIENT_SECRET) {
+      throw new ConfigurationException(
+        'Spotify OAuth2 must be set in production.',
+      );
+    }
+    if (!env.TWITCH_CLIENT_ID || !env.TWITCH_CLIENT_SECRET) {
+      throw new ConfigurationException(
+        'Twitch OAuth2 must be set in production.',
+      );
+    }
     if (!env.SMTP_USER || !env.SMTP_PASS) {
       throw new ConfigurationException(
         'SMTP credentials must be set in production.',
@@ -87,6 +101,12 @@ export function validateEnv(config: Record<string, unknown>) {
     }
     if (!env.GITHUB_CLIENT_ID || !env.GITHUB_CLIENT_SECRET) {
       console.warn('WARNING: GitHub OAuth2 not set; server may crash.');
+    }
+    if (!env.SPOTIFY_CLIENT_ID || !env.SPOTIFY_CLIENT_SECRET) {
+      console.warn('WARNING: Spotify OAuth2 not set; server may crash.');
+    }
+    if (!env.TWITCH_CLIENT_ID || !env.TWITCH_CLIENT_SECRET) {
+      console.warn('WARNING: Twitch OAuth2 not set; server may crash.');
     }
     if (!env.SMTP_USER || !env.SMTP_PASS) {
       console.warn('WARNING: SMTP credentials not set; email may not work.');

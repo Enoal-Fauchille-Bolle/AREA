@@ -2,8 +2,10 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { appConfig, validateEnv } from './config';
 import { ScheduleModule } from '@nestjs/schedule';
+import { HttpModule } from '@nestjs/axios';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './users/entities/user.entity';
+import { UserOAuth2Account } from './auth/user-oauth2-account/entities/user-oauth2-account.entity';
 import { UserService } from './services/user-services/entities/user-service.entity';
 import { Service } from './services/entities/service.entity';
 import { Component } from './components/entities/component.entity';
@@ -15,6 +17,7 @@ import { AreaExecution } from './area-executions/entities/area-execution.entity'
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
+import { OAuth2Module } from './oauth2';
 import { ServicesModule } from './services/services.module';
 import { ComponentsModule } from './components/components.module';
 import { VariablesModule } from './variables/variables.module';
@@ -38,6 +41,10 @@ import { CommonModule } from './common/common.module';
       validate: validateEnv,
     }),
     ScheduleModule.forRoot(),
+    HttpModule.register({
+      timeout: 5000,
+      maxRedirects: 5,
+    }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
@@ -68,6 +75,7 @@ import { CommonModule } from './common/common.module';
       inject: [ConfigService],
     }),
     UsersModule,
+    OAuth2Module,
     ServicesModule,
     ComponentsModule,
     VariablesModule,

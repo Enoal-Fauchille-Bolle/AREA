@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -9,6 +10,7 @@ import { Service } from './entities/service.entity';
 import { ComponentsService } from '../components/components.service';
 import { VariablesService } from '../variables/variables.service';
 import { UserServicesService } from './user-services/user-services.service';
+import { OAuth2Service } from '../oauth2/oauth2.service';
 import { ConfigService } from '@nestjs/config';
 import {
   ServiceActionsResponseDto,
@@ -18,9 +20,7 @@ import {
   CreateServiceDto,
   LinkServiceDto,
 } from './dto';
-import { DiscordOAuth2Service } from './oauth2/discord-oauth2.service';
-import { GoogleOAuth2Service } from './oauth2/google-oauth2.service';
-import { GithubOAuth2Service } from './oauth2/github-oauth2.service';
+import { getOAuthProviderFromString } from '../oauth2/dto';
 
 @Injectable()
 export class ServicesService {
@@ -33,10 +33,8 @@ export class ServicesService {
     private readonly componentService: ComponentsService,
     private readonly variableService: VariablesService,
     private readonly userServiceService: UserServicesService,
+    private readonly oauth2Service: OAuth2Service,
     private readonly configService: ConfigService,
-    private readonly discordOAuth2Service: DiscordOAuth2Service,
-    private readonly googleOAuth2Service: GoogleOAuth2Service,
-    private readonly githubOAuth2Service: GithubOAuth2Service,
   ) {
     const appConfig = this.configService.get('app');
     this.webRedirectUri = appConfig.oauth2.service.web_redirect_uri;
@@ -185,19 +183,97 @@ export class ServicesService {
     serviceId: number,
     body?: LinkServiceDto,
   ): Promise<void> {
+    const userService = await this.userServiceService.findOne(
+      userId,
+      serviceId,
+    );
 
-        const userService = this.userServiceRepository.create({
+    if (userService) {
+      if (!userService.service.require_auth) {
+        return;
+      }
+      if (userService.refresh_token) {
+        const provider = getOAuthProviderFromString(userService.service.name);
+        // Unreachable code check
+        if (!provider) {
+          throw new InternalServerErrorException(
+            `OAuth provider for service "${userService.service.name}" should exist`,
+          );
+        }
+        const tokens = await this.oauth2Service.refreshAccessToken({
+          provider: provider,
+          refresh_token: userService.refresh_token,
+        });
+        await this.userServiceService.update({
           user_id: userId,
           service_id: serviceId,
-          oauth_token: tokens.accessToken,
-          refresh_token: tokens.refreshToken,
-          token_expires_at: tokens.expiresAt,
+          oauth_token: tokens.access_token,
+          refresh_token: tokens.refresh_token,
+          token_expires_at: tokens.expires_in
+            ? new Date(Date.now() + tokens.expires_in * 1000)
+            : undefined,
         });
+        return;
       }
-    } else if (!existing) {
+    }
+
+    const service = await this.serviceRepository.findOne({
+      where: { id: serviceId },
+    });
+    if (!service) {
+      throw new NotFoundException(`Service with ID ${serviceId} not found`);
+    }
+
+    if (!service.requires_auth) {
+      await this.userServiceService.create({
+        user_id: userId,
+        service_id: serviceId,
+      });
+      return;
+    }
+
+    if (!body) {
+      throw new BadRequestException(
+        'Authorization code and platform are required to link this service',
+      );
+    }
+
+    const redirectUri =
+      body.platform === 'web' ? this.webRedirectUri : this.mobileRedirectUri;
+
+    const provider = getOAuthProviderFromString(service.name);
+    if (!provider) {
       throw new BadRequestException(
         `Cannot link service "${service.name}". The service may not be implemented or is not supported for linking.`,
       );
+    }
+
+    const tokens = await this.oauth2Service.exchangeCodeForTokens({
+      code: body.code,
+      provider: provider,
+      redirect_uri: redirectUri,
+    });
+
+    if (userService) {
+      await this.userServiceService.update({
+        user_id: userId,
+        service_id: serviceId,
+        oauth_token: tokens.access_token,
+        refresh_token: tokens.refresh_token,
+        token_expires_at: tokens.expires_in
+          ? new Date(Date.now() + tokens.expires_in * 1000)
+          : undefined,
+      });
+    } else {
+      await this.userServiceService.create({
+        user_id: userId,
+        service_id: serviceId,
+        oauth_token: tokens.access_token,
+        refresh_token: tokens.refresh_token,
+        token_expires_at: tokens.expires_in
+          ? new Date(Date.now() + tokens.expires_in * 1000)
+          : undefined,
+      });
     }
   }
 
