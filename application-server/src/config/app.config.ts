@@ -42,10 +42,10 @@ export const appConfig = registerAs('app', () => {
     oauth2: {
       auth: {
         web_redirect_uri:
-          process.env.WEB_SERVICE_REDIRECT_URI ||
+          process.env.WEB_AUTH_REDIRECT_URI ||
           'http://localhost:8081/auth/callback',
         mobile_redirect_uri:
-          process.env.MOBILE_SERVICE_REDIRECT_URI ||
+          process.env.MOBILE_AUTH_REDIRECT_URI ||
           'http://localhost:8080/auth/callback',
         mobile_scheme:
           process.env.MOBILE_APP_AUTH_URL_SCHEME || 'area://auth/callback',
