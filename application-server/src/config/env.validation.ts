@@ -28,14 +28,24 @@ export const envValidationSchema = z.object({
   TWITCH_CLIENT_SECRET: z.string().optional(),
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
+  ANDROID_PACKAGE_NAME: z.string().optional(),
+  ANDROID_SHA256_FINGERPRINT: z.string().optional(),
+  IOS_TEAM_ID: z.string().optional(),
+  IOS_BUNDLE_ID: z.string().optional(),
   WEB_AUTH_REDIRECT_URI: z
     .string()
     .default('http://localhost:8081/auth/callback'),
-  MOBILE_AUTH_REDIRECT_URI: z.string().default('area://auth/callback'),
+  MOBILE_AUTH_REDIRECT_URI: z
+    .string()
+    .default('http://localhost:8080/auth/callback'),
+  MOBILE_APP_AUTH_URL_SCHEME: z.string().default('area://auth/callback'),
   WEB_SERVICE_REDIRECT_URI: z
     .string()
     .default('http://localhost:8081/service/callback'),
-  MOBILE_SERVICE_REDIRECT_URI: z.string().default('area://service/callback'),
+  MOBILE_SERVICE_REDIRECT_URI: z
+    .string()
+    .default('http://localhost:8080/service/callback'),
+  MOBILE_APP_SERVICE_URL_SCHEME: z.string().default('area://service/callback'),
 });
 
 export function validateEnv(config: Record<string, unknown>) {
@@ -85,6 +95,16 @@ export function validateEnv(config: Record<string, unknown>) {
         'SMTP credentials must be set in production.',
       );
     }
+    if (!env.ANDROID_PACKAGE_NAME || !env.ANDROID_SHA256_FINGERPRINT) {
+      throw new ConfigurationException(
+        'Android package name and SHA256 fingerprint must be set in production.',
+      );
+    }
+    if (!env.IOS_TEAM_ID || !env.IOS_BUNDLE_ID) {
+      throw new ConfigurationException(
+        'iOS team ID and bundle ID must be set in production.',
+      );
+    }
   } else {
     if (!env.JWT_SECRET) {
       console.warn('WARNING: Using default JWT secret for development.');
@@ -110,6 +130,16 @@ export function validateEnv(config: Record<string, unknown>) {
     }
     if (!env.SMTP_USER || !env.SMTP_PASS) {
       console.warn('WARNING: SMTP credentials not set; email may not work.');
+    }
+    if (!env.ANDROID_PACKAGE_NAME || !env.ANDROID_SHA256_FINGERPRINT) {
+      console.warn(
+        'WARNING: Android config not set; some mobile features may not work.',
+      );
+    }
+    if (!env.IOS_TEAM_ID || !env.IOS_BUNDLE_ID) {
+      console.warn(
+        'WARNING: iOS config not set; some mobile features may not work.',
+      );
     }
   }
   return env;

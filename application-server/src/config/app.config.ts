@@ -45,14 +45,21 @@ export const appConfig = registerAs('app', () => {
           process.env.WEB_SERVICE_REDIRECT_URI ||
           'http://localhost:8081/auth/callback',
         mobile_redirect_uri:
-          process.env.MOBILE_SERVICE_REDIRECT_URI || 'area://auth/callback',
+          process.env.MOBILE_SERVICE_REDIRECT_URI ||
+          'http://localhost:8080/auth/callback',
+        mobile_scheme:
+          process.env.MOBILE_APP_AUTH_URL_SCHEME || 'area://auth/callback',
       },
       service: {
         web_redirect_uri:
           process.env.WEB_SERVICE_REDIRECT_URI ||
           'http://localhost:8081/service/callback',
         mobile_redirect_uri:
-          process.env.MOBILE_SERVICE_REDIRECT_URI || 'area://service/callback',
+          process.env.MOBILE_SERVICE_REDIRECT_URI ||
+          'http://localhost:8080/service/callback',
+        mobile_scheme:
+          process.env.MOBILE_APP_SERVICE_URL_SCHEME ||
+          'area://service/callback',
       },
       discord: {
         clientId: process.env.DISCORD_CLIENT_ID,
@@ -80,6 +87,18 @@ export const appConfig = registerAs('app', () => {
     email: {
       smtpUser: process.env.SMTP_USER,
       smtpPass: process.env.SMTP_PASS,
+    },
+
+    // Mobile related Configuration
+    mobile: {
+      android: {
+        packageName: process.env.ANDROID_PACKAGE_NAME,
+        sha256: process.env.ANDROID_SHA256_FINGERPRINT,
+      },
+      ios: {
+        teamId: process.env.IOS_TEAM_ID,
+        bundleId: process.env.IOS_BUNDLE_ID,
+      },
     },
   };
 });

@@ -127,9 +127,9 @@ export class AuthService {
 
     // Check for email conflict
     if (updateProfileDto.email && updateProfileDto.email !== user.email) {
-      const existingUser = await this.usersService
-        .findByEmail(updateProfileDto.email)
-        .catch(() => null);
+      const existingUser = await this.usersService.findByEmail(
+        updateProfileDto.email,
+      );
       if (existingUser) {
         throw new ConflictException('Email already in use');
       }

@@ -10,7 +10,12 @@ import {
   BadRequestException,
   UseGuards,
   Request,
+  Query,
+  Res,
+  Headers,
 } from '@nestjs/common';
+import { type Response } from 'express';
+import { ConfigService } from '@nestjs/config';
 import { ServicesService } from './services.service';
 import {
   ServiceResponseDto,
@@ -19,12 +24,50 @@ import {
   ServiceComponentsResponseDto,
   LinkServiceDto,
 } from './dto';
+import {
+  handleMobileCallback,
+  isMobileRequest,
+  getOAuthProviderFromString,
+} from '../oauth2';
 import { parseIdParam } from '../common/constants';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('services')
 export class ServicesController {
-  constructor(private readonly servicesService: ServicesService) {}
+  constructor(
+    private readonly servicesService: ServicesService,
+    private readonly configService: ConfigService,
+  ) {}
+
+  // Mobile OAuth2 Callback Endpoint (auto redirect)
+  @Get('callback')
+  oauth2Callback(
+    @Headers('user-agent') userAgent: string,
+    @Query('code') code: string,
+    @Query('state') provider: string,
+    @Res() res: Response,
+  ) {
+    if (!code) {
+      throw new BadRequestException('Missing OAuth code');
+    }
+    if (!provider) {
+      throw new BadRequestException('Missing OAuth provider');
+    }
+    const oauthProvider = getOAuthProviderFromString(provider);
+    if (!oauthProvider) {
+      throw new BadRequestException('Invalid OAuth provider');
+    }
+    if (isMobileRequest(userAgent)) {
+      return handleMobileCallback(
+        res,
+        oauthProvider,
+        code,
+        'auth',
+        this.configService,
+      );
+    }
+    return 'Redirecting to mobile application...\n';
+  }
 
   @Get()
   async findAll(): Promise<ServiceResponseDto[]> {

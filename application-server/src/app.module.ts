@@ -26,6 +26,7 @@ import { AreaParametersModule } from './area-parameters/area-parameters.module';
 import { HookStatesModule } from './hook-states/hook-states.module';
 import { AreaExecutionsModule } from './area-executions/area-executions.module';
 import { AuthModule } from './auth/auth.module';
+import { WellKnownModule } from './well-known';
 import { ClockModule } from './clock/clock.module';
 import { EmailModule } from './email/email.module';
 import { GithubModule } from './github/github.module';
@@ -84,6 +85,7 @@ import { CommonModule } from './common/common.module';
     HookStatesModule,
     AreaExecutionsModule,
     AuthModule,
+    WellKnownModule,
     ClockModule,
     EmailModule,
     GithubModule,
