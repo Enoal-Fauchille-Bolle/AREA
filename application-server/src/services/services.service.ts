@@ -20,13 +20,6 @@ import {
 } from './dto';
 import { DiscordOAuth2Service } from './oauth2/discord-oauth2.service';
 import { GoogleOAuth2Service } from './oauth2/google-oauth2.service';
-
-// Minimal token shape returned by provider services (exchange/refresh)
-type OAuthTokens = {
-  accessToken: string;
-  refreshToken: string | null;
-  expiresAt: Date;
-};
 import { GithubOAuth2Service } from './oauth2/github-oauth2.service';
 
 @Injectable()
@@ -192,35 +185,7 @@ export class ServicesService {
     serviceId: number,
     body?: LinkServiceDto,
   ): Promise<void> {
-    const service = await this.serviceRepository.findOne({
-      where: { id: serviceId },
-    });
-    if (!service) {
-      throw new NotFoundException(`Service with ID ${serviceId} not found`);
-    }
 
-    const existing = await this.userServiceRepository.findOne({
-      where: { user_id: userId, service_id: serviceId },
-    });
-
-    const redirectUri =
-      body.platform === 'web' ? this.webRedirectUri : this.mobileRedirectUri;
-
-    // Handle Discord OAuth2 flow
-    if (service.name.toLowerCase() === 'discord') {
-      const tokens = await this.discordOAuth2Service.exchangeCodeForTokens(
-        body.code,
-        redirectUri,
-      );
-
-      if (existing) {
-        // Update existing user service with new tokens
-        existing.oauth_token = tokens.accessToken;
-        existing.refresh_token = tokens.refreshToken;
-        existing.token_expires_at = tokens.expiresAt;
-        await this.userServiceRepository.save(existing);
-      } else {
-        // Create new user service link with tokens
         const userService = this.userServiceRepository.create({
           user_id: userId,
           service_id: serviceId,
@@ -228,50 +193,6 @@ export class ServicesService {
           refresh_token: tokens.refreshToken,
           token_expires_at: tokens.expiresAt,
         });
-        await this.userServiceRepository.save(userService);
-      }
-    } else if (service.name.toLowerCase() === 'github') {
-      const tokens = await this.githubOAuth2Service.exchangeCodeForTokens(
-        body.code,
-        redirectUri,
-      );
-
-      if (existing) {
-        // Update existing user service with new tokens
-        existing.oauth_token = tokens.accessToken;
-        await this.userServiceRepository.save(existing);
-      } else {
-        // Create new user service link with tokens
-        const userService = this.userServiceRepository.create({
-          user_id: userId,
-          service_id: serviceId,
-          oauth_token: tokens.accessToken,
-        });
-        await this.userServiceRepository.save(userService);
-      }
-    } else if (service.name.toLowerCase() === 'google') {
-      const tokens = await this.googleOAuth2Service.exchangeCodeForTokens(
-        body.code,
-        redirectUri,
-        body.code_verifier,
-      );
-
-      if (existing) {
-        // Update existing user service with new tokens
-        existing.oauth_token = tokens.accessToken;
-        existing.refresh_token = tokens.refreshToken;
-        existing.token_expires_at = tokens.expiresAt;
-        await this.userServiceRepository.save(existing);
-      } else {
-        // Create new user service link with tokens
-        const userService = this.userServiceRepository.create({
-          user_id: userId,
-          service_id: serviceId,
-          oauth_token: tokens.accessToken,
-          refresh_token: tokens.refreshToken,
-          token_expires_at: tokens.expiresAt,
-        });
-        await this.userServiceRepository.save(userService);
       }
     } else if (!existing) {
       throw new BadRequestException(

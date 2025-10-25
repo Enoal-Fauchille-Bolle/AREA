@@ -182,7 +182,6 @@ export class DiscordService {
   private async sendDiscordMessage(params: SendMessageParams) {
     try {
       const channel = await this.client.channels.fetch(params.channel_id);
-
       if (!channel || !channel.isTextBased()) {
         throw new BadRequestException(
           `Channel ${params.channel_id} is not a text channel or does not exist`,

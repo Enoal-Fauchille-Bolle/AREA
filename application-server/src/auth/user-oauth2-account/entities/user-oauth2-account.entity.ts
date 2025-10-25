@@ -1,3 +1,4 @@
+import { DB_COLUMN_LENGTHS } from '../../../config';
 import {
   Entity,
   PrimaryColumn,
@@ -6,19 +7,31 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import { User } from '../../users/entities/user.entity';
-import { Service } from '../../services/entities/service.entity';
+import { User } from '../../../users/entities/user.entity';
+import { Service } from '../../../services/entities/service.entity';
 
 @Entity('user_oauth2_accounts')
 export class UserOAuth2Account {
-  @PrimaryColumn({ type: 'int' })
-  user_id: number;
-
+  // Foreign key to Service
   @PrimaryColumn({ type: 'int' })
   service_id: number;
 
-  @Column({ type: 'varchar', length: 255, unique: true })
-  email: string;
+  @PrimaryColumn({
+    type: 'varchar',
+    length: DB_COLUMN_LENGTHS.oauth2ProviderUserId,
+  })
+  service_account_id: string;
+
+  // Foreign Key to User
+  @Column({ type: 'int' })
+  user_id: number;
+
+  @Column({
+    type: 'varchar',
+    length: DB_COLUMN_LENGTHS.email,
+    nullable: true,
+  })
+  email: string | null;
 
   @CreateDateColumn({ type: 'timestamp with time zone' })
   created_at: Date;

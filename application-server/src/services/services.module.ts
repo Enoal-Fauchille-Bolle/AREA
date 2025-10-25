@@ -4,6 +4,8 @@ import { Service } from './entities/service.entity';
 import { DiscordOAuth2Service } from './oauth2/discord-oauth2.service';
 import { GoogleOAuth2Service } from './oauth2/google-oauth2.service';
 import { GithubOAuth2Service } from './oauth2/github-oauth2.service';
+import { UserService } from './user-services/entities/user-service.entity';
+import { UsersModule } from '../users/users.module';
 import { ComponentsModule } from '../components/components.module';
 import { VariablesModule } from '../variables/variables.module';
 import { ServicesService } from './services.service';
@@ -13,6 +15,8 @@ import { ServicesInitializerService } from './services-initializer.service';
 
 @Module({
   imports: [
+    TypeOrmModule.forFeature([Service, UserService]),
+    UsersModule,
     ComponentsModule,
     VariablesModule,
   ],
@@ -24,6 +28,6 @@ import { ServicesInitializerService } from './services-initializer.service';
     GoogleOAuth2Service,
     GithubOAuth2Service,
   ],
-  exports: [ServicesService, DiscordOAuth2Service, GoogleOAuth2Service],
+  exports: [ServicesService, UserServicesService],
 })
 export class ServicesModule {}

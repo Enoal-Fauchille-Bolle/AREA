@@ -7,6 +7,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import { ServicesService } from '../services/services.service';
+import { UserOAuth2AccountsService } from './user-oauth2-account/user-oauth2-account.service';
 import {
   RegisterDto,
   OAuthRegisterDto,
@@ -25,6 +26,7 @@ export class AuthService {
     private usersService: UsersService,
     private servicesService: ServicesService,
     private googleOAuth2Service: GoogleOAuth2Service,
+    private userOAuth2AccountsService: UserOAuth2AccountsService,
     private jwtService: JwtService,
   ) {}
 
@@ -180,103 +182,13 @@ export class AuthService {
       );
     }
 
-      // 1. Exchange code for access token
-      const tokenData = await this.googleOAuth2Service.exchangeCodeForTokens(
-        code,
-        redirectUri,
-        codeVerifier,
       );
 
-      // 2. Fetch user info from provider
-      const googleUser = await this.googleOAuth2Service.getUserInfo(
-        tokenData.accessToken,
       );
-
-      // 3. Find Google service in database
-      const googleService = await this.servicesService.findByName('Google');
-
-    // 4. Check if user exists (by email)
-    const existingUser = await this.usersService
-      .findByEmail(googleUser.email)
-      .catch(() => null);
-
-    let user: UserResponseDto;
-
-    if (!existingUser) {
-      // User doesn't exist, create new account (auto-register)
-      // Generate a username from email
-      const baseUsername = googleUser.email
-        .split('@')[0]
-        .replace(/[^a-zA-Z0-9]/g, '');
-
-      // Check if username already exists and add counter if needed
-      let finalUsername = baseUsername;
-      let attempts = 0;
-      const maxAttempts = 10;
-
-      while (attempts < maxAttempts) {
-        const existingUser =
-          await this.usersService.findByUsername(finalUsername);
-        if (!existingUser) {
-          // Username doesn't exist, we can use it
-          break;
-        }
-        // Username exists, try with counter
-        attempts++;
-        finalUsername = `${baseUsername}${attempts}`;
-      }
-
-      // If we still can't find a unique username, use timestamp
-      if (attempts >= maxAttempts) {
-        finalUsername = `${baseUsername}${Date.now()}`;
-      }
-
-      console.log(`[OAuth2] Creating new user with username: ${finalUsername}`);
-
-      user = await this.usersService.create({
-        email: googleUser.email,
-        username: finalUsername,
-        password: Math.random().toString(36).substring(2, 15), // Random password for OAuth users
-      });
-    } else {
-      // Convert User entity to UserResponseDto
-      const foundUser = await this.usersService.findOne(existingUser.id);
-      if (!foundUser) {
-        throw new Error('User not found after lookup');
-      }
-      user = foundUser;
     }
 
-    // 5. Store/update OAuth tokens in UserServices
-    const existingConnection =
-      await this.userServicesService.findUserServiceConnection(
-        user.id,
-        googleService.id,
-      );
-
-    if (existingConnection) {
-      // Update existing connection
-      await this.userServicesService.refreshToken(
-        user.id,
-        tokenData.accessToken,
-        tokenData.refreshToken || undefined,
-        tokenData.expiresAt,
-      );
-    } else {
-      // Create new connection
-      await this.userServicesService.create({
-        user_id: user.id,
-        service_id: googleService.id,
-        oauth_token: tokenData.accessToken,
-        refresh_token: tokenData.refreshToken || undefined,
-        token_expires_at: tokenData.expiresAt,
-      });
-    }
-
-    // 6. Update last connection
     await this.usersService.updateLastConnection(user.id);
 
-    // 7. Generate JWT token
     const payload = {
       email: user.email,
       sub: user.id,
