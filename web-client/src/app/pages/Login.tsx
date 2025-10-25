@@ -37,7 +37,7 @@ function Login() {
   };
 
   const handleGoogleLogin = () => {
-    googleOAuth.initiate();
+    googleOAuth.initiate('login');
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

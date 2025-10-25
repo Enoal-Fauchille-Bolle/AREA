@@ -180,8 +180,17 @@ export class AuthService {
     await this.usersService.remove(userId);
   }
 
-  // OAuth2 methods
   async loginWithOAuth2(body: OAuthLoginDto): Promise<AuthResponseDto> {
+    return this.handleOAuth2Authentication(body);
+  }
+
+  async registerWithOAuth2(body: OAuthRegisterDto): Promise<AuthResponseDto> {
+    return this.handleOAuth2Authentication(body);
+  }
+
+  private async handleOAuth2Authentication(
+    body: OAuthLoginDto | OAuthRegisterDto,
+  ): Promise<AuthResponseDto> {
     const provider = getOAuthProviderFromString(body.provider);
     if (!provider) {
       throw new BadRequestException(
@@ -195,7 +204,12 @@ export class AuthService {
       redirect_uri: body.redirect_uri,
     });
 
-    // Can't only capitalize the provider to get service name because of GitHub.
+    if (!userInfo.email) {
+      throw new UnauthorizedException(
+        'OAuth2 provider did not return an email address: cannot proceed without email verification',
+      );
+    }
+
     const service = await this.servicesService.findByName(
       OAuthProviderServiceNameMap[provider],
     );
@@ -208,7 +222,6 @@ export class AuthService {
 
     if (userAccount) {
       if (userInfo.email && userAccount.email !== userInfo.email) {
-        // Update email if it has changed
         await this.userOAuth2AccountsService.updateEmail(
           userAccount.user.id,
           service.id,
@@ -225,105 +238,53 @@ export class AuthService {
       );
     }
 
-    if (!userInfo.email) {
-      throw new UnauthorizedException(
-        'OAuth2 provider did not return an email address: cannot proceed without email verification',
-      );
-    }
-
     const user = await this.usersService.findByEmail(userInfo.email);
+    let userId: number;
+    let userEmail: string;
+    let username: string;
+
     if (!user) {
-      throw new UnauthorizedException(
-        'No account associated with this OAuth2 account. Please register first.',
-      );
-    }
-
-    // Create OAuth2 account link
-    await this.userOAuth2AccountsService.create({
-      service_id: service.id,
-      oauth2_provider_user_id: userInfo.id,
-      user_id: user.id,
-      email: userInfo.email,
-    });
-    await this.usersService.updateLastConnection(user.id);
-
-    const payload = {
-      email: user.email,
-      sub: user.id,
-      username: user.username,
-    };
-    const token = this.jwtService.sign(payload);
-
-    return new AuthResponseDto(token);
-  }
-
-  async registerWithOAuth2(body: OAuthRegisterDto): Promise<AuthResponseDto> {
-    const provider = getOAuthProviderFromString(body.provider);
-    if (!provider) {
-      throw new BadRequestException(
-        `Unsupported OAuth2 provider: ${body.provider}`,
-      );
-    }
-
-    const userInfo = await this.oauth2Service.exchangeCodeAndGetUserInfo({
-      code: body.code,
-      provider: provider,
-      redirect_uri: body.redirect_uri,
-    });
-
-    if (!userInfo.email) {
-      throw new UnauthorizedException(
-        'OAuth2 provider did not return an email address: cannot proceed without email verification',
-      );
-    }
-
-    // Check if user already exists
-    const user = await this.usersService.findByEmail(userInfo.email);
-    if (user) {
-      throw new ConflictException(
-        'An account with this email already exists. Please login instead.',
-      );
-    }
-
-    let username = createUsernameFromProviderInfo(userInfo.rawData);
-    // Should not happen
-    if (!username) {
-      throw new InternalServerErrorException(
-        'Failed to generate a username from OAuth2 provider data',
-      );
-    }
-
-    if (await this.usersService.findByUsername(username)) {
-      username = `${provider}_user_${userInfo.id}`;
-      if (await this.usersService.findByUsername(username)) {
-        throw new ConflictException(
-          'Generated username from OAuth2 provider data already exists. Please choose a different registration method.',
+      let generatedUsername = createUsernameFromProviderInfo(userInfo.rawData);
+      if (!generatedUsername) {
+        throw new InternalServerErrorException(
+          'Failed to generate a username from OAuth2 provider data',
         );
       }
+
+      if (await this.usersService.findByUsername(generatedUsername)) {
+        generatedUsername = `${provider}_user_${userInfo.id}`;
+        if (await this.usersService.findByUsername(generatedUsername)) {
+          generatedUsername = `${provider}_user_${userInfo.id}_${Date.now()}`;
+        }
+      }
+
+      const newUser = await this.usersService.createWithoutPassword({
+        email: userInfo.email,
+        username: generatedUsername,
+      });
+
+      userId = newUser.id;
+      userEmail = newUser.email;
+      username = newUser.username;
+    } else {
+      userId = user.id;
+      userEmail = user.email;
+      username = user.username;
     }
-
-    // Create new user
-    const newUser = await this.usersService.createWithoutPassword({
-      email: userInfo.email,
-      username: username,
-    });
-
-    // Create OAuth2 account link
-    const service = await this.servicesService.findByName(
-      OAuthProviderServiceNameMap[provider],
-    );
 
     await this.userOAuth2AccountsService.create({
       service_id: service.id,
       oauth2_provider_user_id: userInfo.id,
-      user_id: newUser.id,
+      user_id: userId,
       email: userInfo.email,
     });
 
+    await this.usersService.updateLastConnection(userId);
+
     const payload = {
-      email: newUser.email,
-      sub: newUser.id,
-      username: newUser.username,
+      email: userEmail,
+      sub: userId,
+      username: username,
     };
     const token = this.jwtService.sign(payload);
 

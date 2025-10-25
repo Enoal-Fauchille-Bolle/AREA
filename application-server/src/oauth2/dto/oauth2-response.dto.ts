@@ -248,7 +248,7 @@ export function mapGoogleUserInfo(
     expires_in: tokenData.expires_in ?? null,
     expired_at: expiresAt,
     scopes: scopes,
-    id: raw.sub,
+    id: raw.id ?? raw.sub ?? '',
     email: raw.email ?? null,
     email_verified: raw.email_verified ?? false,
     name: raw.name ?? null,

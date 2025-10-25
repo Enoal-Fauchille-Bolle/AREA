@@ -18,7 +18,12 @@ export const useAuth = () => {
         setError(
           err instanceof Error ? err.message : 'Failed to load user profile',
         );
-        if (err instanceof Error && (err.message.includes('401') || err.message.includes('403') || err.message.includes('Unauthorized'))) {
+        if (
+          err instanceof Error &&
+          (err.message.includes('401') ||
+            err.message.includes('403') ||
+            err.message.includes('Unauthorized'))
+        ) {
           tokenService.removeToken();
         }
       } finally {

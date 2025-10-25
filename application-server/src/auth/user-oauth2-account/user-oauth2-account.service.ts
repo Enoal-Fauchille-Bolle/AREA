@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -58,8 +59,20 @@ export class UserOAuth2AccountsService {
       user_id: createAccountDto.user_id,
       email: createAccountDto.email ?? null,
     });
-    const savedAccount =
-      await this.userOAuth2AccountRepository.save(oauth2Account);
+    await this.userOAuth2AccountRepository.save(oauth2Account);
+    const savedAccount = await this.userOAuth2AccountRepository.findOne({
+      where: {
+        service_id: createAccountDto.service_id,
+        service_account_id: createAccountDto.oauth2_provider_user_id,
+        user_id: createAccountDto.user_id,
+      },
+      relations: ['user', 'service'],
+    });
+    if (!savedAccount) {
+      throw new InternalServerErrorException(
+        'Failed to retrieve the created OAuth2 account',
+      );
+    }
     return UserOAuth2AccountResponseDto.fromEntity(savedAccount);
   }
 
@@ -94,6 +107,7 @@ export class UserOAuth2AccountsService {
   ): Promise<UserOAuth2AccountResponseDto> {
     const account = await this.userOAuth2AccountRepository.findOne({
       where: { user_id, service_id },
+      relations: ['user', 'service'],
     });
 
     if (!account) {

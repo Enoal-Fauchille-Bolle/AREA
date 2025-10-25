@@ -25,7 +25,7 @@ export class OAuthLoginDto {
     description: 'The redirect URI used in the OAuth flow',
     example: 'https://yourapp.com/oauth/callback',
   })
-  @IsUrl()
+  @IsUrl({ require_tld: false })
   @IsNotEmpty()
   redirect_uri: string;
 }

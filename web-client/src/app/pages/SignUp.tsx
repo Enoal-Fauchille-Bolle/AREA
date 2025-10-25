@@ -38,7 +38,7 @@ function SignUp() {
   };
 
   const handleGoogleSignUp = () => {
-    googleOAuth.initiate();
+    googleOAuth.initiate('register');
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
