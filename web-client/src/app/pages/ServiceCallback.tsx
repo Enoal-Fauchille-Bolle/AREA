@@ -35,12 +35,12 @@ function ServiceCallback() {
         const response =
           intent === 'register'
             ? await authApi.registerWithOAuth2({
-                provider: 'Google',
+                provider: 'google',
                 code: code,
                 redirect_uri: googleOAuth.redirectUri,
               })
             : await authApi.loginWithOAuth2({
-                provider: 'Google',
+                provider: 'google',
                 code: code,
                 redirect_uri: googleOAuth.redirectUri,
               });

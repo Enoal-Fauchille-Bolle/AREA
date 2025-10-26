@@ -181,16 +181,6 @@ export class AuthService {
   }
 
   async loginWithOAuth2(body: OAuthLoginDto): Promise<AuthResponseDto> {
-    return this.handleOAuth2Authentication(body);
-  }
-
-  async registerWithOAuth2(body: OAuthRegisterDto): Promise<AuthResponseDto> {
-    return this.handleOAuth2Authentication(body);
-  }
-
-  private async handleOAuth2Authentication(
-    body: OAuthLoginDto | OAuthRegisterDto,
-  ): Promise<AuthResponseDto> {
     const provider = getOAuthProviderFromString(body.provider);
     if (!provider) {
       throw new BadRequestException(
@@ -239,55 +229,106 @@ export class AuthService {
     }
 
     const user = await this.usersService.findByEmail(userInfo.email);
-    let userId: number;
-    let userEmail: string;
-    let username: string;
-
-    if (!user) {
-      let generatedUsername = createUsernameFromProviderInfo(userInfo.rawData);
-      if (!generatedUsername) {
-        throw new InternalServerErrorException(
-          'Failed to generate a username from OAuth2 provider data',
-        );
-      }
-
-      if (await this.usersService.findByUsername(generatedUsername)) {
-        generatedUsername = `${provider}_user_${userInfo.id}`;
-        if (await this.usersService.findByUsername(generatedUsername)) {
-          generatedUsername = `${provider}_user_${userInfo.id}_${Date.now()}`;
-        }
-      }
-
-      const newUser = await this.usersService.createWithoutPassword({
+    if (user) {
+      await this.userOAuth2AccountsService.create({
+        service_id: service.id,
+        oauth2_provider_user_id: userInfo.id,
+        user_id: user.id,
         email: userInfo.email,
-        username: generatedUsername,
       });
 
-      userId = newUser.id;
-      userEmail = newUser.email;
-      username = newUser.username;
-    } else {
-      userId = user.id;
-      userEmail = user.email;
-      username = user.username;
+      await this.usersService.updateLastConnection(user.id);
+      return new AuthResponseDto(
+        this.jwtService.sign({
+          email: user.email,
+          sub: user.id,
+          username: user.username,
+        }),
+      );
     }
+
+    throw new UnauthorizedException(
+      'No account found with this OAuth2 provider. Please sign up first.',
+    );
+  }
+
+  async registerWithOAuth2(body: OAuthRegisterDto): Promise<AuthResponseDto> {
+    const provider = getOAuthProviderFromString(body.provider);
+    if (!provider) {
+      throw new BadRequestException(
+        `Unsupported OAuth2 provider: ${body.provider}`,
+      );
+    }
+
+    const userInfo = await this.oauth2Service.exchangeCodeAndGetUserInfo({
+      code: body.code,
+      provider: provider,
+      redirect_uri: body.redirect_uri,
+    });
+
+    if (!userInfo.email) {
+      throw new UnauthorizedException(
+        'OAuth2 provider did not return an email address: cannot proceed without email verification',
+      );
+    }
+
+    const service = await this.servicesService.findByName(
+      OAuthProviderServiceNameMap[provider],
+    );
+
+    const userAccount =
+      await this.userOAuth2AccountsService.findByServiceAccountId(
+        service.id,
+        userInfo.id,
+      );
+
+    if (userAccount) {
+      throw new ConflictException(
+        'An account with this OAuth2 provider already exists. Please login instead.',
+      );
+    }
+
+    const existingUser = await this.usersService.findByEmail(userInfo.email);
+    if (existingUser) {
+      throw new ConflictException(
+        'An account with this email already exists. Please login instead.',
+      );
+    }
+
+    let generatedUsername = createUsernameFromProviderInfo(userInfo.rawData);
+    if (!generatedUsername) {
+      throw new InternalServerErrorException(
+        'Failed to generate a username from OAuth2 provider data',
+      );
+    }
+
+    if (await this.usersService.findByUsername(generatedUsername)) {
+      generatedUsername = `${provider}_user_${userInfo.id}`;
+      if (await this.usersService.findByUsername(generatedUsername)) {
+        generatedUsername = `${provider}_user_${userInfo.id}_${Date.now()}`;
+      }
+    }
+
+    const newUser = await this.usersService.createWithoutPassword({
+      email: userInfo.email,
+      username: generatedUsername,
+    });
 
     await this.userOAuth2AccountsService.create({
       service_id: service.id,
       oauth2_provider_user_id: userInfo.id,
-      user_id: userId,
+      user_id: newUser.id,
       email: userInfo.email,
     });
 
-    await this.usersService.updateLastConnection(userId);
+    await this.usersService.updateLastConnection(newUser.id);
 
-    const payload = {
-      email: userEmail,
-      sub: userId,
-      username: username,
-    };
-    const token = this.jwtService.sign(payload);
-
-    return new AuthResponseDto(token);
+    return new AuthResponseDto(
+      this.jwtService.sign({
+        email: newUser.email,
+        sub: newUser.id,
+        username: newUser.username,
+      }),
+    );
   }
 }
