@@ -4,7 +4,6 @@ import { User } from '../../../users/entities/user.entity';
 import { Service } from '../../../services/entities/service.entity';
 import { UserResponseDto } from '../../../users/dto/user-response.dto';
 import { ServiceResponseDto } from '../../../services/dto';
-import { ProviderTokenResponse } from '../../../oauth2/dto';
 
 class UserDto {
   @ApiProperty({
@@ -157,14 +156,12 @@ export class UserServiceResponseDto {
   static fromResponseDtos(
     user: UserResponseDto,
     service: ServiceResponseDto,
-    tokenData?: ProviderTokenResponse,
+    tokenData: UserService,
   ): UserServiceResponseDto {
     return new UserServiceResponseDto({
-      oauth_token: tokenData?.access_token || null,
-      refresh_token: tokenData?.refresh_token || null,
-      token_expires_at: tokenData?.expires_in
-        ? new Date(Date.now() + tokenData.expires_in * 1000)
-        : null,
+      oauth_token: tokenData.oauth_token,
+      refresh_token: tokenData.refresh_token,
+      token_expires_at: tokenData.token_expires_at,
       created_at: new Date(),
       updated_at: new Date(),
       user: UserDto.fromResponseDto(user),

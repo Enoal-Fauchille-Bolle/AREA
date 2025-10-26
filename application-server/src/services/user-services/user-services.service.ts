@@ -13,6 +13,8 @@ import {
   UserServiceResponseDto,
 } from './dto';
 import { UsersService } from '../../users/users.service';
+import { ServiceResponseDto } from '../dto';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class UserServicesService {
@@ -22,6 +24,7 @@ export class UserServicesService {
     @InjectRepository(Service)
     private readonly serviceRepository: Repository<Service>,
     private readonly usersService: UsersService,
+    private readonly configService: ConfigService,
   ) {}
 
   async create(
@@ -64,7 +67,11 @@ export class UserServicesService {
       token_expires_at: createUserServiceDto.token_expires_at ?? null,
     });
     const savedUserService = await this.userServiceRepository.save(userService);
-    return UserServiceResponseDto.fromEntity(savedUserService);
+    return UserServiceResponseDto.fromResponseDtos(
+      user,
+      ServiceResponseDto.fromEntity(service, this.configService),
+      savedUserService,
+    );
   }
 
   async findAll(): Promise<UserServiceResponseDto[]> {
@@ -143,7 +150,10 @@ export class UserServicesService {
       ...userService,
       ...updateUserServiceDto,
     });
-    return UserServiceResponseDto.fromEntity(updatedUserService);
+    return UserServiceResponseDto.fromEntity({
+      ...userService, // to keep relations
+      ...updatedUserService,
+    });
   }
 
   async removeOne(user_id: number, service_id: number): Promise<void> {

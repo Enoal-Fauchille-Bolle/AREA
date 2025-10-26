@@ -140,7 +140,7 @@ export class UserOAuth2AccountResponseDto {
   static fromResponseDtos(
     user: UserResponseDto,
     service: ServiceResponseDto,
-    providerInfo: OAuth2ResponseDto,
+    providerInfo: Pick<OAuth2ResponseDto, 'id' | 'email'>,
   ): UserOAuth2AccountResponseDto {
     return new UserOAuth2AccountResponseDto({
       oauth2_provider_user_id: providerInfo.id,
