@@ -132,8 +132,7 @@ export class DiscordUserInfo {
 }
 
 export class GoogleUserInfo {
-  id?: string;
-  sub?: string;
+  sub: string;
   name?: string;
   given_name?: string;
   family_name?: string;
@@ -223,9 +222,7 @@ export function isDiscordUserInfo(
 export function isGoogleUserInfo(
   data: ProviderUserInfo,
 ): data is GoogleUserInfo {
-  return (
-    ('sub' in data || 'id' in data) && ('given_name' in data || 'email' in data)
-  );
+  return 'sub' in data && 'given_name' in data;
 }
 
 export function isGitHubUserInfo(
@@ -256,9 +253,7 @@ export function createUsernameFromProviderInfo(
         : `${data.username}#${data.discriminator}`) || 'discord_user_' + data.id
     );
   } else if (isGoogleUserInfo(data)) {
-    return (
-      data.name || data.given_name || 'google_user_' + (data.id || data.sub)
-    );
+    return data.name || 'google_user_' + data.sub;
   } else if (isGitHubUserInfo(data)) {
     return data.login || 'github_user_' + data.id;
   } else if (isSpotifyUserInfo(data)) {

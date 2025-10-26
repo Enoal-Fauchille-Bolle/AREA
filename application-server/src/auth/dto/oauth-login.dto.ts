@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsEnum, IsNotEmpty, IsUrl } from 'class-validator';
-import { OAuthProviderServiceNameMap } from '../../oauth2';
+import { OAuthProvider } from '../../oauth2';
 
 export class OAuthLoginDto {
   @ApiProperty({
@@ -14,12 +14,12 @@ export class OAuthLoginDto {
 
   @ApiProperty({
     description: 'The OAuth provider to use for login',
-    enum: Object.values(OAuthProviderServiceNameMap),
-    example: 'Google',
+    enum: OAuthProvider,
+    example: OAuthProvider.GOOGLE,
   })
-  @IsEnum(Object.values(OAuthProviderServiceNameMap))
+  @IsEnum(OAuthProvider)
   @IsNotEmpty()
-  provider: string;
+  provider: OAuthProvider;
 
   @ApiProperty({
     description: 'The redirect URI used in the OAuth flow',

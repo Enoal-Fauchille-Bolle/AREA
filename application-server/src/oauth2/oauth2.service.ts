@@ -243,7 +243,7 @@ export class OAuth2Service {
     try {
       const response = await firstValueFrom(
         this.httpService.get<GoogleUserInfo>(
-          'https://www.googleapis.com/oauth2/v2/userinfo',
+          'https://www.googleapis.com/oauth2/v3/userinfo',
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,
