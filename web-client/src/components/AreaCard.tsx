@@ -7,7 +7,12 @@ interface AreaCardProps {
   onEdit: (id: number) => void;
 }
 
-export const AreaCard = ({ area, onToggleStatus, onDelete, onEdit }: AreaCardProps) => {
+export const AreaCard = ({
+  area,
+  onToggleStatus,
+  onDelete,
+  onEdit,
+}: AreaCardProps) => {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       day: '2-digit',
@@ -51,15 +56,33 @@ export const AreaCard = ({ area, onToggleStatus, onDelete, onEdit }: AreaCardPro
     const name = serviceName.toLowerCase();
     if (name === 'clock') {
       return (
-        <svg className="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+        <svg
+          className="w-5 h-5 text-blue-400"
+          fill="currentColor"
+          viewBox="0 0 20 20"
+        >
+          <path
+            fillRule="evenodd"
+            d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+            clipRule="evenodd"
+          />
         </svg>
       );
     }
     if (name === 'email') {
       return (
-        <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        <svg
+          className="w-5 h-5 text-blue-500"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+          />
         </svg>
       );
     }
@@ -176,7 +199,9 @@ export const AreaCard = ({ area, onToggleStatus, onDelete, onEdit }: AreaCardPro
         {area.componentAction && (
           <div className="bg-gray-800/80 rounded-lg p-3 border border-gray-600/50">
             <div className="flex items-start space-x-2">
-              <span className="text-blue-400 text-sm font-semibold mt-0.5">IF</span>
+              <span className="text-blue-400 text-sm font-semibold mt-0.5">
+                IF
+              </span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center space-x-2">
                   {getServiceIcon(area.componentAction.service?.name)}
@@ -201,7 +226,9 @@ export const AreaCard = ({ area, onToggleStatus, onDelete, onEdit }: AreaCardPro
         {area.componentReaction && (
           <div className="bg-gray-800/80 rounded-lg p-3 border border-gray-600/50">
             <div className="flex items-start space-x-2">
-              <span className="text-green-400 text-sm font-semibold mt-0.5">THEN</span>
+              <span className="text-green-400 text-sm font-semibold mt-0.5">
+                THEN
+              </span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center space-x-2">
                   {getServiceIcon(area.componentReaction.service?.name)}

@@ -160,7 +160,10 @@ function Login() {
                   className="w-4 h-4 text-black border-gray-300 rounded focus:ring-black"
                   disabled={isLoading}
                 />
-                <label htmlFor="remember-me" className="ml-2 text-sm text-gray-600">
+                <label
+                  htmlFor="remember-me"
+                  className="ml-2 text-sm text-gray-600"
+                >
                   Remember me
                 </label>
               </div>

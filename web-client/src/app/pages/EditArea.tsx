@@ -16,8 +16,12 @@ function EditArea() {
     description: '',
     is_active: true,
   });
-  const [actionVariables, setActionVariables] = useState<ParameterVariable[]>([]);
-  const [reactionVariables, setReactionVariables] = useState<ParameterVariable[]>([]);
+  const [actionVariables, setActionVariables] = useState<ParameterVariable[]>(
+    [],
+  );
+  const [reactionVariables, setReactionVariables] = useState<
+    ParameterVariable[]
+  >([]);
   const [parameters, setParameters] = useState<Record<number, string>>({});
 
   useEffect(() => {
@@ -37,7 +41,9 @@ function EditArea() {
           is_active: areaData.is_active,
         });
 
-        const existingParams = await areaParametersApi.getParametersByArea(Number(id));
+        const existingParams = await areaParametersApi.getParametersByArea(
+          Number(id),
+        );
 
         const actionVarsList: ParameterVariable[] = [];
         const reactionVarsList: ParameterVariable[] = [];
@@ -47,7 +53,9 @@ function EditArea() {
           if (param.variable) {
             if (param.variable.component_id === areaData.component_action_id) {
               actionVarsList.push(param.variable);
-            } else if (param.variable.component_id === areaData.component_reaction_id) {
+            } else if (
+              param.variable.component_id === areaData.component_reaction_id
+            ) {
               reactionVarsList.push(param.variable);
             }
             paramsMap[param.variable_id] = param.value;
@@ -76,10 +84,12 @@ function EditArea() {
     try {
       await areasApi.updateArea(Number(id), formData);
 
-      const parametersList = Object.entries(parameters).map(([variableId, value]) => ({
-        variable_id: Number(variableId),
-        value: value,
-      }));
+      const parametersList = Object.entries(parameters).map(
+        ([variableId, value]) => ({
+          variable_id: Number(variableId),
+          value: value,
+        }),
+      );
 
       if (parametersList.length > 0) {
         await areaParametersApi.bulkCreateOrUpdate(Number(id), parametersList);
@@ -204,7 +214,9 @@ function EditArea() {
                   <div key={variable.id}>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       {variable.name}
-                      {!variable.nullable && <span className="text-red-400 ml-1">*</span>}
+                      {!variable.nullable && (
+                        <span className="text-red-400 ml-1">*</span>
+                      )}
                     </label>
                     {variable.description && (
                       <p className="text-xs text-gray-500 mb-2">
@@ -212,12 +224,22 @@ function EditArea() {
                       </p>
                     )}
                     <input
-                      type={variable.type === 'number' ? 'number' : variable.type === 'email' ? 'email' : variable.type === 'url' ? 'url' : 'text'}
+                      type={
+                        variable.type === 'number'
+                          ? 'number'
+                          : variable.type === 'email'
+                            ? 'email'
+                            : variable.type === 'url'
+                              ? 'url'
+                              : 'text'
+                      }
                       value={parameters[variable.id] || ''}
                       onChange={(e) =>
                         handleParameterChange(variable.id, e.target.value)
                       }
-                      placeholder={variable.placeholder || `Enter ${variable.name}`}
+                      placeholder={
+                        variable.placeholder || `Enter ${variable.name}`
+                      }
                       required={!variable.nullable}
                       className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500 transition-colors text-sm"
                     />
@@ -235,7 +257,9 @@ function EditArea() {
                   <div key={variable.id}>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       {variable.name}
-                      {!variable.nullable && <span className="text-red-400 ml-1">*</span>}
+                      {!variable.nullable && (
+                        <span className="text-red-400 ml-1">*</span>
+                      )}
                     </label>
                     {variable.description && (
                       <p className="text-xs text-gray-500 mb-2">
@@ -243,12 +267,22 @@ function EditArea() {
                       </p>
                     )}
                     <input
-                      type={variable.type === 'number' ? 'number' : variable.type === 'email' ? 'email' : variable.type === 'url' ? 'url' : 'text'}
+                      type={
+                        variable.type === 'number'
+                          ? 'number'
+                          : variable.type === 'email'
+                            ? 'email'
+                            : variable.type === 'url'
+                              ? 'url'
+                              : 'text'
+                      }
                       value={parameters[variable.id] || ''}
                       onChange={(e) =>
                         handleParameterChange(variable.id, e.target.value)
                       }
-                      placeholder={variable.placeholder || `Enter ${variable.name}`}
+                      placeholder={
+                        variable.placeholder || `Enter ${variable.name}`
+                      }
                       required={!variable.nullable}
                       className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500 transition-colors text-sm"
                     />
