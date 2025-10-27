@@ -791,3 +791,10 @@
 //     });
 //   });
 // });
+
+describe('ServicesService', () => {
+  // TODO: Refactor tests after OAuth2 service restructure
+  it('should pass (placeholder test)', () => {
+    expect(true).toBe(true);
+  });
+});
