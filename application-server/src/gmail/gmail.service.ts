@@ -417,11 +417,10 @@ export class GmailService {
       }
 
       // Get user's Gmail service connection
-      const userService =
-        await this.userServicesService.findOne(
-          userId,
-          gmailService.id,
-        );
+      const userService = await this.userServicesService.findOne(
+        userId,
+        gmailService.id,
+      );
 
       if (!userService || !userService.oauth_token) {
         throw new Error(
@@ -440,11 +439,10 @@ export class GmailService {
         await this.servicesService.refreshServiceToken(userId, gmailService.id);
 
         // Fetch the updated token
-        const refreshedUserService =
-          await this.userServicesService.findOne(
-            userId,
-            gmailService.id,
-          );
+        const refreshedUserService = await this.userServicesService.findOne(
+          userId,
+          gmailService.id,
+        );
 
         if (!refreshedUserService || !refreshedUserService.oauth_token) {
           throw new Error('Failed to refresh Gmail access token');

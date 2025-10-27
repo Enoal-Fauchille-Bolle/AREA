@@ -206,7 +206,11 @@ export class AuthService {
 
     await this.usersService.updateLastConnection(user.id);
 
-    const payload = { email: user.email, sub: user.id, username: user.username };
+    const payload = {
+      email: user.email,
+      sub: user.id,
+      username: user.username,
+    };
     const token = this.jwtService.sign(payload);
 
     return new AuthResponseDto(token);

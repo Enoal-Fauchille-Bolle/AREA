@@ -291,10 +291,7 @@ export class ServicesService {
     await this.userServiceService.removeOne(userId, serviceId);
   }
 
-  async refreshServiceToken(
-    userId: number,
-    serviceId: number,
-  ): Promise<void> {
+  async refreshServiceToken(userId: number, serviceId: number): Promise<void> {
     const userService = await this.userServiceService.findOne(
       userId,
       serviceId,

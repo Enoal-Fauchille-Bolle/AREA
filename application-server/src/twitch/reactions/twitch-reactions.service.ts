@@ -268,11 +268,10 @@ export class TwitchReactionsService {
       }
 
       // Get user's Twitch service connection
-      const userService =
-        await this.userServicesService.findOne(
-          userId,
-          twitchService.id,
-        );
+      const userService = await this.userServicesService.findOne(
+        userId,
+        twitchService.id,
+      );
 
       if (!userService || !userService.oauth_token) {
         throw new Error(
@@ -294,11 +293,10 @@ export class TwitchReactionsService {
         );
 
         // Fetch the updated token
-        const refreshedUserService =
-          await this.userServicesService.findOne(
-            userId,
-            twitchService.id,
-          );
+        const refreshedUserService = await this.userServicesService.findOne(
+          userId,
+          twitchService.id,
+        );
 
         if (!refreshedUserService || !refreshedUserService.oauth_token) {
           throw new Error('Failed to refresh Twitch access token');

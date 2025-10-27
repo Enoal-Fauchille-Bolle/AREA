@@ -61,10 +61,19 @@ export class OAuth2Service {
     };
 
     // Log Gmail config status for debugging
-    if (!this.CLIENT_IDS[OAuthProvider.GMAIL] || !this.CLIENT_SECRETS[OAuthProvider.GMAIL]) {
+    if (
+      !this.CLIENT_IDS[OAuthProvider.GMAIL] ||
+      !this.CLIENT_SECRETS[OAuthProvider.GMAIL]
+    ) {
       console.warn('WARNING: Gmail OAuth2 credentials are not configured!');
-      console.warn('GMAIL_CLIENT_ID:', this.CLIENT_IDS[OAuthProvider.GMAIL] ? 'present' : 'missing');
-      console.warn('GMAIL_CLIENT_SECRET:', this.CLIENT_SECRETS[OAuthProvider.GMAIL] ? 'present' : 'missing');
+      console.warn(
+        'GMAIL_CLIENT_ID:',
+        this.CLIENT_IDS[OAuthProvider.GMAIL] ? 'present' : 'missing',
+      );
+      console.warn(
+        'GMAIL_CLIENT_SECRET:',
+        this.CLIENT_SECRETS[OAuthProvider.GMAIL] ? 'present' : 'missing',
+      );
     }
   }
 
@@ -94,9 +103,17 @@ export class OAuth2Service {
         console.log('=== GMAIL TOKEN EXCHANGE DEBUG ===');
         console.log('Token URL:', tokenUrl);
         console.log('Client ID:', clientId?.substring(0, 20) + '...');
-        console.log('Client Secret:', clientSecret ? 'present (length: ' + clientSecret.length + ')' : 'missing');
+        console.log(
+          'Client Secret:',
+          clientSecret
+            ? 'present (length: ' + clientSecret.length + ')'
+            : 'missing',
+        );
         console.log('Redirect URI:', dto.redirect_uri);
-        console.log('Code (first 30 chars):', dto.code.substring(0, 30) + '...');
+        console.log(
+          'Code (first 30 chars):',
+          dto.code.substring(0, 30) + '...',
+        );
         console.log('==================================');
       }
 
@@ -114,7 +131,7 @@ export class OAuth2Service {
         const errorData = error.response?.data as
           | { error?: string; error_description?: string }
           | undefined;
-        
+
         // Enhanced error logging for Gmail
         if (dto.provider === OAuthProvider.GMAIL) {
           console.error('=== GMAIL TOKEN EXCHANGE ERROR ===');
@@ -123,7 +140,7 @@ export class OAuth2Service {
           console.error('Full error data:', JSON.stringify(errorData, null, 2));
           console.error('==================================');
         }
-        
+
         throw new BadRequestException(
           `Invalid authorization code for ${dto.provider}: ${errorData?.error || error.message}`,
         );
