@@ -22,6 +22,11 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { DiscordOAuth2Service } from './oauth2/discord-oauth2.service';
 import { GoogleOAuth2Service } from './oauth2/google-oauth2.service';
+import { GmailOAuth2Service } from './oauth2/gmail-oauth2.service';
+import { YouTubeOAuth2Service } from './oauth2/youtube-oauth2.service';
+import { GithubOAuth2Service } from './oauth2/github-oauth2.service';
+import { TwitchOAuth2Service } from './oauth2/twitch-oauth2.service';
+import { AppConfig } from 'src/config';
 
 // Minimal token shape returned by provider services (exchange/refresh)
 type OAuthTokens = {
@@ -29,9 +34,6 @@ type OAuthTokens = {
   refreshToken: string | null;
   expiresAt: Date;
 };
-import { GithubOAuth2Service } from './oauth2/github-oauth2.service';
-import { TwitchOAuth2Service } from './oauth2/twitch-oauth2.service';
-import { AppConfig } from 'src/config';
 
 @Injectable()
 export class ServicesService {
@@ -50,6 +52,8 @@ export class ServicesService {
     private readonly configService: ConfigService,
     private readonly discordOAuth2Service: DiscordOAuth2Service,
     private readonly googleOAuth2Service: GoogleOAuth2Service,
+    private readonly gmailOAuth2Service: GmailOAuth2Service,
+    private readonly youtubeOAuth2Service: YouTubeOAuth2Service,
     private readonly githubOAuth2Service: GithubOAuth2Service,
     private readonly twitchOAuth2Service: TwitchOAuth2Service,
   ) {
@@ -282,8 +286,33 @@ export class ServicesService {
         await this.userServiceRepository.save(userService);
       }
     } else if (service.name.toLowerCase() === 'gmail') {
-      // Gmail uses the same Google OAuth2 flow
-      const tokens = await this.googleOAuth2Service.exchangeCodeForTokens(
+      // Gmail uses its own OAuth2 credentials
+      const tokens = await this.gmailOAuth2Service.exchangeCodeForTokens(
+        body.code,
+        redirectUri,
+        body.code_verifier,
+      );
+
+      if (existing) {
+        // Update existing user service with new tokens
+        existing.oauth_token = tokens.accessToken;
+        existing.refresh_token = tokens.refreshToken;
+        existing.token_expires_at = tokens.expiresAt;
+        await this.userServiceRepository.save(existing);
+      } else {
+        // Create new user service link with tokens
+        const userService = this.userServiceRepository.create({
+          user_id: userId,
+          service_id: serviceId,
+          oauth_token: tokens.accessToken,
+          refresh_token: tokens.refreshToken,
+          token_expires_at: tokens.expiresAt,
+        });
+        await this.userServiceRepository.save(userService);
+      }
+    } else if (service.name.toLowerCase() === 'youtube') {
+      // YouTube uses its own OAuth2 credentials
+      const tokens = await this.youtubeOAuth2Service.exchangeCodeForTokens(
         body.code,
         redirectUri,
         body.code_verifier,
@@ -364,10 +393,12 @@ export class ServicesService {
       throw new NotFoundException(`Service with ID ${serviceId} not found`);
     }
 
-    // Support token refresh for Discord, Google, Gmail, and Twitch
+    // Support token refresh for Discord, Google, Gmail, YouTube, and Twitch
     const provider = (service.name || '').toLowerCase();
 
-    if (!['discord', 'google', 'gmail', 'twitch'].includes(provider)) {
+    if (
+      !['discord', 'google', 'gmail', 'youtube', 'twitch'].includes(provider)
+    ) {
       throw new BadRequestException(
         `Service ${service.name} does not support token refresh`,
       );
@@ -388,8 +419,16 @@ export class ServicesService {
       tokens = (await this.discordOAuth2Service.refreshAccessToken(
         userService.refresh_token,
       )) as OAuthTokens;
-    } else if (provider === 'google' || provider === 'gmail') {
+    } else if (provider === 'google') {
       tokens = (await this.googleOAuth2Service.refreshAccessToken(
+        userService.refresh_token,
+      )) as OAuthTokens;
+    } else if (provider === 'gmail') {
+      tokens = (await this.gmailOAuth2Service.refreshAccessToken(
+        userService.refresh_token,
+      )) as OAuthTokens;
+    } else if (provider === 'youtube') {
+      tokens = (await this.youtubeOAuth2Service.refreshAccessToken(
         userService.refresh_token,
       )) as OAuthTokens;
     } else if (provider === 'twitch') {

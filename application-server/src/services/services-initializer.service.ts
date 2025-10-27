@@ -28,6 +28,7 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
     await this.createGithubService();
     await this.createGmailService();
     await this.createTwitchService();
+    await this.createYoutubeService();
   }
 
   private async createClockService(): Promise<void> {
@@ -792,6 +793,30 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
 
     console.log(
       'Twitch service with streamer_goes_live action and send_chat_message reaction created successfully',
+    );
+  }
+
+  private async createYoutubeService(): Promise<void> {
+    try {
+      await this.servicesService.findByName('YouTube');
+      console.log('YouTube service already exists, skipping creation');
+      return;
+    } catch {
+      console.log('Creating YouTube service...');
+    }
+
+    await this.servicesService.create({
+      name: 'YouTube',
+      description:
+        'Interact with YouTube - manage videos, playlists, and channels',
+      icon_path:
+        'https://www.youtube.com/s/desktop/f506bd45/img/favicon_32x32.png',
+      requires_auth: true,
+      is_active: true,
+    });
+
+    console.log(
+      'YouTube service created successfully (no actions/reactions yet)',
     );
   }
 }

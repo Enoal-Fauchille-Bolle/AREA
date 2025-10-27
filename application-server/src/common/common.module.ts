@@ -8,7 +8,6 @@ import { GmailModule } from '../gmail/gmail.module';
 import { TwitchReactionsModule } from '../twitch/reactions/twitch-reactions.module';
 import { TwitchModule } from '../twitch/twitch.module';
 
-
 @Module({
   imports: [
     EmailModule,

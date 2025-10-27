@@ -9,6 +9,8 @@ import { Variable } from '../variables/entities/variable.entity';
 import { UserService } from '../user-services/entities/user-service.entity';
 import { DiscordOAuth2Service } from './oauth2/discord-oauth2.service';
 import { GoogleOAuth2Service } from './oauth2/google-oauth2.service';
+import { GmailOAuth2Service } from './oauth2/gmail-oauth2.service';
+import { YouTubeOAuth2Service } from './oauth2/youtube-oauth2.service';
 import { GithubOAuth2Service } from './oauth2/github-oauth2.service';
 import { TwitchOAuth2Service } from './oauth2/twitch-oauth2.service';
 import { ComponentsModule } from '../components/components.module';
@@ -26,6 +28,8 @@ import { VariablesModule } from '../variables/variables.module';
     ServicesInitializerService,
     DiscordOAuth2Service,
     GoogleOAuth2Service,
+    GmailOAuth2Service,
+    YouTubeOAuth2Service,
     GithubOAuth2Service,
     TwitchOAuth2Service,
   ],
@@ -33,6 +37,8 @@ import { VariablesModule } from '../variables/variables.module';
     ServicesService,
     DiscordOAuth2Service,
     GoogleOAuth2Service,
+    GmailOAuth2Service,
+    YouTubeOAuth2Service,
     TwitchOAuth2Service,
   ],
 })
