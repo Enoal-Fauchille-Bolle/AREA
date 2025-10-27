@@ -12,7 +12,7 @@ import { TwitchModule } from '../twitch/twitch.module';
   imports: [
     EmailModule,
     ComponentsModule,
-    DiscordModule,
+    forwardRef(() => DiscordModule),
     GmailReactionsModule,
     forwardRef(() => GmailModule),
     TwitchReactionsModule,

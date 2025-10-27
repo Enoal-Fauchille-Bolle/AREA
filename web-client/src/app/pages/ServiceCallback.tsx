@@ -4,11 +4,13 @@ import { authApi, tokenService } from '../../services/api';
 import { googleOAuth } from '../../lib/googleOAuth';
 
 function ServiceCallback() {
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
+  const [status, setStatus] = useState<'loading' | 'success' | 'error'>(
+    'loading',
+  );
   const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
-  const hasHandledRef = useRef(false); // Persist across renders to prevent double execution
+  const hasHandledRef = useRef(false);
 
   useEffect(() => {
     const handleOAuthCallback = async () => {
@@ -18,35 +20,38 @@ function ServiceCallback() {
       hasHandledRef.current = true;
 
       try {
-        // Check for error in URL
         const error = googleOAuth.extractErrorFromUrl();
         if (error) {
           throw new Error(`OAuth error: ${error}`);
         }
 
-        // Extract authorization code from URL
         const code = googleOAuth.extractCodeFromUrl();
         if (!code) {
           throw new Error('No authorization code received from Google');
         }
 
-        // Exchange code for token via backend
-        const response = await authApi.loginWithOAuth2({
-          service: 'google',
-          code: code,
-          redirect_uri: googleOAuth.redirectUri,
-        });
+        const intent = googleOAuth.extractIntentFromUrl();
 
-        // Store token
+        const response =
+          intent === 'register'
+            ? await authApi.registerWithOAuth2({
+                provider: 'google',
+                code: code,
+                redirect_uri: googleOAuth.redirectUri,
+              })
+            : await authApi.loginWithOAuth2({
+                provider: 'google',
+                code: code,
+                redirect_uri: googleOAuth.redirectUri,
+              });
+
         tokenService.setToken(response.token);
-        
         if (!tokenService.getToken()) {
           throw new Error('Failed to save authentication token');
         }
-        
+
         setStatus('success');
 
-        // Redirect to profile after a short delay
         setTimeout(() => {
           navigate('/profile', { replace: true });
         }, 1500);

@@ -11,18 +11,18 @@
   "scripts": {
     "prepare": "husky || exit 0",
     "commit": "commit",
-    "dev:server": "npm run start:dev --workspace=application-server",
-    "dev:web": "npm run dev --workspace=web-client",
-    "dev:both": "concurrently \"npm run dev:server\" \"npm run dev:web\""
+    "dev:server": "pnpm --filter application-server run start:dev || npm run start:dev --workspace=application-server",
+    "dev:web": "pnpm --filter web-client run dev || npm run dev --workspace=web-client",
+    "dev:both": "concurrently \"pnpm run dev:server\" \"pnpm run dev:web\" || concurrently \"npm run dev:server\" \"npm run dev:web\""
   },
   "lint-staged": {
     "application-server/**/*.ts": [
-      "npm run format --workspace=application-server",
-      "npm run lint --workspace=application-server"
+      "pnpm --filter application-server run format || npm run format --workspace=application-server",
+      "pnpm --filter application-server run lint || npm run lint --workspace=application-server"
     ],
     "web-client/**/*.{ts,tsx}": [
-      "npm run format --workspace=web-client",
-      "npm run lint --workspace=web-client"
+      "pnpm --filter web-client run format || npm run format --workspace=web-client",
+      "pnpm --filter web-client run lint || npm run lint --workspace=web-client"
     ],
     "mobile-client/**/*.{ts,tsx}": [
       "dart format --set-exit-if-changed -o none .",

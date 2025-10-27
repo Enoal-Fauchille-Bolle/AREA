@@ -26,7 +26,8 @@ const Configuration: UserConfig = {
       ],
     ],
     // Enforce a maximum header length of 80 characters
-    "header-max-length": [RuleConfigSeverity.Error, "always", 80],
+    // "header-max-length": [RuleConfigSeverity.Error, "always", 80],
+    "header-max-length2": [RuleConfigSeverity.Error, "always"],
     // Enforce a minimum subject length of 15 characters
     "subject-min-length": [RuleConfigSeverity.Error, "always", 15],
     // Enforce the subject does not contain the repository name
@@ -82,6 +83,7 @@ const Configuration: UserConfig = {
         // Custom rule to enforce specific format for merge commits
         "merge-format": ({ header, type }) => {
           const mergeFormatRegex = /^merge: branch `([^`]+)` into `([^`]+)`$/;
+          const mergeFormatRegexAlt = /^merge: `([^`]+)` into `([^`]+)`$/;
 
           // If header is missing or not a string, let other rules handle it
           if (!header || typeof header !== "string") {
@@ -94,12 +96,38 @@ const Configuration: UserConfig = {
           }
 
           // If it is merge, check the exact format
-          if (!mergeFormatRegex.test(header)) {
+          if (!mergeFormatRegex.test(header) && !mergeFormatRegexAlt.test(header)) {
             return [
               false,
               "merge commit must be in format: merge: branch `branch1` into `branch2`",
             ];
           }
+          return [true];
+        },
+
+        // Custom rule to enforce maximum header length of 80 characters, excluding "merge" commits
+        "header-max-length2": ({ header, type }, when) => {
+          const maxLength = 80;
+
+          // If header is missing or not a string, let other rules handle it
+          if (!header || typeof header !== "string") {
+            return [true];
+          }
+
+          // Exclude "merge" commits from this rule
+          if (type === "merge") {
+            return [true];
+          }
+
+          const isValid = header.length <= maxLength;
+
+          if (when === "always" && !isValid) {
+            return [
+              false,
+              `header must not exceed ${maxLength} characters (current length: ${header.length})`,
+            ];
+          }
+
           return [true];
         },
       },

@@ -25,6 +25,22 @@ export class ServiceComponentVariablesResponseDto extends OmitType(
       display_order: variable.display_order,
     });
   }
+
+  static fromResponseDto(
+    variableDto: VariableResponseDto,
+  ): ServiceComponentVariablesResponseDto {
+    return new ServiceComponentVariablesResponseDto({
+      id: variableDto.id,
+      name: variableDto.name,
+      description: variableDto.description,
+      kind: variableDto.kind,
+      type: variableDto.type,
+      optional: variableDto.optional,
+      placeholder: variableDto.placeholder,
+      validation_regex: variableDto.validation_regex,
+      display_order: variableDto.display_order,
+    });
+  }
 }
 
 export class ServiceComponentsResponseDto extends OmitType(
@@ -52,6 +68,21 @@ export class ServiceComponentsResponseDto extends OmitType(
       ),
     });
   }
+
+  static fromResponseDto(
+    componentDto: ComponentResponseDto,
+    variablesDto: VariableResponseDto[],
+  ): ServiceComponentsResponseDto {
+    return new ServiceComponentsResponseDto({
+      id: componentDto.id,
+      kind: componentDto.kind,
+      name: componentDto.name,
+      description: componentDto.description,
+      variables: variablesDto.map((v) =>
+        ServiceComponentVariablesResponseDto.fromResponseDto(v),
+      ),
+    });
+  }
 }
 
 export class ServiceActionsResponseDto extends OmitType(
@@ -75,6 +106,20 @@ export class ServiceActionsResponseDto extends OmitType(
       ),
     });
   }
+
+  static fromResponseDto(
+    componentDto: ComponentResponseDto,
+    variablesDto: VariableResponseDto[],
+  ): ServiceActionsResponseDto {
+    return new ServiceActionsResponseDto({
+      id: componentDto.id,
+      name: componentDto.name,
+      description: componentDto.description,
+      variables: variablesDto.map((v) =>
+        ServiceComponentVariablesResponseDto.fromResponseDto(v),
+      ),
+    });
+  }
 }
 
 export class ServiceReactionsResponseDto extends OmitType(
@@ -95,6 +140,20 @@ export class ServiceReactionsResponseDto extends OmitType(
       description: component.description,
       variables: variables.map((v) =>
         ServiceComponentVariablesResponseDto.fromEntity(v),
+      ),
+    });
+  }
+
+  static fromResponseDto(
+    componentDto: ComponentResponseDto,
+    variablesDto: VariableResponseDto[],
+  ): ServiceReactionsResponseDto {
+    return new ServiceReactionsResponseDto({
+      id: componentDto.id,
+      name: componentDto.name,
+      description: componentDto.description,
+      variables: variablesDto.map((v) =>
+        ServiceComponentVariablesResponseDto.fromResponseDto(v),
       ),
     });
   }

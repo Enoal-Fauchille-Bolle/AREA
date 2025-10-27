@@ -5,7 +5,6 @@ import { HookStatesModule } from '../hook-states/hook-states.module';
 import { AreaExecutionsModule } from '../area-executions/area-executions.module';
 import { AreasModule } from '../areas/areas.module';
 import { AreaParametersModule } from '../area-parameters/area-parameters.module';
-import { UserServicesModule } from '../user-services/user-services.module';
 import { ServicesModule } from '../services/services.module';
 import { CommonModule } from '../common/common.module';
 import { Area } from '../areas/entities/area.entity';
@@ -17,7 +16,6 @@ import { Area } from '../areas/entities/area.entity';
     AreaExecutionsModule,
     AreasModule,
     AreaParametersModule,
-    UserServicesModule,
     ServicesModule,
     forwardRef(() => CommonModule),
   ],

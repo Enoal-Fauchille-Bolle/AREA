@@ -1,39 +1,27 @@
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Service } from './entities/service.entity';
-import {
-  Component,
-  ComponentType,
-} from '../components/entities/component.entity';
-import { Variable } from '../variables/entities/variable.entity';
-import { UserService } from '../user-services/entities/user-service.entity';
+import { ComponentsService } from '../components/components.service';
+import { VariablesService } from '../variables/variables.service';
+import { UserServicesService } from './user-services/user-services.service';
+import { OAuth2Service } from '../oauth2/oauth2.service';
+import { ConfigService } from '@nestjs/config';
 import {
   ServiceActionsResponseDto,
   ServiceReactionsResponseDto,
   ServiceComponentsResponseDto,
   ServiceResponseDto,
   CreateServiceDto,
+  LinkServiceDto,
+  LinkPlatform,
 } from './dto';
-import { ConfigService } from '@nestjs/config';
-import { DiscordOAuth2Service } from './oauth2/discord-oauth2.service';
-import { GoogleOAuth2Service } from './oauth2/google-oauth2.service';
-import { GmailOAuth2Service } from './oauth2/gmail-oauth2.service';
-import { YouTubeOAuth2Service } from './oauth2/youtube-oauth2.service';
-import { GithubOAuth2Service } from './oauth2/github-oauth2.service';
-import { TwitchOAuth2Service } from './oauth2/twitch-oauth2.service';
-import { AppConfig } from 'src/config';
-
-// Minimal token shape returned by provider services (exchange/refresh)
-type OAuthTokens = {
-  accessToken: string;
-  refreshToken: string | null;
-  expiresAt: Date;
-};
+import { getOAuthProviderFromString } from '../oauth2/dto';
 
 @Injectable()
 export class ServicesService {
@@ -43,25 +31,13 @@ export class ServicesService {
   constructor(
     @InjectRepository(Service)
     private readonly serviceRepository: Repository<Service>,
-    @InjectRepository(Component)
-    private readonly componentRepository: Repository<Component>,
-    @InjectRepository(Variable)
-    private readonly variableRepository: Repository<Variable>,
-    @InjectRepository(UserService)
-    private readonly userServiceRepository: Repository<UserService>,
+    private readonly componentService: ComponentsService,
+    private readonly variableService: VariablesService,
+    private readonly userServiceService: UserServicesService,
+    private readonly oauth2Service: OAuth2Service,
     private readonly configService: ConfigService,
-    private readonly discordOAuth2Service: DiscordOAuth2Service,
-    private readonly googleOAuth2Service: GoogleOAuth2Service,
-    private readonly gmailOAuth2Service: GmailOAuth2Service,
-    private readonly youtubeOAuth2Service: YouTubeOAuth2Service,
-    private readonly githubOAuth2Service: GithubOAuth2Service,
-    private readonly twitchOAuth2Service: TwitchOAuth2Service,
   ) {
-    const appConfig = this.configService.get<AppConfig>('app');
-    if (!appConfig) {
-      // Unreachable
-      throw new Error('App configuration is not properly loaded');
-    }
+    const appConfig = this.configService.get('app');
     this.webRedirectUri = appConfig.oauth2.service.web_redirect_uri;
     this.mobileRedirectUri = appConfig.oauth2.service.mobile_redirect_uri;
   }
@@ -108,19 +84,21 @@ export class ServicesService {
       throw new NotFoundException(`Service with ID ${id} not found`);
     }
 
-    const components = await this.componentRepository.find({
-      where: { service_id: id, type: ComponentType.ACTION },
-    });
+    const components = await this.componentService.findActions();
+    const filteredComponents = components.filter(
+      (component) => component.service_id === id,
+    );
 
     const result: ServiceActionsResponseDto[] = [];
 
-    for (const component of components) {
-      const variables = await this.variableRepository.find({
-        where: { component_id: component.id },
-        order: { display_order: 'ASC' },
-      });
+    for (const component of filteredComponents) {
+      const variables = await this.variableService.findByComponent(
+        component.id,
+      );
 
-      result.push(ServiceActionsResponseDto.fromEntity(component, variables));
+      result.push(
+        ServiceActionsResponseDto.fromResponseDto(component, variables),
+      );
     }
 
     return result;
@@ -132,19 +110,21 @@ export class ServicesService {
       throw new NotFoundException(`Service with ID ${id} not found`);
     }
 
-    const components = await this.componentRepository.find({
-      where: { service_id: id, type: ComponentType.REACTION },
-    });
+    const components = await this.componentService.findReactions();
+    const filteredComponents = components.filter(
+      (component) => component.service_id === id,
+    );
 
     const result: ServiceReactionsResponseDto[] = [];
 
-    for (const component of components) {
-      const variables = await this.variableRepository.find({
-        where: { component_id: component.id },
-        order: { display_order: 'ASC' },
-      });
+    for (const component of filteredComponents) {
+      const variables = await this.variableService.findByComponent(
+        component.id,
+      );
 
-      result.push(ServiceReactionsResponseDto.fromEntity(component, variables));
+      result.push(
+        ServiceReactionsResponseDto.fromResponseDto(component, variables),
+      );
     }
 
     return result;
@@ -156,20 +136,17 @@ export class ServicesService {
       throw new NotFoundException(`Service with ID ${id} not found`);
     }
 
-    const components = await this.componentRepository.find({
-      where: { service_id: id },
-    });
+    const components = await this.componentService.findByService(id);
 
     const result: ServiceComponentsResponseDto[] = [];
 
     for (const component of components) {
-      const variables = await this.variableRepository.find({
-        where: { component_id: component.id },
-        order: { display_order: 'ASC' },
-      });
+      const variables = await this.variableService.findByComponent(
+        component.id,
+      );
 
       result.push(
-        ServiceComponentsResponseDto.fromEntity(component, variables),
+        ServiceComponentsResponseDto.fromResponseDto(component, variables),
       );
     }
 
@@ -177,13 +154,20 @@ export class ServicesService {
   }
 
   async findUserServices(userId: number): Promise<ServiceResponseDto[]> {
-    const userServices = await this.userServiceRepository.find({
-      where: { user_id: userId },
-      relations: ['service'],
-    });
+    const userServices = await this.userServiceService.findByUser(userId);
 
-    return userServices.map((us) =>
-      ServiceResponseDto.fromEntity(us.service, this.configService),
+    return await Promise.all(
+      userServices.map(async (us) => {
+        const service = await this.serviceRepository.findOne({
+          where: { id: us.service.id },
+        });
+        if (!service) {
+          throw new NotFoundException(
+            `Service with ID ${us.service.id} not found`,
+          );
+        }
+        return ServiceResponseDto.fromEntity(service, this.configService);
+      }),
     );
   }
 
@@ -198,12 +182,42 @@ export class ServicesService {
   async linkService(
     userId: number,
     serviceId: number,
-    body: {
-      code: string;
-      platform: 'web' | 'mobile';
-      code_verifier?: string;
-    },
+    body: LinkServiceDto,
   ): Promise<void> {
+    const userService = await this.userServiceService.findOne(
+      userId,
+      serviceId,
+    );
+
+    if (userService) {
+      if (!userService.service.require_auth) {
+        return;
+      }
+      if (userService.refresh_token) {
+        const provider = getOAuthProviderFromString(userService.service.name);
+        // Unreachable code check
+        if (!provider) {
+          throw new InternalServerErrorException(
+            `OAuth provider for service "${userService.service.name}" should exist`,
+          );
+        }
+        const tokens = await this.oauth2Service.refreshAccessToken({
+          provider: provider,
+          refresh_token: userService.refresh_token,
+        });
+        await this.userServiceService.update({
+          user_id: userId,
+          service_id: serviceId,
+          oauth_token: tokens.access_token,
+          refresh_token: tokens.refresh_token,
+          token_expires_at: tokens.expires_in
+            ? new Date(Date.now() + tokens.expires_in * 1000)
+            : undefined,
+        });
+        return;
+      }
+    }
+
     const service = await this.serviceRepository.findOne({
       where: { id: serviceId },
     });
@@ -211,157 +225,58 @@ export class ServicesService {
       throw new NotFoundException(`Service with ID ${serviceId} not found`);
     }
 
-    const existing = await this.userServiceRepository.findOne({
-      where: { user_id: userId, service_id: serviceId },
-    });
+    if (!service.requires_auth) {
+      await this.userServiceService.create({
+        user_id: userId,
+        service_id: serviceId,
+      });
+      return;
+    }
+
+    if (!body.code || !body.platform) {
+      throw new BadRequestException(
+        'Authorization code and platform are required to link this service',
+      );
+    }
 
     const redirectUri =
-      body.platform === 'web' ? this.webRedirectUri : this.mobileRedirectUri;
+      body.platform === LinkPlatform.WEB
+        ? this.webRedirectUri
+        : this.mobileRedirectUri;
 
-    // Handle Discord OAuth2 flow
-    if (service.name.toLowerCase() === 'discord') {
-      const tokens = await this.discordOAuth2Service.exchangeCodeForTokens(
-        body.code,
-        redirectUri,
-      );
-
-      if (existing) {
-        // Update existing user service with new tokens
-        existing.oauth_token = tokens.accessToken;
-        existing.refresh_token = tokens.refreshToken;
-        existing.token_expires_at = tokens.expiresAt;
-        await this.userServiceRepository.save(existing);
-      } else {
-        // Create new user service link with tokens
-        const userService = this.userServiceRepository.create({
-          user_id: userId,
-          service_id: serviceId,
-          oauth_token: tokens.accessToken,
-          refresh_token: tokens.refreshToken,
-          token_expires_at: tokens.expiresAt,
-        });
-        await this.userServiceRepository.save(userService);
-      }
-    } else if (service.name.toLowerCase() === 'github') {
-      const tokens = await this.githubOAuth2Service.exchangeCodeForTokens(
-        body.code,
-        redirectUri,
-      );
-
-      if (existing) {
-        // Update existing user service with new tokens
-        existing.oauth_token = tokens.accessToken;
-        await this.userServiceRepository.save(existing);
-      } else {
-        // Create new user service link with tokens
-        const userService = this.userServiceRepository.create({
-          user_id: userId,
-          service_id: serviceId,
-          oauth_token: tokens.accessToken,
-        });
-        await this.userServiceRepository.save(userService);
-      }
-    } else if (service.name.toLowerCase() === 'google') {
-      const tokens = await this.googleOAuth2Service.exchangeCodeForTokens(
-        body.code,
-        redirectUri,
-        body.code_verifier,
-      );
-
-      if (existing) {
-        // Update existing user service with new tokens
-        existing.oauth_token = tokens.accessToken;
-        existing.refresh_token = tokens.refreshToken;
-        existing.token_expires_at = tokens.expiresAt;
-        await this.userServiceRepository.save(existing);
-      } else {
-        // Create new user service link with tokens
-        const userService = this.userServiceRepository.create({
-          user_id: userId,
-          service_id: serviceId,
-          oauth_token: tokens.accessToken,
-          refresh_token: tokens.refreshToken,
-          token_expires_at: tokens.expiresAt,
-        });
-        await this.userServiceRepository.save(userService);
-      }
-    } else if (service.name.toLowerCase() === 'gmail') {
-      // Gmail uses its own OAuth2 credentials
-      const tokens = await this.gmailOAuth2Service.exchangeCodeForTokens(
-        body.code,
-        redirectUri,
-        body.code_verifier,
-      );
-
-      if (existing) {
-        // Update existing user service with new tokens
-        existing.oauth_token = tokens.accessToken;
-        existing.refresh_token = tokens.refreshToken;
-        existing.token_expires_at = tokens.expiresAt;
-        await this.userServiceRepository.save(existing);
-      } else {
-        // Create new user service link with tokens
-        const userService = this.userServiceRepository.create({
-          user_id: userId,
-          service_id: serviceId,
-          oauth_token: tokens.accessToken,
-          refresh_token: tokens.refreshToken,
-          token_expires_at: tokens.expiresAt,
-        });
-        await this.userServiceRepository.save(userService);
-      }
-    } else if (service.name.toLowerCase() === 'youtube') {
-      // YouTube uses its own OAuth2 credentials
-      const tokens = await this.youtubeOAuth2Service.exchangeCodeForTokens(
-        body.code,
-        redirectUri,
-        body.code_verifier,
-      );
-
-      if (existing) {
-        // Update existing user service with new tokens
-        existing.oauth_token = tokens.accessToken;
-        existing.refresh_token = tokens.refreshToken;
-        existing.token_expires_at = tokens.expiresAt;
-        await this.userServiceRepository.save(existing);
-      } else {
-        // Create new user service link with tokens
-        const userService = this.userServiceRepository.create({
-          user_id: userId,
-          service_id: serviceId,
-          oauth_token: tokens.accessToken,
-          refresh_token: tokens.refreshToken,
-          token_expires_at: tokens.expiresAt,
-        });
-        await this.userServiceRepository.save(userService);
-      }
-    } else if (service.name.toLowerCase() === 'twitch') {
-      const tokens = await this.twitchOAuth2Service.exchangeCodeForTokens(
-        body.code,
-        redirectUri,
-      );
-
-      if (existing) {
-        // Update existing user service with new tokens
-        existing.oauth_token = tokens.accessToken;
-        existing.refresh_token = tokens.refreshToken;
-        existing.token_expires_at = tokens.expiresAt;
-        await this.userServiceRepository.save(existing);
-      } else {
-        // Create new user service link with tokens
-        const userService = this.userServiceRepository.create({
-          user_id: userId,
-          service_id: serviceId,
-          oauth_token: tokens.accessToken,
-          refresh_token: tokens.refreshToken,
-          token_expires_at: tokens.expiresAt,
-        });
-        await this.userServiceRepository.save(userService);
-      }
-    } else if (!existing) {
+    const provider = getOAuthProviderFromString(service.name);
+    if (!provider) {
       throw new BadRequestException(
         `Cannot link service "${service.name}". The service may not be implemented or is not supported for linking.`,
       );
+    }
+
+    const tokens = await this.oauth2Service.exchangeCodeForTokens({
+      code: body.code,
+      provider: provider,
+      redirect_uri: redirectUri,
+    });
+
+    if (userService) {
+      await this.userServiceService.update({
+        user_id: userId,
+        service_id: serviceId,
+        oauth_token: tokens.access_token,
+        refresh_token: tokens.refresh_token,
+        token_expires_at: tokens.expires_in
+          ? new Date(Date.now() + tokens.expires_in * 1000)
+          : undefined,
+      });
+    } else {
+      await this.userServiceService.create({
+        user_id: userId,
+        service_id: serviceId,
+        oauth_token: tokens.access_token,
+        refresh_token: tokens.refresh_token,
+        token_expires_at: tokens.expires_in
+          ? new Date(Date.now() + tokens.expires_in * 1000)
+          : undefined,
+      });
     }
   }
 
@@ -373,75 +288,64 @@ export class ServicesService {
       throw new NotFoundException(`Service with ID ${serviceId} not found`);
     }
 
-    const result = await this.userServiceRepository.delete({
-      user_id: userId,
-      service_id: serviceId,
-    });
-
-    if (result.affected === 0) {
-      throw new NotFoundException(
-        `User service link not found for user ${userId} and service ${serviceId}`,
-      );
-    }
+    await this.userServiceService.removeOne(userId, serviceId);
   }
 
-  async refreshServiceToken(userId: number, serviceId: number): Promise<void> {
+  async refreshServiceToken(
+    userId: number,
+    serviceId: number,
+  ): Promise<void> {
+    const userService = await this.userServiceService.findOne(
+      userId,
+      serviceId,
+    );
+
+    if (!userService) {
+      throw new NotFoundException(
+        `User service connection not found for user ${userId} and service ${serviceId}`,
+      );
+    }
+
+    if (!userService.refresh_token) {
+      throw new BadRequestException(
+        'No refresh token available for this service connection',
+      );
+    }
+
     const service = await this.serviceRepository.findOne({
       where: { id: serviceId },
     });
+
     if (!service) {
       throw new NotFoundException(`Service with ID ${serviceId} not found`);
     }
 
-    // Support token refresh for Discord, Google, Gmail, YouTube, and Twitch
-    const provider = (service.name || '').toLowerCase();
-
-    if (
-      !['discord', 'google', 'gmail', 'youtube', 'twitch'].includes(provider)
-    ) {
+    const provider = getOAuthProviderFromString(service.name);
+    if (!provider) {
       throw new BadRequestException(
-        `Service ${service.name} does not support token refresh`,
+        `Cannot refresh token for service "${service.name}". The service may not be implemented or is not supported.`,
       );
     }
 
-    const userService = await this.userServiceRepository.findOne({
-      where: { user_id: userId, service_id: serviceId },
-    });
+    try {
+      const tokens = await this.oauth2Service.refreshAccessToken({
+        provider: provider,
+        refresh_token: userService.refresh_token,
+      });
 
-    if (!userService || !userService.refresh_token) {
-      throw new NotFoundException(
-        `User service link not found or no refresh token available`,
+      await this.userServiceService.update({
+        user_id: userId,
+        service_id: serviceId,
+        oauth_token: tokens.access_token,
+        refresh_token: tokens.refresh_token ?? userService.refresh_token,
+        token_expires_at: tokens.expires_in
+          ? new Date(Date.now() + tokens.expires_in * 1000)
+          : undefined,
+      });
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Failed to refresh token for service "${service.name}": ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
     }
-
-    let tokens: OAuthTokens;
-    if (provider === 'discord') {
-      tokens = (await this.discordOAuth2Service.refreshAccessToken(
-        userService.refresh_token,
-      )) as OAuthTokens;
-    } else if (provider === 'google') {
-      tokens = (await this.googleOAuth2Service.refreshAccessToken(
-        userService.refresh_token,
-      )) as OAuthTokens;
-    } else if (provider === 'gmail') {
-      tokens = (await this.gmailOAuth2Service.refreshAccessToken(
-        userService.refresh_token,
-      )) as OAuthTokens;
-    } else if (provider === 'youtube') {
-      tokens = (await this.youtubeOAuth2Service.refreshAccessToken(
-        userService.refresh_token,
-      )) as OAuthTokens;
-    } else if (provider === 'twitch') {
-      tokens = (await this.twitchOAuth2Service.refreshAccessToken(
-        userService.refresh_token,
-      )) as OAuthTokens;
-    } else {
-      throw new NotFoundException(`Unknown provider: ${provider}`);
-    }
-
-    userService.oauth_token = tokens.accessToken;
-    userService.refresh_token = tokens.refreshToken;
-    userService.token_expires_at = tokens.expiresAt;
-    await this.userServiceRepository.save(userService);
   }
 }

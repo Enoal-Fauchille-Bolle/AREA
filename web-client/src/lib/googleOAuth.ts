@@ -21,7 +21,9 @@ export interface GoogleOAuthConfig {
 /**
  * Generate the Google OAuth2 authorization URL
  */
-export function getGoogleAuthUrl(): string {
+export function getGoogleAuthUrl(
+  intent: 'login' | 'register' = 'login',
+): string {
   const config: GoogleOAuthConfig = {
     clientId: GOOGLE_CLIENT_ID,
     redirectUri: REDIRECT_URI,
@@ -38,6 +40,7 @@ export function getGoogleAuthUrl(): string {
     scope: config.scope,
     access_type: config.accessType,
     prompt: config.prompt,
+    state: intent,
   });
 
   return `${GOOGLE_AUTH_URL}?${params.toString()}`;
@@ -46,7 +49,9 @@ export function getGoogleAuthUrl(): string {
 /**
  * Extract the authorization code from the URL query parameters
  */
-export function extractCodeFromUrl(url: string = window.location.href): string | null {
+export function extractCodeFromUrl(
+  url: string = window.location.href,
+): string | null {
   const urlObj = new URL(url);
   return urlObj.searchParams.get('code');
 }
@@ -54,16 +59,31 @@ export function extractCodeFromUrl(url: string = window.location.href): string |
 /**
  * Extract error from the URL query parameters (if OAuth failed)
  */
-export function extractErrorFromUrl(url: string = window.location.href): string | null {
+export function extractErrorFromUrl(
+  url: string = window.location.href,
+): string | null {
   const urlObj = new URL(url);
   return urlObj.searchParams.get('error');
 }
 
 /**
+ * Extract the intent (login or register) from the URL state parameter
+ */
+export function extractIntentFromUrl(
+  url: string = window.location.href,
+): 'login' | 'register' {
+  const urlObj = new URL(url);
+  const state = urlObj.searchParams.get('state');
+  return state === 'register' ? 'register' : 'login';
+}
+
+/**
  * Initiate Google OAuth2 flow by redirecting to Google's authorization page
  */
-export function initiateGoogleOAuth(): void {
-  const authUrl = getGoogleAuthUrl();
+export function initiateGoogleOAuth(
+  intent: 'login' | 'register' = 'login',
+): void {
+  const authUrl = getGoogleAuthUrl(intent);
   window.location.href = authUrl;
 }
 
@@ -71,6 +91,7 @@ export const googleOAuth = {
   getAuthUrl: getGoogleAuthUrl,
   extractCodeFromUrl,
   extractErrorFromUrl,
+  extractIntentFromUrl,
   initiate: initiateGoogleOAuth,
   clientId: GOOGLE_CLIENT_ID,
   redirectUri: REDIRECT_URI,

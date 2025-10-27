@@ -15,7 +15,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     let isMounted = true;
 
     const checkAuth = async () => {
-      await new Promise(resolve => setTimeout(resolve, 150));
+      await new Promise((resolve) => setTimeout(resolve, 150));
       if (!isMounted) return;
       const isAuthenticated = tokenService.isAuthenticated();
       if (!isAuthenticated) {

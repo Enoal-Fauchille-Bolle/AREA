@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AreaExecutionsService } from '../../area-executions/area-executions.service';
 import { AreaParametersService } from '../../area-parameters/area-parameters.service';
-import { UserServicesService } from '../../user-services/user-services.service';
+import { UserServicesService } from '../../services/user-services/user-services.service';
 import { ServicesService } from '../../services/services.service';
 import { Area } from '../../areas/entities/area.entity';
 
@@ -172,7 +172,7 @@ export class GmailReactionsService {
 
       // Get user's Gmail service connection
       const userService =
-        await this.userServicesService.findUserServiceConnection(
+        await this.userServicesService.findOne(
           userId,
           gmailService.id,
         );
@@ -195,7 +195,7 @@ export class GmailReactionsService {
 
         // Fetch the updated token
         const refreshedUserService =
-          await this.userServicesService.findUserServiceConnection(
+          await this.userServicesService.findOne(
             userId,
             gmailService.id,
           );

@@ -10,7 +10,7 @@ import { Repository } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { AreaExecutionsService } from '../area-executions/area-executions.service';
 import { AreaParametersService } from '../area-parameters/area-parameters.service';
-import { UserServicesService } from '../user-services/user-services.service';
+import { UserServicesService } from '../services/user-services/user-services.service';
 import { ServicesService } from '../services/services.service';
 import { HookStatesService } from '../hook-states/hook-states.service';
 import { AreasService } from '../areas/areas.service';
@@ -444,7 +444,7 @@ export class TwitchService {
 
       // Get user's Twitch service connection
       const userService =
-        await this.userServicesService.findUserServiceConnection(
+        await this.userServicesService.findOne(
           userId,
           twitchService.id,
         );
@@ -470,7 +470,7 @@ export class TwitchService {
 
         // Fetch the updated token
         const refreshedUserService =
-          await this.userServicesService.findUserServiceConnection(
+          await this.userServicesService.findOne(
             userId,
             twitchService.id,
           );

@@ -148,7 +148,7 @@ export interface LoginRequest {
 }
 
 export interface OAuth2LoginRequest {
-  service: string;
+  provider: string;
   code: string;
   redirect_uri: string;
   code_verifier?: string;
@@ -554,10 +554,22 @@ export const authApi = {
     return handleResponse(response);
   },
 
-  async loginWithOAuth2(
+  async loginWithOAuth2(oauthData: OAuth2LoginRequest): Promise<AuthResponse> {
+    const response = await fetch(`${API_BASE_URL}/auth/login-oauth2`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(oauthData),
+    });
+
+    return handleResponse(response);
+  },
+
+  async registerWithOAuth2(
     oauthData: OAuth2LoginRequest,
   ): Promise<AuthResponse> {
-    const response = await fetch(`${API_BASE_URL}/auth/login-oauth2`, {
+    const response = await fetch(`${API_BASE_URL}/auth/register-oauth2`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

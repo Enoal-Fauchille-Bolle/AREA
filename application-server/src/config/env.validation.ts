@@ -2,29 +2,54 @@ import { z } from 'zod';
 import { ConfigurationException } from '../common/exceptions/configuration.exception';
 
 export const envValidationSchema = z.object({
-  NODE_ENV: z
-    .enum(['development', 'production', 'test'])
-    .default('development'),
-  SERVER_URL: z.string().default('http://127.0.0.1:8080'),
-  PORT: z.string().default('8080'),
-  JWT_SECRET: z.string().optional(),
-  JWT_EXPIRES_IN: z.string().default('24h'),
-  BCRYPT_SALT_ROUNDS: z.string().default('10'),
   POSTGRES_HOST: z.string().default('localhost'),
   POSTGRES_PORT: z.string().default('5432'),
   POSTGRES_USER: z.string().default('area_user'),
   POSTGRES_PASSWORD: z.string().default('area_password'),
   POSTGRES_DB: z.string().default('area_db'),
+  SERVER_URL: z.string().default('http://127.0.0.1:8080'),
+  PORT: z.string().default('8080'),
+  NODE_ENV: z
+    .enum(['development', 'production', 'test'])
+    .default('development'),
+  JWT_SECRET: z.string().optional(),
+  JWT_EXPIRES_IN: z.string().default('24h'),
+  BCRYPT_SALT_ROUNDS: z.string().default('10'),
   DISCORD_CLIENT_ID: z.string().optional(),
   DISCORD_CLIENT_SECRET: z.string().optional(),
+  DISCORD_BOT_TOKEN: z.string().optional(),
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+  GMAIL_CLIENT_ID: z.string().optional(),
+  GMAIL_CLIENT_SECRET: z.string().optional(),
+  YOUTUBE_CLIENT_ID: z.string().optional(),
+  YOUTUBE_CLIENT_SECRET: z.string().optional(),
   GITHUB_CLIENT_ID: z.string().optional(),
   GITHUB_CLIENT_SECRET: z.string().optional(),
+  SPOTIFY_CLIENT_ID: z.string().optional(),
+  SPOTIFY_CLIENT_SECRET: z.string().optional(),
+  TWITCH_CLIENT_ID: z.string().optional(),
+  TWITCH_CLIENT_SECRET: z.string().optional(),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  ANDROID_PACKAGE_NAME: z.string().optional(),
+  ANDROID_SHA256_FINGERPRINT: z.string().optional(),
+  IOS_TEAM_ID: z.string().optional(),
+  IOS_BUNDLE_ID: z.string().optional(),
+  WEB_AUTH_REDIRECT_URI: z
+    .string()
+    .default('http://localhost:8081/auth/callback'),
+  MOBILE_AUTH_REDIRECT_URI: z
+    .string()
+    .default('http://localhost:8080/auth/callback'),
+  MOBILE_APP_AUTH_URL_SCHEME: z.string().default('area://auth/callback'),
   WEB_SERVICE_REDIRECT_URI: z
     .string()
     .default('http://localhost:8081/service/callback'),
-  MOBILE_SERVICE_REDIRECT_URI: z.string().default('area://service/callback'),
-  SMTP_USER: z.string().optional(),
-  SMTP_PASS: z.string().optional(),
+  MOBILE_SERVICE_REDIRECT_URI: z
+    .string()
+    .default('http://localhost:8080/service/callback'),
+  MOBILE_APP_SERVICE_URL_SCHEME: z.string().default('area://service/callback'),
 });
 
 export function validateEnv(config: Record<string, unknown>) {
@@ -46,9 +71,44 @@ export function validateEnv(config: Record<string, unknown>) {
         'Discord OAuth2 must be set in production.',
       );
     }
+    if (!env.DISCORD_BOT_TOKEN) {
+      throw new ConfigurationException(
+        'Discord Bot Token must be set in production.',
+      );
+    }
+    if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) {
+      throw new ConfigurationException(
+        'Google OAuth2 must be set in production.',
+      );
+    }
     if (!env.GITHUB_CLIENT_ID || !env.GITHUB_CLIENT_SECRET) {
       throw new ConfigurationException(
         'GitHub OAuth2 must be set in production.',
+      );
+    }
+    if (!env.SPOTIFY_CLIENT_ID || !env.SPOTIFY_CLIENT_SECRET) {
+      throw new ConfigurationException(
+        'Spotify OAuth2 must be set in production.',
+      );
+    }
+    if (!env.TWITCH_CLIENT_ID || !env.TWITCH_CLIENT_SECRET) {
+      throw new ConfigurationException(
+        'Twitch OAuth2 must be set in production.',
+      );
+    }
+    if (!env.SMTP_USER || !env.SMTP_PASS) {
+      throw new ConfigurationException(
+        'SMTP credentials must be set in production.',
+      );
+    }
+    if (!env.ANDROID_PACKAGE_NAME || !env.ANDROID_SHA256_FINGERPRINT) {
+      throw new ConfigurationException(
+        'Android package name and SHA256 fingerprint must be set in production.',
+      );
+    }
+    if (!env.IOS_TEAM_ID || !env.IOS_BUNDLE_ID) {
+      throw new ConfigurationException(
+        'iOS team ID and bundle ID must be set in production.',
       );
     }
   } else {
@@ -58,8 +118,35 @@ export function validateEnv(config: Record<string, unknown>) {
     if (!env.DISCORD_CLIENT_ID || !env.DISCORD_CLIENT_SECRET) {
       console.warn('WARNING: Discord OAuth2 not set; server may crash.');
     }
+    if (!env.DISCORD_BOT_TOKEN) {
+      console.warn(
+        'WARNING: Discord Bot Token not set; Discord REActions will not work.',
+      );
+    }
+    if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) {
+      console.warn('WARNING: Google OAuth2 not set; server may crash.');
+    }
     if (!env.GITHUB_CLIENT_ID || !env.GITHUB_CLIENT_SECRET) {
       console.warn('WARNING: GitHub OAuth2 not set; server may crash.');
+    }
+    if (!env.SPOTIFY_CLIENT_ID || !env.SPOTIFY_CLIENT_SECRET) {
+      console.warn('WARNING: Spotify OAuth2 not set; server may crash.');
+    }
+    if (!env.TWITCH_CLIENT_ID || !env.TWITCH_CLIENT_SECRET) {
+      console.warn('WARNING: Twitch OAuth2 not set; server may crash.');
+    }
+    if (!env.SMTP_USER || !env.SMTP_PASS) {
+      console.warn('WARNING: SMTP credentials not set; email may not work.');
+    }
+    if (!env.ANDROID_PACKAGE_NAME || !env.ANDROID_SHA256_FINGERPRINT) {
+      console.warn(
+        'WARNING: Android config not set; some mobile features may not work.',
+      );
+    }
+    if (!env.IOS_TEAM_ID || !env.IOS_BUNDLE_ID) {
+      console.warn(
+        'WARNING: iOS config not set; some mobile features may not work.',
+      );
     }
   }
   return env;

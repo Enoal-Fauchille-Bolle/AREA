@@ -3,7 +3,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { TwitchReactionsService } from './twitch-reactions.service';
 import { AreaExecutionsModule } from '../../area-executions/area-executions.module';
 import { AreaParametersModule } from '../../area-parameters/area-parameters.module';
-import { UserServicesModule } from '../../user-services/user-services.module';
 import { ServicesModule } from '../../services/services.module';
 import { Area } from '../../areas/entities/area.entity';
 
@@ -12,7 +11,6 @@ import { Area } from '../../areas/entities/area.entity';
     TypeOrmModule.forFeature([Area]),
     AreaExecutionsModule,
     AreaParametersModule,
-    UserServicesModule,
     ServicesModule,
   ],
   providers: [TwitchReactionsService],

@@ -29,8 +29,13 @@ export const appConfig = registerAs('app', () => {
 
     // Database Configuration
     database: {
+      host: process.env.POSTGRES_HOST || 'localhost',
+      port: parseInt(process.env.POSTGRES_PORT || '5432', 10),
+      username: process.env.POSTGRES_USER || 'area_user',
+      password: process.env.POSTGRES_PASSWORD || 'area_password',
+      database: process.env.POSTGRES_DB || 'area_db',
       synchronize: process.env.NODE_ENV !== 'production',
-      logging: true,
+      logging: process.env.NODE_ENV !== 'production',
     },
 
     // Time Constants (in milliseconds)
@@ -42,16 +47,31 @@ export const appConfig = registerAs('app', () => {
 
     // OAuth2 Configuration
     oauth2: {
+      auth: {
+        web_redirect_uri:
+          process.env.WEB_AUTH_REDIRECT_URI ||
+          'http://localhost:8081/auth/callback',
+        mobile_redirect_uri:
+          process.env.MOBILE_AUTH_REDIRECT_URI ||
+          'http://localhost:8080/auth/callback',
+        mobile_scheme:
+          process.env.MOBILE_APP_AUTH_URL_SCHEME || 'area://auth/callback',
+      },
       service: {
         web_redirect_uri:
           process.env.WEB_SERVICE_REDIRECT_URI ||
           'http://localhost:8081/service/callback',
         mobile_redirect_uri:
-          process.env.MOBILE_SERVICE_REDIRECT_URI || 'area://service/callback',
+          process.env.MOBILE_SERVICE_REDIRECT_URI ||
+          'http://localhost:8080/service/callback',
+        mobile_scheme:
+          process.env.MOBILE_APP_SERVICE_URL_SCHEME ||
+          'area://service/callback',
       },
       discord: {
         clientId: process.env.DISCORD_CLIENT_ID,
         clientSecret: process.env.DISCORD_CLIENT_SECRET,
+        botToken: process.env.DISCORD_BOT_TOKEN,
       },
       google: {
         clientId: process.env.GOOGLE_CLIENT_ID,
@@ -73,16 +93,30 @@ export const appConfig = registerAs('app', () => {
         clientId: process.env.TWITCH_CLIENT_ID,
         clientSecret: process.env.TWITCH_CLIENT_SECRET,
       },
+      spotify: {
+        clientId: process.env.SPOTIFY_CLIENT_ID,
+        clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
+      },
+    },
+
+    // Email Configuration
+    email: {
+      smtpUser: process.env.SMTP_USER,
+      smtpPass: process.env.SMTP_PASS,
+    },
+
+    // Mobile related Configuration
+    mobile: {
+      android: {
+        packageName: process.env.ANDROID_PACKAGE_NAME,
+        sha256: process.env.ANDROID_SHA256_FINGERPRINT,
+      },
+      ios: {
+        teamId: process.env.IOS_TEAM_ID,
+        bundleId: process.env.IOS_BUNDLE_ID,
+      },
     },
   };
-});
-
-// Debug logging
-console.log('[app.config] Google OAuth2 Environment Variables:', {
-  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID
-    ? `${process.env.GOOGLE_CLIENT_ID.substring(0, 20)}...`
-    : 'undefined',
-  GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET ? 'set' : 'undefined',
 });
 
 export type AppConfig = ReturnType<typeof appConfig>;
