@@ -231,9 +231,15 @@ export class AreaParametersService {
     if (areaParameter.variable) {
       response.variable = {
         id: areaParameter.variable.id,
+        component_id: areaParameter.variable.component_id,
         name: areaParameter.variable.name,
+        description: areaParameter.variable.description,
         kind: areaParameter.variable.kind,
         type: areaParameter.variable.type,
+        nullable: areaParameter.variable.nullable,
+        placeholder: areaParameter.variable.placeholder,
+        validation_regex: areaParameter.variable.validation_regex,
+        display_order: areaParameter.variable.display_order,
       };
     }
 

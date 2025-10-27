@@ -174,6 +174,8 @@ export interface Area {
   updated_at: string;
   last_triggered_at: string | null;
   triggered_count: number;
+  componentAction?: Component;
+  componentReaction?: Component;
 }
 
 export interface CreateAreaRequest {
@@ -247,6 +249,18 @@ export interface AreaParameter {
   area_id: number;
   variable_id: number;
   value: string;
+  variable?: {
+    id: number;
+    component_id: number;
+    name: string;
+    description: string | null;
+    kind: VariableKind;
+    type: VariableType;
+    nullable: boolean;
+    placeholder: string | null;
+    validation_regex: string | null;
+    display_order: number;
+  };
 }
 
 export interface ApiError {
@@ -579,6 +593,30 @@ export const areaParametersApi = {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
+      },
+    );
+
+    return handleResponse(response);
+  },
+
+  async bulkCreateOrUpdate(
+    areaId: number,
+    parameters: { variable_id: number; value: string }[],
+  ): Promise<AreaParameter[]> {
+    const token = tokenService.getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}/area-parameters/area/${areaId}/bulk`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ parameters }),
       },
     );
 

@@ -155,11 +155,15 @@ function Login() {
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <input
+                  id="remember-me"
                   type="checkbox"
                   className="w-4 h-4 text-black border-gray-300 rounded focus:ring-black"
                   disabled={isLoading}
                 />
-                <label className="ml-2 text-sm text-gray-600">
+                <label
+                  htmlFor="remember-me"
+                  className="ml-2 text-sm text-gray-600"
+                >
                   Remember me
                 </label>
               </div>

@@ -334,19 +334,19 @@ const CreateArea: React.FC = () => {
                     currentStep,
                   )
                 ? 'bg-green-600 text-white'
-                : 'bg-gray-600 text-gray-300'
+                : 'bg-gray-500 text-gray-100'
           }`}
         >
           1
         </div>
-        <div className="w-16 h-0.5 bg-gray-600">
+        <div className="w-16 h-0.5 bg-gray-500">
           <div
             className={`h-full transition-all duration-300 ${
               ['reaction', 'parameters', 'config', 'complete'].includes(
                 currentStep,
               )
                 ? 'bg-green-600 w-full'
-                : 'bg-gray-600 w-0'
+                : 'bg-gray-500 w-0'
             }`}
           />
         </div>
@@ -356,17 +356,17 @@ const CreateArea: React.FC = () => {
               ? 'bg-blue-600 text-white'
               : ['parameters', 'config', 'complete'].includes(currentStep)
                 ? 'bg-green-600 text-white'
-                : 'bg-gray-600 text-gray-300'
+                : 'bg-gray-500 text-gray-100'
           }`}
         >
           2
         </div>
-        <div className="w-16 h-0.5 bg-gray-600">
+        <div className="w-16 h-0.5 bg-gray-500">
           <div
             className={`h-full transition-all duration-300 ${
               ['parameters', 'config', 'complete'].includes(currentStep)
                 ? 'bg-green-600 w-full'
-                : 'bg-gray-600 w-0'
+                : 'bg-gray-500 w-0'
             }`}
           />
         </div>
@@ -376,17 +376,17 @@ const CreateArea: React.FC = () => {
               ? 'bg-blue-600 text-white'
               : ['config', 'complete'].includes(currentStep)
                 ? 'bg-green-600 text-white'
-                : 'bg-gray-600 text-gray-300'
+                : 'bg-gray-500 text-gray-100'
           }`}
         >
           3
         </div>
-        <div className="w-16 h-0.5 bg-gray-600">
+        <div className="w-16 h-0.5 bg-gray-500">
           <div
             className={`h-full transition-all duration-300 ${
               ['config', 'complete'].includes(currentStep)
                 ? 'bg-green-600 w-full'
-                : 'bg-gray-600 w-0'
+                : 'bg-gray-500 w-0'
             }`}
           />
         </div>
@@ -396,7 +396,7 @@ const CreateArea: React.FC = () => {
               ? 'bg-blue-600 text-white'
               : currentStep === 'complete'
                 ? 'bg-green-600 text-white'
-                : 'bg-gray-600 text-gray-300'
+                : 'bg-gray-500 text-gray-100'
           }`}
         >
           4
@@ -412,7 +412,7 @@ const CreateArea: React.FC = () => {
     availableServices: Service[] = services,
   ) => (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold text-white">{title}</h3>
+      <h2 className="text-lg font-semibold text-white">{title}</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {availableServices.map((service) => (
           <button
@@ -421,13 +421,13 @@ const CreateArea: React.FC = () => {
             className={`p-4 border-2 rounded-lg transition-all hover:shadow-md ${
               selectedService?.id === service.id
                 ? 'border-blue-500 bg-blue-900 bg-opacity-50'
-                : 'border-gray-600 hover:border-gray-500 bg-gray-700'
+                : 'border-gray-500 hover:border-gray-400 bg-gray-600'
             }`}
           >
             <div className="flex items-center space-x-3">
               <div className="text-left">
                 <p className="font-medium text-white">{service.name}</p>
-                <p className="text-sm text-gray-400">{service.description}</p>
+                <p className="text-sm text-gray-200">{service.description}</p>
               </div>
             </div>
           </button>
@@ -443,9 +443,9 @@ const CreateArea: React.FC = () => {
     onComponentSelect: (component: Component) => void,
   ) => (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold text-white">{title}</h3>
+      <h2 className="text-lg font-semibold text-white">{title}</h2>
       {components.length === 0 ? (
-        <p className="text-gray-400">
+        <p className="text-gray-200">
           No components available for this service.
         </p>
       ) : (
@@ -457,11 +457,11 @@ const CreateArea: React.FC = () => {
               className={`w-full p-4 border-2 rounded-lg text-left transition-all hover:shadow-md ${
                 selectedComponent?.id === component.id
                   ? 'border-blue-500 bg-blue-900 bg-opacity-50'
-                  : 'border-gray-600 hover:border-gray-500 bg-gray-700'
+                  : 'border-gray-500 hover:border-gray-400 bg-gray-600'
               }`}
             >
-              <h4 className="font-medium text-white">{component.name}</h4>
-              <p className="text-sm text-gray-400 mt-1">
+              <h3 className="font-medium text-white">{component.name}</h3>
+              <p className="text-sm text-gray-200 mt-1">
                 {component.description}
               </p>
             </button>
@@ -533,7 +533,7 @@ const CreateArea: React.FC = () => {
             <div className="flex justify-between">
               <button
                 onClick={() => setCurrentStep('action')}
-                className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
+                className="px-4 py-2 text-gray-200 hover:text-white transition-colors"
               >
                 ← Back
               </button>
@@ -566,7 +566,7 @@ const CreateArea: React.FC = () => {
               <h2 className="text-2xl font-bold text-white mb-2">
                 Configure Parameters
               </h2>
-              <p className="text-gray-400">
+              <p className="text-base text-gray-200">
                 Set up any required parameters for your action and reaction
               </p>
             </div>
@@ -649,75 +649,75 @@ const CreateArea: React.FC = () => {
                       </p>
                     </div>
                   </div>
-                {discordUser && (
-                  <div className="bg-green-800 bg-opacity-30 rounded-lg p-4 mb-3">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center overflow-hidden">
-                        {discordUser.avatar ? (
-                          <img
-                            src={discordUser.avatar}
-                            alt="Discord Avatar"
-                            className="w-full h-full rounded-full object-cover"
-                            onLoad={() =>
-                              console.log('Avatar loaded successfully')
-                            }
-                            onError={(e) => {
-                              console.error('Avatar failed to load:', e);
-                              console.log('Avatar URL:', discordUser.avatar);
-                              console.log('Discord user data:', discordUser);
-                              console.log('Discord user ID:', discordUser.id);
-                              console.log(
-                                'Discord user avatar:',
-                                discordUser.avatar,
-                              );
-                            }}
-                          />
-                        ) : (
+                  {discordUser && (
+                    <div className="bg-green-800 bg-opacity-30 rounded-lg p-4 mb-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center overflow-hidden">
+                          {discordUser.avatar ? (
+                            <img
+                              src={discordUser.avatar}
+                              alt="Discord Avatar"
+                              className="w-full h-full rounded-full object-cover"
+                              onLoad={() =>
+                                console.log('Avatar loaded successfully')
+                              }
+                              onError={(e) => {
+                                console.error('Avatar failed to load:', e);
+                                console.log('Avatar URL:', discordUser.avatar);
+                                console.log('Discord user data:', discordUser);
+                                console.log('Discord user ID:', discordUser.id);
+                                console.log(
+                                  'Discord user avatar:',
+                                  discordUser.avatar,
+                                );
+                              }}
+                            />
+                          ) : (
+                            <svg
+                              className="w-6 h-6 text-white"
+                              fill="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                            </svg>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-green-100 font-medium">
+                            {discordUser.discriminator !== '0' &&
+                            discordUser.discriminator !== '0000' ? (
+                              <>
+                                #{discordUser.discriminator}{' '}
+                                {discordUser.username}
+                              </>
+                            ) : (
+                              discordUser.username
+                            )}
+                          </p>
+                          <p className="text-green-300 text-sm">
+                            Connected Account
+                          </p>
+                        </div>
+                        <div className="text-green-400">
                           <svg
-                            className="w-6 h-6 text-white"
-                            fill="currentColor"
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
                             viewBox="0 0 24 24"
                           >
-                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
                           </svg>
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-green-100 font-medium">
-                          {discordUser.discriminator !== '0' &&
-                          discordUser.discriminator !== '0000' ? (
-                            <>
-                              #{discordUser.discriminator}{' '}
-                              {discordUser.username}
-                            </>
-                          ) : (
-                            discordUser.username
-                          )}
-                        </p>
-                        <p className="text-green-300 text-sm">
-                          Connected Account
-                        </p>
-                      </div>
-                      <div className="text-green-400">
-                        <svg
-                          className="w-5 h-5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            )}
+                  )}
+                </div>
+              )}
 
             {allVariables.length === 0 ? (
               <div className="bg-gray-800 rounded-lg p-6 text-center">
@@ -917,7 +917,7 @@ const CreateArea: React.FC = () => {
             <h2 className="text-2xl font-bold text-white">
               AREA created successfully!
             </h2>
-            <p className="text-gray-400">Redirecting to your profile...</p>
+            <p className="text-gray-200">Redirecting to your profile...</p>
           </div>
         );
 
@@ -970,23 +970,27 @@ const CreateArea: React.FC = () => {
               <button
                 onClick={toggleProfileMenu}
                 className="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center hover:bg-gray-500 transition-colors"
+                aria-label="Open profile menu"
+                aria-expanded={isProfileMenuOpen}
+                aria-haspopup="true"
               >
                 <svg
                   className="w-6 h-6 text-gray-300"
                   fill="currentColor"
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
                 >
                   <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
                 </svg>
               </button>
               {isProfileMenuOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-lg py-2 z-50">
-                  <div className="px-4 py-2 text-sm text-gray-300 border-b border-gray-700">
+                <div className="absolute right-0 mt-2 w-48 bg-gray-700 border border-gray-600 rounded-lg shadow-lg py-2 z-50">
+                  <div className="px-4 py-2 text-sm text-white border-b border-gray-600">
                     <div className="font-semibold">
                       {user ? `${user.username}` : 'Loading...'}
                     </div>
                     <div
-                      className="text-gray-400 text-xs truncate"
+                      className="text-gray-100 text-xs truncate"
                       title={user?.email || 'Loading...'}
                     >
                       {user?.email || 'Loading...'}
@@ -997,7 +1001,7 @@ const CreateArea: React.FC = () => {
                       setIsProfileMenuOpen(false);
                       navigate('/profile/settings');
                     }}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors flex items-center"
+                    className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600 transition-colors flex items-center"
                   >
                     <svg
                       className="w-4 h-4 mr-3"
@@ -1049,7 +1053,7 @@ const CreateArea: React.FC = () => {
             <h1 className="text-3xl font-bold text-white mb-2">
               Create a new AREA
             </h1>
-            <p className="text-gray-400">
+            <p className="text-xl md:text-2xl text-gray-400">
               Set up an automation by choosing a trigger action and a reaction
             </p>
           </div>
