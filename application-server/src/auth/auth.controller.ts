@@ -9,7 +9,13 @@ import {
   Request,
   HttpCode,
   HttpStatus,
+  Headers,
+  Query,
+  Res,
+  BadRequestException,
 } from '@nestjs/common';
+import { type Response } from 'express';
+import { ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import {
   LoginDto,
@@ -17,14 +23,53 @@ import {
   UpdateProfileDto,
   OAuthLoginDto,
   AuthResponseDto,
+  OAuthRegisterDto,
 } from './dto';
 import { UserResponseDto } from '../users/dto/user-response.dto';
+import {
+  handleMobileCallback,
+  isMobileRequest,
+  getOAuthProviderFromString,
+} from '../oauth2';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly configService: ConfigService,
+  ) {}
+
+  // Mobile OAuth2 Callback Endpoint (auto redirect)
+  @Get('callback')
+  oauth2Callback(
+    @Headers('user-agent') userAgent: string,
+    @Query('code') code: string,
+    @Query('state') provider: string,
+    @Res() res: Response,
+  ) {
+    if (!code) {
+      throw new BadRequestException('Missing OAuth code');
+    }
+    if (!provider) {
+      throw new BadRequestException('Missing OAuth provider');
+    }
+    const oauthProvider = getOAuthProviderFromString(provider);
+    if (!oauthProvider) {
+      throw new BadRequestException('Invalid OAuth provider');
+    }
+    if (isMobileRequest(userAgent)) {
+      return handleMobileCallback(
+        res,
+        oauthProvider,
+        code,
+        'auth',
+        this.configService,
+      );
+    }
+    return 'Redirecting to mobile application...\n';
+  }
 
   @UseGuards(LocalAuthGuard)
   @Post('login')
@@ -48,21 +93,15 @@ export class AuthController {
   async loginOAuth2(
     @Body() oauthLoginDto: OAuthLoginDto,
   ): Promise<AuthResponseDto> {
-    return this.authService.loginWithOAuth2(
-      oauthLoginDto.service,
-      oauthLoginDto.code,
-    );
+    return this.authService.loginWithOAuth2(oauthLoginDto);
   }
 
   @Post('register-oauth2')
   @HttpCode(HttpStatus.CREATED)
   async registerOAuth2(
-    @Body() oauthLoginDto: OAuthLoginDto,
+    @Body() oauthLoginDto: OAuthRegisterDto,
   ): Promise<AuthResponseDto> {
-    return this.authService.registerWithOAuth2(
-      oauthLoginDto.service,
-      oauthLoginDto.code,
-    );
+    return this.authService.registerWithOAuth2(oauthLoginDto);
   }
 
   @UseGuards(JwtAuthGuard)

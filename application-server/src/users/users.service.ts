@@ -43,6 +43,18 @@ export class UsersService {
     return new UserResponseDto(savedUser);
   }
 
+  async createWithoutPassword(
+    createUserDto: Omit<CreateUserDto, 'password'>,
+  ): Promise<UserResponseDto> {
+    const user = this.usersRepository.create({
+      ...createUserDto,
+      is_admin: createUserDto.is_admin ?? false,
+      is_active: createUserDto.is_active ?? true,
+    });
+    const savedUser = await this.usersRepository.save(user);
+    return new UserResponseDto(savedUser);
+  }
+
   async findAll(): Promise<UserResponseDto[]> {
     const users = await this.usersRepository.find();
     return users.map((user) => new UserResponseDto(user));

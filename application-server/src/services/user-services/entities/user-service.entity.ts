@@ -7,8 +7,8 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import { User } from '../../users/entities/user.entity';
-import { Service } from '../../services/entities/service.entity';
+import { User } from '../../../users/entities/user.entity';
+import { Service } from '../../entities/service.entity';
 
 @Entity('user_services')
 export class UserService {

@@ -3,26 +3,38 @@ import {
   ConflictException,
   UnauthorizedException,
   NotFoundException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
+import { ServicesService } from '../services/services.service';
+import { UserOAuth2AccountsService } from './user-oauth2-account/user-oauth2-account.service';
+import { OAuth2Service } from '../oauth2/oauth2.service';
 import {
   RegisterDto,
+  OAuthRegisterDto,
   LoginDto,
+  OAuthLoginDto,
   UpdateProfileDto,
   AuthResponseDto,
 } from './dto';
 import { UserResponseDto } from '../users/dto/user-response.dto';
+import {
+  OAuthProviderServiceNameMap,
+  createUsernameFromProviderInfo,
+} from '../oauth2/dto';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
   constructor(
     private usersService: UsersService,
+    private servicesService: ServicesService,
+    private userOAuth2AccountsService: UserOAuth2AccountsService,
+    private oauth2Service: OAuth2Service,
     private jwtService: JwtService,
   ) {}
 
-  // Replace 'UserEntity' with the actual user type used in your project
   async validateUser(
     email: string,
     password: string,
@@ -113,9 +125,9 @@ export class AuthService {
 
     // Check for email conflict
     if (updateProfileDto.email && updateProfileDto.email !== user.email) {
-      const existingUser = await this.usersService
-        .findByEmail(updateProfileDto.email)
-        .catch(() => null);
+      const existingUser = await this.usersService.findByEmail(
+        updateProfileDto.email,
+      );
       if (existingUser) {
         throw new ConflictException('Email already in use');
       }
@@ -166,26 +178,141 @@ export class AuthService {
     await this.usersService.remove(userId);
   }
 
-  // OAuth2 methods - placeholder for now
-  loginWithOAuth2(_service: string, _code: string): Promise<AuthResponseDto> {
-    // TODO: Implement OAuth2 login flow
-    // 1. Exchange code for access token
-    // 2. Fetch user info from provider
-    // 3. Check if user exists, login or create account
-    // 4. Generate JWT token
-    return Promise.reject(new Error('OAuth2 login not yet implemented'));
+  async loginWithOAuth2(body: OAuthLoginDto): Promise<AuthResponseDto> {
+    const userInfo = await this.oauth2Service.exchangeCodeAndGetUserInfo({
+      code: body.code,
+      provider: body.provider,
+      redirect_uri: body.redirect_uri,
+    });
+
+    if (!userInfo.email) {
+      throw new UnauthorizedException(
+        'OAuth2 provider did not return an email address: cannot proceed without email verification',
+      );
+    }
+
+    const service = await this.servicesService.findByName(
+      OAuthProviderServiceNameMap[body.provider],
+    );
+
+    const userAccount =
+      await this.userOAuth2AccountsService.findByServiceAccountId(
+        service.id,
+        userInfo.id,
+      );
+
+    if (userAccount) {
+      if (userInfo.email && userAccount.email !== userInfo.email) {
+        await this.userOAuth2AccountsService.updateEmail(
+          userAccount.user.id,
+          service.id,
+          userInfo.email,
+        );
+      }
+      await this.usersService.updateLastConnection(userAccount.user.id);
+      return new AuthResponseDto(
+        this.jwtService.sign({
+          email: userAccount.user.email,
+          sub: userAccount.user.id,
+          username: userAccount.user.username,
+        }),
+      );
+    }
+
+    const user = await this.usersService.findByEmail(userInfo.email);
+    if (user) {
+      await this.userOAuth2AccountsService.create({
+        service_id: service.id,
+        oauth2_provider_user_id: userInfo.id,
+        user_id: user.id,
+        email: userInfo.email,
+      });
+
+      await this.usersService.updateLastConnection(user.id);
+      return new AuthResponseDto(
+        this.jwtService.sign({
+          email: user.email,
+          sub: user.id,
+          username: user.username,
+        }),
+      );
+    }
+
+    throw new UnauthorizedException(
+      'No account found with this OAuth2 provider. Please sign up first.',
+    );
   }
 
-  registerWithOAuth2(
-    _service: string,
-    _code: string,
-  ): Promise<AuthResponseDto> {
-    // TODO: Implement OAuth2 registration flow
-    // 1. Exchange code for access token
-    // 2. Fetch user info from provider
-    // 3. Create new user account
-    // 4. Store OAuth tokens in UserServices
-    // 5. Generate JWT token
-    return Promise.reject(new Error('OAuth2 registration not yet implemented'));
+  async registerWithOAuth2(body: OAuthRegisterDto): Promise<AuthResponseDto> {
+    const userInfo = await this.oauth2Service.exchangeCodeAndGetUserInfo({
+      code: body.code,
+      provider: body.provider,
+      redirect_uri: body.redirect_uri,
+    });
+
+    if (!userInfo.email) {
+      throw new UnauthorizedException(
+        'OAuth2 provider did not return an email address: cannot proceed without email verification',
+      );
+    }
+
+    const service = await this.servicesService.findByName(
+      OAuthProviderServiceNameMap[body.provider],
+    );
+
+    const userAccount =
+      await this.userOAuth2AccountsService.findByServiceAccountId(
+        service.id,
+        userInfo.id,
+      );
+
+    if (userAccount) {
+      throw new ConflictException(
+        'An account with this OAuth2 provider already exists. Please login instead.',
+      );
+    }
+
+    const existingUser = await this.usersService.findByEmail(userInfo.email);
+    if (existingUser) {
+      throw new ConflictException(
+        'An account with this email already exists. Please login instead.',
+      );
+    }
+
+    let generatedUsername = createUsernameFromProviderInfo(userInfo.rawData);
+    if (!generatedUsername) {
+      throw new InternalServerErrorException(
+        'Failed to generate a username from OAuth2 provider data',
+      );
+    }
+
+    if (await this.usersService.findByUsername(generatedUsername)) {
+      generatedUsername = `${body.provider}_user_${userInfo.id}`;
+      if (await this.usersService.findByUsername(generatedUsername)) {
+        generatedUsername = `${body.provider}_user_${userInfo.id}_${Date.now()}`;
+      }
+    }
+
+    const newUser = await this.usersService.createWithoutPassword({
+      email: userInfo.email,
+      username: generatedUsername,
+    });
+
+    await this.userOAuth2AccountsService.create({
+      service_id: service.id,
+      oauth2_provider_user_id: userInfo.id,
+      user_id: newUser.id,
+      email: userInfo.email,
+    });
+
+    await this.usersService.updateLastConnection(newUser.id);
+
+    return new AuthResponseDto(
+      this.jwtService.sign({
+        email: newUser.email,
+        sub: newUser.id,
+        username: newUser.username,
+      }),
+    );
   }
 }

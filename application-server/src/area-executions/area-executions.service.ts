@@ -10,12 +10,14 @@ import {
   UpdateAreaExecutionDto,
   AreaExecutionResponseDto,
 } from './dto';
+import { AreasService } from '../areas/areas.service';
 
 @Injectable()
 export class AreaExecutionsService {
   constructor(
     @InjectRepository(AreaExecution)
     private readonly areaExecutionRepository: Repository<AreaExecution>,
+    private readonly areasService: AreasService,
   ) {}
 
   async create(
@@ -28,6 +30,10 @@ export class AreaExecutionsService {
 
     const savedExecution =
       await this.areaExecutionRepository.save(areaExecution);
+
+    // Increment the trigger count for the area
+    await this.areasService.incrementTriggerCount(savedExecution.areaId);
+
     return new AreaExecutionResponseDto(savedExecution);
   }
 

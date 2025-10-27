@@ -1,26 +1,29 @@
 import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { UserOAuth2Account } from './user-oauth2-account';
+import { UsersModule } from '../users';
+import { ServicesModule } from '../services';
+import { OAuth2Module } from '../oauth2';
 import { PassportModule } from '@nestjs/passport';
+import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
+import { UserOAuth2AccountsService } from './user-oauth2-account';
 import { AuthController } from './auth.controller';
-import { UsersModule } from '../users/users.module';
 import { LocalStrategy } from './strategies/local.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
-import type { AppConfig } from '../config';
 
 @Module({
   imports: [
+    TypeOrmModule.forFeature([UserOAuth2Account]),
     UsersModule,
+    ServicesModule,
+    OAuth2Module,
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
-        const appConfig = configService.get<AppConfig>('app');
-        if (!appConfig) {
-          throw new Error('App configuration is not properly loaded');
-        }
-
+        const appConfig = configService.get('app');
         return {
           secret: appConfig.jwt.secret,
           signOptions: {
@@ -31,8 +34,13 @@ import type { AppConfig } from '../config';
       inject: [ConfigService],
     }),
   ],
-  providers: [AuthService, LocalStrategy, JwtStrategy],
+  providers: [
+    AuthService,
+    LocalStrategy,
+    JwtStrategy,
+    UserOAuth2AccountsService,
+  ],
   controllers: [AuthController],
-  exports: [AuthService],
+  exports: [AuthService, UserOAuth2AccountsService],
 })
 export class AuthModule {}

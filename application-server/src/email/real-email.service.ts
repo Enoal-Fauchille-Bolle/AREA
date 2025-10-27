@@ -14,16 +14,19 @@ interface EmailParams {
 export class RealEmailService {
   private readonly logger = new Logger(RealEmailService.name);
   private readonly transporter: Transporter;
+  private readonly smtpUser: string;
+  private readonly smtpPass: string;
 
   constructor(
     private readonly areaExecutionsService: AreaExecutionsService,
     private readonly areaParametersService: AreaParametersService,
     private readonly configService: ConfigService,
   ) {
-    const smtpUser = this.configService.get<string>('SMTP_USER');
-    const smtpPass = this.configService.get<string>('SMTP_PASS');
+    const appService = this.configService.get('app');
+    this.smtpUser = appService.email.smtpUser!;
+    this.smtpPass = appService.email.smtpPass!;
 
-    if (!smtpUser || !smtpPass) {
+    if (!this.smtpUser || !this.smtpPass) {
       this.logger.warn(
         'SMTP_USER and SMTP_PASS not set - real email sending will fail',
       );
@@ -32,8 +35,8 @@ export class RealEmailService {
     this.transporter = createTransport({
       service: 'gmail',
       auth: {
-        user: smtpUser || 'dummy@example.com',
-        pass: smtpPass || 'dummy-pass',
+        user: this.smtpUser || 'dummy@example.com',
+        pass: this.smtpPass || 'dummy-pass',
       },
     });
   }
@@ -53,7 +56,7 @@ export class RealEmailService {
 
       // Send real email
       await this.transporter.sendMail({
-        from: process.env.SMTP_USER,
+        from: this.smtpUser,
         to: emailParams.to,
         subject: emailParams.subject,
         text: emailParams.body,
