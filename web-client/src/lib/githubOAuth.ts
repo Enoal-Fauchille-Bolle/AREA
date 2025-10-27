@@ -1,44 +1,37 @@
-const GOOGLE_CLIENT_ID =
-  import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+const GITHUB_CLIENT_ID =
+  import.meta.env.VITE_GITHUB_CLIENT_ID || '';
 
 const REDIRECT_URI =
-  import.meta.env.VITE_GOOGLE_REDIRECT_URI ||
+  import.meta.env.VITE_GITHUB_REDIRECT_URI ||
   'http://localhost:8081/service/callback';
 
-const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
+const GITHUB_AUTH_URL = 'https://github.com/login/oauth/authorize';
 
-export interface GoogleOAuthConfig {
+export interface GitHubOAuthConfig {
   clientId: string;
   redirectUri: string;
   scope: string;
   responseType: string;
-  accessType: string;
-  prompt: string;
 }
 
-export function getGoogleAuthUrl(
+export function getGitHubAuthUrl(
   intent: 'login' | 'register' = 'login',
 ): string {
-  const config: GoogleOAuthConfig = {
-    clientId: GOOGLE_CLIENT_ID,
+  const config: GitHubOAuthConfig = {
+    clientId: GITHUB_CLIENT_ID,
     redirectUri: REDIRECT_URI,
-    scope: 'openid email profile',
+    scope: 'read:user user:email',
     responseType: 'code',
-    accessType: 'offline',
-    prompt: 'consent',
   };
 
   const params = new URLSearchParams({
     client_id: config.clientId,
     redirect_uri: config.redirectUri,
-    response_type: config.responseType,
     scope: config.scope,
-    access_type: config.accessType,
-    prompt: config.prompt,
-    state: `google:${intent}`,
+    state: `github:${intent}`,
   });
 
-  return `${GOOGLE_AUTH_URL}?${params.toString()}`;
+  return `${GITHUB_AUTH_URL}?${params.toString()}`;
 }
 
 export function extractCodeFromUrl(
@@ -62,25 +55,25 @@ export function extractIntentFromUrl(
   const state = urlObj.searchParams.get('state');
   if (!state) return 'login';
   const parts = state.split(':');
-  if (parts.length === 2 && parts[0] === 'google') {
+  if (parts.length === 2 && parts[0] === 'github') {
     return parts[1] === 'register' ? 'register' : 'login';
   }
   return 'login';
 }
 
-export function initiateGoogleOAuth(
+export function initiateGitHubOAuth(
   intent: 'login' | 'register' = 'login',
 ): void {
-  const authUrl = getGoogleAuthUrl(intent);
+  const authUrl = getGitHubAuthUrl(intent);
   window.location.href = authUrl;
 }
 
-export const googleOAuth = {
-  getAuthUrl: getGoogleAuthUrl,
+export const githubOAuth = {
+  getAuthUrl: getGitHubAuthUrl,
   extractCodeFromUrl,
   extractErrorFromUrl,
   extractIntentFromUrl,
-  initiate: initiateGoogleOAuth,
-  clientId: GOOGLE_CLIENT_ID,
+  initiate: initiateGitHubOAuth,
+  clientId: GITHUB_CLIENT_ID,
   redirectUri: REDIRECT_URI,
 };
