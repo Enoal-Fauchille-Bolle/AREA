@@ -341,7 +341,7 @@ export const servicesApi = {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ code }),
+      body: JSON.stringify({ code, platform: 'web' }),
     });
 
     console.log('Link service response:', response.status, response.statusText);

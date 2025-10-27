@@ -246,7 +246,7 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
         'Send messages to Discord channels using the AREA Discord Bot. The bot must be added to your server with appropriate permissions.',
       icon_path:
         'https://static.vecteezy.com/system/resources/previews/023/741/147/non_2x/discord-logo-icon-social-media-icon-free-png.png',
-      requires_auth: false, // Discord bot doesn't require user OAuth
+      requires_auth: true,
       is_active: true,
     });
 
