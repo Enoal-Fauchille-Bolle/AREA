@@ -3,7 +3,6 @@ import {
   ConflictException,
   UnauthorizedException,
   NotFoundException,
-  BadRequestException,
   InternalServerErrorException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -21,7 +20,6 @@ import {
 } from './dto';
 import { UserResponseDto } from '../users/dto/user-response.dto';
 import {
-  getOAuthProviderFromString,
   OAuthProviderServiceNameMap,
   createUsernameFromProviderInfo,
 } from '../oauth2/dto';
@@ -181,16 +179,9 @@ export class AuthService {
   }
 
   async loginWithOAuth2(body: OAuthLoginDto): Promise<AuthResponseDto> {
-    const provider = getOAuthProviderFromString(body.provider);
-    if (!provider) {
-      throw new BadRequestException(
-        `Unsupported OAuth2 provider: ${body.provider}`,
-      );
-    }
-
     const userInfo = await this.oauth2Service.exchangeCodeAndGetUserInfo({
       code: body.code,
-      provider: provider,
+      provider: body.provider,
       redirect_uri: body.redirect_uri,
     });
 
@@ -201,7 +192,7 @@ export class AuthService {
     }
 
     const service = await this.servicesService.findByName(
-      OAuthProviderServiceNameMap[provider],
+      OAuthProviderServiceNameMap[body.provider],
     );
 
     const userAccount =
@@ -253,16 +244,9 @@ export class AuthService {
   }
 
   async registerWithOAuth2(body: OAuthRegisterDto): Promise<AuthResponseDto> {
-    const provider = getOAuthProviderFromString(body.provider);
-    if (!provider) {
-      throw new BadRequestException(
-        `Unsupported OAuth2 provider: ${body.provider}`,
-      );
-    }
-
     const userInfo = await this.oauth2Service.exchangeCodeAndGetUserInfo({
       code: body.code,
-      provider: provider,
+      provider: body.provider,
       redirect_uri: body.redirect_uri,
     });
 
@@ -273,7 +257,7 @@ export class AuthService {
     }
 
     const service = await this.servicesService.findByName(
-      OAuthProviderServiceNameMap[provider],
+      OAuthProviderServiceNameMap[body.provider],
     );
 
     const userAccount =
@@ -303,9 +287,9 @@ export class AuthService {
     }
 
     if (await this.usersService.findByUsername(generatedUsername)) {
-      generatedUsername = `${provider}_user_${userInfo.id}`;
+      generatedUsername = `${body.provider}_user_${userInfo.id}`;
       if (await this.usersService.findByUsername(generatedUsername)) {
-        generatedUsername = `${provider}_user_${userInfo.id}_${Date.now()}`;
+        generatedUsername = `${body.provider}_user_${userInfo.id}_${Date.now()}`;
       }
     }
 

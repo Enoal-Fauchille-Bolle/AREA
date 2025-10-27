@@ -1,22 +1,28 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsEnum, IsNotEmpty } from 'class-validator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsString, IsEnum, IsNotEmpty, IsOptional } from 'class-validator';
+
+enum LinkPlatform {
+  WEB = 'web',
+  MOBILE = 'mobile',
+}
 
 export class LinkServiceDto {
-  @ApiProperty({
-    description:
-      'The Authorization code received from the OAuth provider for the link',
+  @ApiPropertyOptional({
+    description: 'The OAuth authorization code received from the service',
     example: 'SplxlOBeZQQYbYS6WxSbIA',
   })
   @IsString()
   @IsNotEmpty()
+  @IsOptional()
   code: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'The platform for the link',
-    enum: ['web', 'mobile'],
-    example: 'web',
+    enum: LinkPlatform,
+    example: LinkPlatform.WEB,
   })
-  @IsEnum(['web', 'mobile'])
+  @IsEnum(LinkPlatform)
   @IsNotEmpty()
-  platform: 'web' | 'mobile';
+  @IsOptional()
+  platform: LinkPlatform;
 }
