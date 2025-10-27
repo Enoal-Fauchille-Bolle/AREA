@@ -2,6 +2,8 @@ import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { authApi, tokenService } from '../../services/api';
 import { googleOAuth } from '../../lib/googleOAuth';
+import { githubOAuth } from '../../lib/githubOAuth';
+import { discordOAuth } from '../../lib/discordOAuth';
 
 function ServiceCallback() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>(
@@ -23,7 +25,6 @@ function ServiceCallback() {
       const code = urlParams.get('code');
       const error = urlParams.get('error');
 
-      // Check if this is a Discord OAuth popup callback
       if (window.opener) {
         console.log('=== Discord OAuth Callback (popup) ===');
         const service = 'DISCORD';
@@ -53,31 +54,51 @@ function ServiceCallback() {
         return;
       }
 
-      // Otherwise, handle Google OAuth callback
       try {
-        const googleError = googleOAuth.extractErrorFromUrl();
-        if (googleError) {
-          throw new Error(`OAuth error: ${googleError}`);
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const error = urlParams.get('error');
+        const state = urlParams.get('state');
+
+        if (!code) {
+          throw new Error('No authorization code received from OAuth provider');
         }
 
-        const googleCode = googleOAuth.extractCodeFromUrl();
-        if (!googleCode) {
-          throw new Error('No authorization code received from Google');
+        if (error) {
+          throw new Error(`OAuth error: ${error}`);
         }
 
-        const intent = googleOAuth.extractIntentFromUrl();
+        let provider: 'google' | 'github' | 'discord';
+        let intent: 'login' | 'register';
+        let redirectUri: string;
+
+        if (state?.startsWith('google:')) {
+          provider = 'google';
+          intent = googleOAuth.extractIntentFromUrl();
+          redirectUri = googleOAuth.redirectUri;
+        } else if (state?.startsWith('github:')) {
+          provider = 'github';
+          intent = githubOAuth.extractIntentFromUrl();
+          redirectUri = githubOAuth.redirectUri;
+        } else if (state?.startsWith('discord:')) {
+          provider = 'discord';
+          intent = discordOAuth.extractIntentFromUrl();
+          redirectUri = discordOAuth.redirectUri;
+        } else {
+          throw new Error(`Unknown OAuth provider from state: ${state}`);
+        }
 
         const response =
           intent === 'register'
             ? await authApi.registerWithOAuth2({
-                provider: 'google',
-                code: googleCode,
-                redirect_uri: googleOAuth.redirectUri,
+                provider,
+                code: code,
+                redirect_uri: redirectUri,
               })
             : await authApi.loginWithOAuth2({
-                provider: 'google',
-                code: googleCode,
-                redirect_uri: googleOAuth.redirectUri,
+                provider,
+                code: code,
+                redirect_uri: redirectUri,
               });
 
         tokenService.setToken(response.token);
@@ -113,7 +134,7 @@ function ServiceCallback() {
             <h2 className="text-2xl font-black text-black mb-2">
               {window.opener
                 ? 'Processing Discord authentication...'
-                : 'Authenticating with Google...'}
+                : 'Authenticating...'}
             </h2>
             <p className="text-gray-600">
               {window.opener
