@@ -19,6 +19,7 @@ import {
   ServiceResponseDto,
   CreateServiceDto,
   LinkServiceDto,
+  LinkPlatform,
 } from './dto';
 import { getOAuthProviderFromString } from '../oauth2/dto';
 
@@ -181,7 +182,7 @@ export class ServicesService {
   async linkService(
     userId: number,
     serviceId: number,
-    body?: LinkServiceDto,
+    body: LinkServiceDto,
   ): Promise<void> {
     const userService = await this.userServiceService.findOne(
       userId,
@@ -232,14 +233,16 @@ export class ServicesService {
       return;
     }
 
-    if (!body) {
+    if (!body.code || !body.platform) {
       throw new BadRequestException(
         'Authorization code and platform are required to link this service',
       );
     }
 
     const redirectUri =
-      body.platform === 'web' ? this.webRedirectUri : this.mobileRedirectUri;
+      body.platform === LinkPlatform.WEB
+        ? this.webRedirectUri
+        : this.mobileRedirectUri;
 
     const provider = getOAuthProviderFromString(service.name);
     if (!provider) {

@@ -130,7 +130,7 @@ export class ServicesController {
   async linkService(
     @Request() req: { user: { id: number } },
     @Param('id') id: string,
-    @Body() body?: LinkServiceDto,
+    @Body() body: LinkServiceDto,
   ): Promise<void> {
     const parsedIntId = parseIdParam(id);
     if (isNaN(parsedIntId)) {
