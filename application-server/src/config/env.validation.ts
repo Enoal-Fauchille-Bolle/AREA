@@ -70,6 +70,8 @@ export function validateEnv(config: Record<string, unknown>) {
     if (!env.DISCORD_BOT_TOKEN) {
       throw new ConfigurationException(
         'Discord Bot Token must be set in production.',
+      );
+    }
     if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) {
       throw new ConfigurationException(
         'Google OAuth2 must be set in production.',
@@ -116,6 +118,7 @@ export function validateEnv(config: Record<string, unknown>) {
       console.warn(
         'WARNING: Discord Bot Token not set; Discord REActions will not work.',
       );
+    }
     if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) {
       console.warn('WARNING: Google OAuth2 not set; server may crash.');
     }
