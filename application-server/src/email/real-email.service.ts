@@ -14,28 +14,29 @@ interface EmailParams {
 export class RealEmailService {
   private readonly logger = new Logger(RealEmailService.name);
   private readonly transporter: Transporter;
+  private readonly smtpUser: string;
+  private readonly smtpPass: string;
 
   constructor(
     private readonly areaExecutionsService: AreaExecutionsService,
     private readonly areaParametersService: AreaParametersService,
     private readonly configService: ConfigService,
   ) {
-    const smtpUser = this.configService.get<string>('SMTP_USER');
-    const smtpPass = this.configService.get<string>('SMTP_PASS');
+    const appService = this.configService.get('app');
+    this.smtpUser = appService.email.smtpUser!;
+    this.smtpPass = appService.email.smtpPass!;
 
-    if (!smtpUser || !smtpPass) {
+    if (!this.smtpUser || !this.smtpPass) {
       this.logger.warn(
         'SMTP_USER and SMTP_PASS not set - real email sending will fail',
       );
     }
-    console.log('SMTP_USER:', smtpUser);
-    console.log('SMTP_PASS:', smtpPass);
 
     this.transporter = createTransport({
       service: 'gmail',
       auth: {
-        user: smtpUser || 'dummy@example.com',
-        pass: smtpPass || 'dummy-pass',
+        user: this.smtpUser || 'dummy@example.com',
+        pass: this.smtpPass || 'dummy-pass',
       },
     });
   }
@@ -47,7 +48,7 @@ export class RealEmailService {
       );
 
       // Get email parameters from the area
-      const emailParams = await this.getEmailParameters(areaId);
+      const emailParams = await this.getEmailParameters(areaId, executionId);
 
       if (!emailParams) {
         throw new Error('Email parameters not configured');
@@ -55,7 +56,7 @@ export class RealEmailService {
 
       // Send real email
       await this.transporter.sendMail({
-        from: process.env.SMTP_USER,
+        from: this.smtpUser,
         to: emailParams.to,
         subject: emailParams.subject,
         text: emailParams.body,
@@ -90,10 +91,24 @@ export class RealEmailService {
 
   private async getEmailParameters(
     areaId: number,
+    executionId?: number,
   ): Promise<EmailParams | null> {
     try {
-      // Get all parameters for this area
-      const parameters = await this.areaParametersService.findByArea(areaId);
+      // Get execution context for variable interpolation
+      let executionContext: Record<string, unknown> = {};
+      if (executionId) {
+        const execution = await this.areaExecutionsService.findOne(executionId);
+        if (execution.triggerData) {
+          executionContext = execution.triggerData;
+        }
+      }
+
+      // Get parameters with variable interpolation
+      const parameters =
+        await this.areaParametersService.findByAreaWithInterpolation(
+          areaId,
+          executionContext,
+        );
 
       const toParam = parameters.find((p) => p.variable?.name === 'to');
       const subjectParam = parameters.find(

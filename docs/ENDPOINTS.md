@@ -29,7 +29,6 @@ Go back to the [Application Server Documentation](./APPLICATION_SERVER.md).
     - [GET /services/me](#get-servicesme)
     - [POST /services/:id/link](#post-servicesidlink)
     - [DELETE /services/:id/unlink](#delete-servicesidunlink)
-    - [POST /services/:id/refresh-token](#post-servicesidrefresh-token)
   - [About](#about)
     - [GET /about.json](#get-aboutjson)
   - [Admin](#admin)
@@ -81,8 +80,9 @@ Go back to the [Application Server Documentation](./APPLICATION_SERVER.md).
 
 **Request Body:**
 
-- `service` (string, required): OAuth2 service (e.g., "Google", "Discord").
 - `code` (string, required): Authorization code from the OAuth2 provider.
+- `provider` (string, required): OAuth2 provider (e.g., "Google", "Discord").
+- `redirect_uri` (string, required): Redirect URI used in the OAuth2 flow.
 
 **Response:**
 
@@ -127,8 +127,9 @@ Go back to the [Application Server Documentation](./APPLICATION_SERVER.md).
 
 **Request Body:**
 
-- `service` (string, required): OAuth2 service (e.g., "Google", "Discord").
 - `code` (string, required): Authorization code from the OAuth2 provider.
+- `provider` (string, required): OAuth2 provider (e.g., "Google", "Discord").
+- `redirect_uri` (string, required): Redirect URI used in the OAuth2 flow.
 
 **Response:**
 
@@ -603,7 +604,8 @@ Go back to the [Application Server Documentation](./APPLICATION_SERVER.md).
 
 **Request Body:**
 
-- `code` (string, required if service requires OAuth2, otherwise ignored): Exchange code or token for service authentication.
+- `code` (string, optional): Authorization code from the OAuth2 provider. Not required if the service does not require authentication or is already linked (has a valid refresh token).
+- `platform` (string, optional): Platform from which the linking is initiated (i.e., "web", "mobile"). Not required if the service does not require authentication or is already linked (has a valid refresh token).
 
 **Response:**
 
@@ -633,26 +635,6 @@ Go back to the [Application Server Documentation](./APPLICATION_SERVER.md).
 - `204 No Content`: Service successfully unlinked.
 - `401 Unauthorized`: Invalid or missing JWT token.
 - `404 Not Found`: Service not found.
-
----
-
-### POST /services/:id/refresh-token
-
-**Description:** Refresh the OAuth2 token for a linked service.
-
-**Access:** 🔒 Authenticated
-
-**Response:**
-
-*No response body.*
-
-**Status codes:**
-
-- `204 No Content`: Token successfully refreshed.
-- `400 Bad Request`: Invalid parameters.
-- `401 Unauthorized`: Invalid or missing JWT token.
-- `404 Not Found`: Service not found.
-- `409 Conflict`: Service not linked.
 
 ---
 

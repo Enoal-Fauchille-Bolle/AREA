@@ -1,41 +1,46 @@
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Service } from './entities/service.entity';
-import {
-  Component,
-  ComponentType,
-} from '../components/entities/component.entity';
-import { Variable } from '../variables/entities/variable.entity';
-import { UserService } from '../user-services/entities/user-service.entity';
+import { ComponentsService } from '../components/components.service';
+import { VariablesService } from '../variables/variables.service';
+import { UserServicesService } from './user-services/user-services.service';
+import { OAuth2Service } from '../oauth2/oauth2.service';
+import { ConfigService } from '@nestjs/config';
 import {
   ServiceActionsResponseDto,
   ServiceReactionsResponseDto,
   ServiceComponentsResponseDto,
   ServiceResponseDto,
   CreateServiceDto,
+  LinkServiceDto,
+  LinkPlatform,
 } from './dto';
-import { ConfigService } from '@nestjs/config';
-import { DiscordOAuth2Service } from './oauth2/discord-oauth2.service';
+import { getOAuthProviderFromString } from '../oauth2/dto';
 
 @Injectable()
 export class ServicesService {
+  private readonly webRedirectUri: string;
+  private readonly mobileRedirectUri: string;
+
   constructor(
     @InjectRepository(Service)
     private readonly serviceRepository: Repository<Service>,
-    @InjectRepository(Component)
-    private readonly componentRepository: Repository<Component>,
-    @InjectRepository(Variable)
-    private readonly variableRepository: Repository<Variable>,
-    @InjectRepository(UserService)
-    private readonly userServiceRepository: Repository<UserService>,
+    private readonly componentService: ComponentsService,
+    private readonly variableService: VariablesService,
+    private readonly userServiceService: UserServicesService,
+    private readonly oauth2Service: OAuth2Service,
     private readonly configService: ConfigService,
-    private readonly discordOAuth2Service: DiscordOAuth2Service,
-  ) {}
+  ) {
+    const appConfig = this.configService.get('app');
+    this.webRedirectUri = appConfig.oauth2.service.web_redirect_uri;
+    this.mobileRedirectUri = appConfig.oauth2.service.mobile_redirect_uri;
+  }
 
   async findAll(): Promise<ServiceResponseDto[]> {
     const services = await this.serviceRepository.find({});
@@ -79,19 +84,21 @@ export class ServicesService {
       throw new NotFoundException(`Service with ID ${id} not found`);
     }
 
-    const components = await this.componentRepository.find({
-      where: { service_id: id, type: ComponentType.ACTION },
-    });
+    const components = await this.componentService.findActions();
+    const filteredComponents = components.filter(
+      (component) => component.service_id === id,
+    );
 
     const result: ServiceActionsResponseDto[] = [];
 
-    for (const component of components) {
-      const variables = await this.variableRepository.find({
-        where: { component_id: component.id },
-        order: { display_order: 'ASC' },
-      });
+    for (const component of filteredComponents) {
+      const variables = await this.variableService.findByComponent(
+        component.id,
+      );
 
-      result.push(ServiceActionsResponseDto.fromEntity(component, variables));
+      result.push(
+        ServiceActionsResponseDto.fromResponseDto(component, variables),
+      );
     }
 
     return result;
@@ -103,19 +110,21 @@ export class ServicesService {
       throw new NotFoundException(`Service with ID ${id} not found`);
     }
 
-    const components = await this.componentRepository.find({
-      where: { service_id: id, type: ComponentType.REACTION },
-    });
+    const components = await this.componentService.findReactions();
+    const filteredComponents = components.filter(
+      (component) => component.service_id === id,
+    );
 
     const result: ServiceReactionsResponseDto[] = [];
 
-    for (const component of components) {
-      const variables = await this.variableRepository.find({
-        where: { component_id: component.id },
-        order: { display_order: 'ASC' },
-      });
+    for (const component of filteredComponents) {
+      const variables = await this.variableService.findByComponent(
+        component.id,
+      );
 
-      result.push(ServiceReactionsResponseDto.fromEntity(component, variables));
+      result.push(
+        ServiceReactionsResponseDto.fromResponseDto(component, variables),
+      );
     }
 
     return result;
@@ -127,20 +136,17 @@ export class ServicesService {
       throw new NotFoundException(`Service with ID ${id} not found`);
     }
 
-    const components = await this.componentRepository.find({
-      where: { service_id: id },
-    });
+    const components = await this.componentService.findByService(id);
 
     const result: ServiceComponentsResponseDto[] = [];
 
     for (const component of components) {
-      const variables = await this.variableRepository.find({
-        where: { component_id: component.id },
-        order: { display_order: 'ASC' },
-      });
+      const variables = await this.variableService.findByComponent(
+        component.id,
+      );
 
       result.push(
-        ServiceComponentsResponseDto.fromEntity(component, variables),
+        ServiceComponentsResponseDto.fromResponseDto(component, variables),
       );
     }
 
@@ -148,13 +154,20 @@ export class ServicesService {
   }
 
   async findUserServices(userId: number): Promise<ServiceResponseDto[]> {
-    const userServices = await this.userServiceRepository.find({
-      where: { user_id: userId },
-      relations: ['service'],
-    });
+    const userServices = await this.userServiceService.findByUser(userId);
 
-    return userServices.map((us) =>
-      ServiceResponseDto.fromEntity(us.service, this.configService),
+    return await Promise.all(
+      userServices.map(async (us) => {
+        const service = await this.serviceRepository.findOne({
+          where: { id: us.service.id },
+        });
+        if (!service) {
+          throw new NotFoundException(
+            `Service with ID ${us.service.id} not found`,
+          );
+        }
+        return ServiceResponseDto.fromEntity(service, this.configService);
+      }),
     );
   }
 
@@ -169,8 +182,42 @@ export class ServicesService {
   async linkService(
     userId: number,
     serviceId: number,
-    code?: string,
+    body: LinkServiceDto,
   ): Promise<void> {
+    const userService = await this.userServiceService.findOne(
+      userId,
+      serviceId,
+    );
+
+    if (userService) {
+      if (!userService.service.require_auth) {
+        return;
+      }
+      if (userService.refresh_token) {
+        const provider = getOAuthProviderFromString(userService.service.name);
+        // Unreachable code check
+        if (!provider) {
+          throw new InternalServerErrorException(
+            `OAuth provider for service "${userService.service.name}" should exist`,
+          );
+        }
+        const tokens = await this.oauth2Service.refreshAccessToken({
+          provider: provider,
+          refresh_token: userService.refresh_token,
+        });
+        await this.userServiceService.update({
+          user_id: userId,
+          service_id: serviceId,
+          oauth_token: tokens.access_token,
+          refresh_token: tokens.refresh_token,
+          token_expires_at: tokens.expires_in
+            ? new Date(Date.now() + tokens.expires_in * 1000)
+            : undefined,
+        });
+        return;
+      }
+    }
+
     const service = await this.serviceRepository.findOne({
       where: { id: serviceId },
     });
@@ -178,35 +225,58 @@ export class ServicesService {
       throw new NotFoundException(`Service with ID ${serviceId} not found`);
     }
 
-    const existing = await this.userServiceRepository.findOne({
-      where: { user_id: userId, service_id: serviceId },
+    if (!service.requires_auth) {
+      await this.userServiceService.create({
+        user_id: userId,
+        service_id: serviceId,
+      });
+      return;
+    }
+
+    if (!body.code || !body.platform) {
+      throw new BadRequestException(
+        'Authorization code and platform are required to link this service',
+      );
+    }
+
+    const redirectUri =
+      body.platform === LinkPlatform.WEB
+        ? this.webRedirectUri
+        : this.mobileRedirectUri;
+
+    const provider = getOAuthProviderFromString(service.name);
+    if (!provider) {
+      throw new BadRequestException(
+        `Cannot link service "${service.name}". The service may not be implemented or is not supported for linking.`,
+      );
+    }
+
+    const tokens = await this.oauth2Service.exchangeCodeForTokens({
+      code: body.code,
+      provider: provider,
+      redirect_uri: redirectUri,
     });
 
-    if (service.name.toLowerCase() === 'discord' && code) {
-      const tokens =
-        await this.discordOAuth2Service.exchangeCodeForTokens(code);
-
-      if (existing) {
-        existing.oauth_token = tokens.accessToken;
-        existing.refresh_token = tokens.refreshToken;
-        existing.token_expires_at = tokens.expiresAt;
-        await this.userServiceRepository.save(existing);
-      } else {
-        const userService = this.userServiceRepository.create({
-          user_id: userId,
-          service_id: serviceId,
-          oauth_token: tokens.accessToken,
-          refresh_token: tokens.refreshToken,
-          token_expires_at: tokens.expiresAt,
-        });
-        await this.userServiceRepository.save(userService);
-      }
-    } else if (!existing) {
-      throw new BadRequestException(
-        service.name.toLowerCase() === 'discord'
-          ? 'Discord service requires OAuth2 authentication code.'
-          : `Cannot link service "${service.name}". The service may require authentication or is not supported for linking.`,
-      );
+    if (userService) {
+      await this.userServiceService.update({
+        user_id: userId,
+        service_id: serviceId,
+        oauth_token: tokens.access_token,
+        refresh_token: tokens.refresh_token,
+        token_expires_at: tokens.expires_in
+          ? new Date(Date.now() + tokens.expires_in * 1000)
+          : undefined,
+      });
+    } else {
+      await this.userServiceService.create({
+        user_id: userId,
+        service_id: serviceId,
+        oauth_token: tokens.access_token,
+        refresh_token: tokens.refresh_token,
+        token_expires_at: tokens.expires_in
+          ? new Date(Date.now() + tokens.expires_in * 1000)
+          : undefined,
+      });
     }
   }
 
@@ -218,59 +288,25 @@ export class ServicesService {
       throw new NotFoundException(`Service with ID ${serviceId} not found`);
     }
 
-    const result = await this.userServiceRepository.delete({
-      user_id: userId,
-      service_id: serviceId,
-    });
-
-    if (result.affected === 0) {
-      throw new NotFoundException(
-        `User service link not found for user ${userId} and service ${serviceId}`,
-      );
-    }
-  }
-
-  async refreshServiceToken(userId: number, serviceId: number): Promise<void> {
-    const service = await this.serviceRepository.findOne({
-      where: { id: serviceId },
-    });
-    if (!service) {
-      throw new NotFoundException(`Service with ID ${serviceId} not found`);
-    }
-
-    if (service.name.toLowerCase() !== 'discord') {
-      throw new NotFoundException(
-        `Service ${service.name} does not support token refresh`,
-      );
-    }
-
-    const userService = await this.userServiceRepository.findOne({
-      where: { user_id: userId, service_id: serviceId },
-    });
-
-    if (!userService || !userService.refresh_token) {
-      throw new NotFoundException(
-        `User service link not found or no refresh token available`,
-      );
-    }
-
-    const tokens = await this.discordOAuth2Service.refreshAccessToken(
-      userService.refresh_token,
-    );
-
-    userService.oauth_token = tokens.accessToken;
-    userService.refresh_token = tokens.refreshToken;
-    userService.token_expires_at = tokens.expiresAt;
-    await this.userServiceRepository.save(userService);
+    await this.userServiceService.removeOne(userId, serviceId);
   }
 
   async getDiscordProfile(
     userId: number,
   ): Promise<{ username: string; avatar: string | null; id: string }> {
-    const userService = await this.userServiceRepository.findOne({
-      where: { user_id: userId, service: { name: 'Discord' } },
-      relations: ['service'],
+    // Find Discord service
+    const discordService = await this.serviceRepository.findOne({
+      where: { name: 'Discord' },
     });
+    if (!discordService) {
+      throw new NotFoundException('Discord service not found');
+    }
+
+    // Find user's Discord connection
+    const userService = await this.userServiceService.findOne(
+      userId,
+      discordService.id,
+    );
 
     if (!userService || !userService.oauth_token) {
       throw new NotFoundException('Discord account not connected');
@@ -321,19 +357,48 @@ export class ServicesService {
       throw new NotFoundException(`Service ${serviceName} not found`);
     }
 
-    const userService = await this.userServiceRepository.findOne({
-      where: {
-        user_id: userId,
-        service_id: service.id,
-      },
-    });
+    await this.userServiceService.removeOne(userId, service.id);
+  }
 
-    if (!userService) {
+  async refreshServiceToken(userId: number, serviceId: number): Promise<void> {
+    const service = await this.serviceRepository.findOne({
+      where: { id: serviceId },
+    });
+    if (!service) {
+      throw new NotFoundException(`Service with ID ${serviceId} not found`);
+    }
+
+    const userService = await this.userServiceService.findOne(
+      userId,
+      serviceId,
+    );
+
+    if (!userService || !userService.refresh_token) {
       throw new NotFoundException(
-        `No connection found to service ${serviceName}`,
+        `User service link not found or no refresh token available`,
       );
     }
 
-    await this.userServiceRepository.remove(userService);
+    const provider = getOAuthProviderFromString(service.name);
+    if (!provider) {
+      throw new BadRequestException(
+        `Service ${service.name} does not support token refresh`,
+      );
+    }
+
+    const tokens = await this.oauth2Service.refreshAccessToken({
+      provider: provider,
+      refresh_token: userService.refresh_token,
+    });
+
+    await this.userServiceService.update({
+      user_id: userId,
+      service_id: serviceId,
+      oauth_token: tokens.access_token,
+      refresh_token: tokens.refresh_token,
+      token_expires_at: tokens.expires_in
+        ? new Date(Date.now() + tokens.expires_in * 1000)
+        : undefined,
+    });
   }
 }

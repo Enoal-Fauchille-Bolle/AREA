@@ -24,6 +24,8 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
     await this.createClockService();
     await this.createEmailService();
     await this.createDiscordService();
+    await this.createGoogleService();
+    await this.createGithubService();
   }
 
   private async createClockService(): Promise<void> {
@@ -241,8 +243,10 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
     const discordService = await this.servicesService.create({
       name: 'Discord',
       description:
-        'Send messages and interact with Discord servers and channels',
-      requires_auth: true,
+        'Send messages to Discord channels using the AREA Discord Bot. The bot must be added to your server with appropriate permissions.',
+      icon_path:
+        'https://static.vecteezy.com/system/resources/previews/023/741/147/non_2x/discord-logo-icon-social-media-icon-free-png.png',
+      requires_auth: false, // Discord bot doesn't require user OAuth
       is_active: true,
     });
 
@@ -250,15 +254,27 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       service_id: discordService.id,
       type: ComponentType.REACTION,
       name: 'send_message',
-      description: 'Send a message to a Discord channel',
+      description:
+        'Send a message to a Discord channel using the AREA Discord Bot',
       is_active: true,
     });
 
+    // Create message_posted action component
+    const messagePostedComponent = await this.componentsService.create({
+      service_id: discordService.id,
+      type: ComponentType.ACTION,
+      name: 'message_posted',
+      description: 'Triggers when a new message is posted in a Discord channel',
+      is_active: true,
+    });
+
+    // Create component parameters for send_message
     await Promise.all([
       this.variablesService.create({
         component_id: sendMessageComponent.id,
         name: 'channel_id',
-        description: 'Discord channel ID where the message will be sent',
+        description:
+          'Discord channel ID where the message will be sent. The AREA bot must have access to this channel.',
         kind: VariableKind.PARAMETER,
         type: VariableType.STRING,
         nullable: false,
@@ -277,47 +293,360 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
         placeholder: 'Hello from AREA! 👋',
         display_order: 2,
       }),
+    ]);
 
+    // Create component parameters for message_posted
+    await Promise.all([
+      // Channel ID parameter - required
       this.variablesService.create({
-        component_id: sendMessageComponent.id,
-        name: 'embed_title',
-        description: 'Optional embed title for rich message formatting',
+        component_id: messagePostedComponent.id,
+        name: 'channel_id',
+        description:
+          'Discord channel ID to monitor for new messages. The AREA bot must have access to this channel.',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: false,
+        placeholder: '123456789012345678',
+        validation_regex: '^[0-9]{17,19}$', // Discord snowflake ID pattern
+        display_order: 1,
+      }),
+
+      // Author filter parameter - optional
+      this.variablesService.create({
+        component_id: messagePostedComponent.id,
+        name: 'author_filter',
+        description:
+          'Filter messages by author username (optional, case-insensitive)',
         kind: VariableKind.PARAMETER,
         type: VariableType.STRING,
         nullable: true,
-        placeholder: 'AREA Notification',
+        placeholder: 'username',
+        display_order: 2,
+      }),
+
+      // Content filter parameter - optional
+      this.variablesService.create({
+        component_id: messagePostedComponent.id,
+        name: 'content_filter',
+        description:
+          'Filter messages containing this text (optional, case-insensitive)',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: true,
+        placeholder: 'hello',
+        display_order: 3,
+      }),
+    ]);
+
+    // Create return values for message_posted
+    await Promise.all([
+      // Author name return value
+      this.variablesService.create({
+        component_id: messagePostedComponent.id,
+        name: 'author_name',
+        description: 'Username of the message author',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 1,
+      }),
+
+      // Author ID return value
+      this.variablesService.create({
+        component_id: messagePostedComponent.id,
+        name: 'author_id',
+        description: 'Discord user ID of the message author',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 2,
+      }),
+
+      // Message content return value
+      this.variablesService.create({
+        component_id: messagePostedComponent.id,
+        name: 'message_content',
+        description: 'Content of the posted message',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
         display_order: 3,
       }),
 
+      // Message ID return value
       this.variablesService.create({
-        component_id: sendMessageComponent.id,
-        name: 'embed_description',
-        description: 'Optional embed description for rich message formatting',
-        kind: VariableKind.PARAMETER,
+        component_id: messagePostedComponent.id,
+        name: 'message_id',
+        description: 'Discord message ID of the posted message',
+        kind: VariableKind.RETURN_VALUE,
         type: VariableType.STRING,
-        nullable: true,
-        placeholder: 'Your automation was triggered successfully',
+        nullable: false,
         display_order: 4,
       }),
 
+      // Current time return value
       this.variablesService.create({
-        component_id: sendMessageComponent.id,
-        name: 'embed_color',
-        description: 'Optional embed color in hexadecimal format (without #)',
-        kind: VariableKind.PARAMETER,
+        component_id: messagePostedComponent.id,
+        name: 'current_time',
+        description: 'Timestamp when the message was posted (ISO format)',
+        kind: VariableKind.RETURN_VALUE,
         type: VariableType.STRING,
-        nullable: true,
-        placeholder: '5865F2',
-        validation_regex: '^[0-9A-Fa-f]{6}$',
+        nullable: false,
         display_order: 5,
       }),
     ]);
 
+    // Create react_to_message reaction component
+    const reactToMessageComponent = await this.componentsService.create({
+      service_id: discordService.id,
+      type: ComponentType.REACTION,
+      name: 'react_to_message',
+      description: 'React to a Discord message with an emoji',
+      is_active: true,
+    });
+
+    // Create reaction_added action component
+    const reactionAddedComponent = await this.componentsService.create({
+      service_id: discordService.id,
+      type: ComponentType.ACTION,
+      name: 'reaction_added',
+      description: 'Triggers when a reaction is added to a Discord message',
+      is_active: true,
+    });
+
+    // Create component parameters for react_to_message
+    await Promise.all([
+      // Channel ID parameter - required
+      this.variablesService.create({
+        component_id: reactToMessageComponent.id,
+        name: 'channel_id',
+        description:
+          'Discord channel ID where the message is located. The AREA bot must have access to this channel.',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: false,
+        placeholder: '123456789012345678',
+        validation_regex: '^[0-9]{17,19}$', // Discord snowflake ID pattern
+        display_order: 1,
+      }),
+
+      // Message ID parameter - required
+      this.variablesService.create({
+        component_id: reactToMessageComponent.id,
+        name: 'message_id',
+        description: 'Discord message ID to react to',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: false,
+        placeholder: '123456789012345678',
+        validation_regex: '^[0-9]{17,19}$', // Discord snowflake ID pattern
+        display_order: 2,
+      }),
+
+      // Emoji parameter - required
+      this.variablesService.create({
+        component_id: reactToMessageComponent.id,
+        name: 'emoji',
+        description: 'Emoji to react with (Unicode emoji or custom emoji name)',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: false,
+        placeholder: '👍',
+        display_order: 3,
+      }),
+    ]);
+
+    // Create component parameters for reaction_added
+    await Promise.all([
+      // Channel ID parameter - required
+      this.variablesService.create({
+        component_id: reactionAddedComponent.id,
+        name: 'channel_id',
+        description:
+          'Discord channel ID to monitor for reactions. The AREA bot must have access to this channel.',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: false,
+        placeholder: '123456789012345678',
+        validation_regex: '^[0-9]{17,19}$', // Discord snowflake ID pattern
+        display_order: 1,
+      }),
+
+      // Message ID parameter - optional
+      this.variablesService.create({
+        component_id: reactionAddedComponent.id,
+        name: 'message_id',
+        description:
+          'Specific message ID to monitor for reactions (optional, monitors all messages if not specified)',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: true,
+        placeholder: '123456789012345678',
+        validation_regex: '^[0-9]{17,19}$',
+        display_order: 2,
+      }),
+
+      // Emoji filter parameter - optional
+      this.variablesService.create({
+        component_id: reactionAddedComponent.id,
+        name: 'emoji_filter',
+        description:
+          'Filter reactions by emoji (optional, case-insensitive partial match)',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: true,
+        placeholder: '👍',
+        display_order: 3,
+      }),
+
+      // User filter parameter - optional
+      this.variablesService.create({
+        component_id: reactionAddedComponent.id,
+        name: 'user_filter',
+        description:
+          'Filter reactions by username (optional, case-insensitive partial match)',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: true,
+        placeholder: 'username',
+        display_order: 4,
+      }),
+    ]);
+
+    // Create return values for reaction_added
+    await Promise.all([
+      // User name return value
+      this.variablesService.create({
+        component_id: reactionAddedComponent.id,
+        name: 'user_name',
+        description: 'Username of the user who added the reaction',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 1,
+      }),
+
+      // User ID return value
+      this.variablesService.create({
+        component_id: reactionAddedComponent.id,
+        name: 'user_id',
+        description: 'Discord user ID of the user who added the reaction',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 2,
+      }),
+
+      // Emoji name return value
+      this.variablesService.create({
+        component_id: reactionAddedComponent.id,
+        name: 'emoji_name',
+        description: 'Name or representation of the emoji used in the reaction',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 3,
+      }),
+
+      // Emoji ID return value
+      this.variablesService.create({
+        component_id: reactionAddedComponent.id,
+        name: 'emoji_id',
+        description:
+          'Discord emoji ID (for custom emojis, null for Unicode emojis)',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: true,
+        display_order: 4,
+      }),
+
+      // Message ID return value
+      this.variablesService.create({
+        component_id: reactionAddedComponent.id,
+        name: 'message_id',
+        description: 'Discord message ID that received the reaction',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 5,
+      }),
+
+      // Channel ID return value
+      this.variablesService.create({
+        component_id: reactionAddedComponent.id,
+        name: 'channel_id',
+        description: 'Discord channel ID where the reaction occurred',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 6,
+      }),
+
+      // Current time return value
+      this.variablesService.create({
+        component_id: reactionAddedComponent.id,
+        name: 'current_time',
+        description: 'Timestamp when the reaction was added (ISO format)',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 7,
+      }),
+    ]);
+
+    console.log('Discord service with all components created successfully');
+  }
+
+  private async createGithubService(): Promise<void> {
+    try {
+      // Check if GitHub service already exists
+      await this.servicesService.findByName('GitHub');
+      console.log('GitHub service already exists, skipping creation');
+      return;
+    } catch {
+      // Service doesn't exist, create it
+      console.log('Creating GitHub service...');
+    }
+
+    // Create GitHub service
+    const githubService = await this.servicesService.create({
+      name: 'GitHub',
+      description: 'Source code hosting and collaboration platform',
+      icon_path:
+        'https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg',
+      requires_auth: true,
+      is_active: true,
+    });
+
+    // Create push_event action component
+    const pushEventComponent = await this.componentsService.create({
+      service_id: githubService.id,
+      type: ComponentType.ACTION,
+      name: 'push_event',
+      description: 'Triggers when a push is made to a repository (any branch)',
+      is_active: true,
+      webhook_endpoint: '/webhooks/github',
+    });
+
+    // Create repository parameter for push_event
+    await this.variablesService.create({
+      component_id: pushEventComponent.id,
+      name: 'repository',
+      description:
+        'Full repository name (owner/repo, e.g., "octocat/Hello-World"). Leave empty to match all repositories.',
+      kind: VariableKind.PARAMETER,
+      type: VariableType.STRING,
+      nullable: true,
+      placeholder: 'octocat/Hello-World',
+      display_order: 1,
+    });
+
+    // Create output variables for push_event
     await Promise.all([
       this.variablesService.create({
-        component_id: sendMessageComponent.id,
-        name: 'message_id',
-        description: 'ID of the sent Discord message',
+        component_id: pushEventComponent.id,
+        name: 'head_commit_branch',
+        description: 'Branch name where the push occurred',
         kind: VariableKind.RETURN_VALUE,
         type: VariableType.STRING,
         nullable: false,
@@ -325,28 +654,319 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       }),
 
       this.variablesService.create({
-        component_id: sendMessageComponent.id,
-        name: 'message_url',
-        description: 'Direct URL to the sent Discord message',
+        component_id: pushEventComponent.id,
+        name: 'head_commit_message',
+        description: 'Commit message of the latest push',
         kind: VariableKind.RETURN_VALUE,
-        type: VariableType.URL,
+        type: VariableType.STRING,
         nullable: false,
         display_order: 2,
       }),
 
       this.variablesService.create({
-        component_id: sendMessageComponent.id,
-        name: 'sent_at',
-        description: 'Timestamp when the message was sent',
+        component_id: pushEventComponent.id,
+        name: 'head_commit_date',
+        description: 'Date and time when the commit was made',
         kind: VariableKind.RETURN_VALUE,
         type: VariableType.DATE,
         nullable: false,
         display_order: 3,
       }),
+
+      this.variablesService.create({
+        component_id: pushEventComponent.id,
+        name: 'head_commit_url',
+        description: 'Direct URL to the commit on GitHub',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.URL,
+        nullable: false,
+        display_order: 4,
+      }),
+
+      this.variablesService.create({
+        component_id: pushEventComponent.id,
+        name: 'head_commit_id',
+        description: 'Full SHA hash of the commit',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 5,
+      }),
+
+      this.variablesService.create({
+        component_id: pushEventComponent.id,
+        name: 'head_commit_author_username',
+        description: 'GitHub username of the commit author',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 6,
+      }),
+
+      this.variablesService.create({
+        component_id: pushEventComponent.id,
+        name: 'repository_name',
+        description: 'Full repository name (owner/repo)',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 7,
+      }),
+
+      this.variablesService.create({
+        component_id: pushEventComponent.id,
+        name: 'pusher_name',
+        description: 'Name of the person who pushed',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 8,
+      }),
+
+      this.variablesService.create({
+        component_id: pushEventComponent.id,
+        name: 'commits_count',
+        description: 'Number of commits in this push',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.NUMBER,
+        nullable: false,
+        display_order: 9,
+      }),
+    ]);
+
+    // Create pull_request_event action component
+    const pullRequestEventComponent = await this.componentsService.create({
+      service_id: githubService.id,
+      type: ComponentType.ACTION,
+      name: 'pull_request_event',
+      description: 'Triggers when a new pull request is opened',
+      is_active: true,
+      webhook_endpoint: '/webhooks/github',
+    });
+
+    await this.variablesService.create({
+      component_id: pullRequestEventComponent.id,
+      name: 'repository',
+      description:
+        'Full repository name (owner/repo, e.g., "octocat/Hello-World"). Leave empty to match all repositories.',
+      kind: VariableKind.PARAMETER,
+      type: VariableType.STRING,
+      nullable: true,
+      placeholder: 'octocat/Hello-World',
+      display_order: 1,
+    });
+
+    // Create output variables for pull_request_event
+    await Promise.all([
+      this.variablesService.create({
+        component_id: pullRequestEventComponent.id,
+        name: 'pr_title',
+        description: 'Title of the pull request',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 1,
+      }),
+
+      this.variablesService.create({
+        component_id: pullRequestEventComponent.id,
+        name: 'pr_body',
+        description: 'Body/description of the pull request',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 2,
+      }),
+
+      this.variablesService.create({
+        component_id: pullRequestEventComponent.id,
+        name: 'pr_link',
+        description: 'Direct URL to the pull request on GitHub',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.URL,
+        nullable: false,
+        display_order: 3,
+      }),
+
+      this.variablesService.create({
+        component_id: pullRequestEventComponent.id,
+        name: 'pr_author_username',
+        description: 'GitHub username of the pull request author',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 4,
+      }),
+
+      this.variablesService.create({
+        component_id: pullRequestEventComponent.id,
+        name: 'pr_head_branch',
+        description: 'Source branch of the pull request',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 5,
+      }),
+
+      this.variablesService.create({
+        component_id: pullRequestEventComponent.id,
+        name: 'pr_base_branch',
+        description: 'Target branch of the pull request',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 6,
+      }),
+
+      this.variablesService.create({
+        component_id: pullRequestEventComponent.id,
+        name: 'repository_name',
+        description: 'Full repository name (owner/repo)',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 7,
+      }),
+
+      this.variablesService.create({
+        component_id: pullRequestEventComponent.id,
+        name: 'pr_number',
+        description: 'Pull request number',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.NUMBER,
+        nullable: false,
+        display_order: 8,
+      }),
+    ]);
+
+    // Create issue_event action component
+    const issueEventComponent = await this.componentsService.create({
+      service_id: githubService.id,
+      type: ComponentType.ACTION,
+      name: 'issue_event',
+      description: 'Triggers when a new issue is created',
+      is_active: true,
+      webhook_endpoint: '/webhooks/github',
+    });
+
+    await this.variablesService.create({
+      component_id: issueEventComponent.id,
+      name: 'repository',
+      description:
+        'Full repository name (owner/repo, e.g., "octocat/Hello-World"). Leave empty to match all repositories.',
+      kind: VariableKind.PARAMETER,
+      type: VariableType.STRING,
+      nullable: true,
+      placeholder: 'octocat/Hello-World',
+      display_order: 1,
+    });
+
+    // Create output variables for issue_event
+    await Promise.all([
+      this.variablesService.create({
+        component_id: issueEventComponent.id,
+        name: 'issue_title',
+        description: 'Title of the issue',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 1,
+      }),
+
+      this.variablesService.create({
+        component_id: issueEventComponent.id,
+        name: 'issue_body',
+        description: 'Body/description of the issue',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 2,
+      }),
+
+      this.variablesService.create({
+        component_id: issueEventComponent.id,
+        name: 'issue_link',
+        description: 'Direct URL to the issue on GitHub',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.URL,
+        nullable: false,
+        display_order: 3,
+      }),
+
+      this.variablesService.create({
+        component_id: issueEventComponent.id,
+        name: 'issue_author_username',
+        description: 'GitHub username of the issue author',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 4,
+      }),
+
+      this.variablesService.create({
+        component_id: issueEventComponent.id,
+        name: 'issue_milestone',
+        description: 'Milestone associated with the issue (null if none)',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: true,
+        display_order: 5,
+      }),
+
+      this.variablesService.create({
+        component_id: issueEventComponent.id,
+        name: 'issue_labels',
+        description: 'Comma-separated list of issue labels',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 6,
+      }),
+
+      this.variablesService.create({
+        component_id: issueEventComponent.id,
+        name: 'repository_name',
+        description: 'Full repository name (owner/repo)',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 7,
+      }),
+
+      this.variablesService.create({
+        component_id: issueEventComponent.id,
+        name: 'issue_number',
+        description: 'Issue number',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.NUMBER,
+        nullable: false,
+        display_order: 8,
+      }),
     ]);
 
     console.log(
-      'Discord service and send_message component created successfully',
+      'GitHub service and webhook action components created successfully',
     );
+  }
+
+  private async createGoogleService(): Promise<void> {
+    try {
+      await this.servicesService.findByName('Google');
+      console.log('Google service already exists, skipping creation');
+      return;
+    } catch {
+      console.log('Creating Google service...');
+    }
+
+    await this.servicesService.create({
+      name: 'Google',
+      description: 'Google OAuth2 integration for authentication and services',
+      icon_path:
+        'https://www.gstatic.com/images/branding/product/1x/googleg_48dp.png',
+      requires_auth: true,
+      is_active: true,
+    });
+
+    console.log('Google service created successfully');
   }
 }

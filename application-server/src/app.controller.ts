@@ -6,11 +6,6 @@ import type { Request } from 'express';
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
-  @Get()
-  getHello(): string {
-    return this.appService.getHello();
-  }
-
   @Get('about.json')
   async getAbout(@Req() request: Request): Promise<any> {
     return this.appService.getAbout(request);

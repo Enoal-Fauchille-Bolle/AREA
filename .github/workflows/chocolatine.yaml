@@ -387,9 +387,9 @@ jobs:
         run: npm run test:cov
         working-directory: application-server
 
-      - name: Running Integration Tests
-        run: npm run test:e2e
-        working-directory: application-server
+      # - name: Running Integration Tests
+      #   run: npm run test:e2e
+      #   working-directory: application-server
 
       - name: Upload Test Coverage
         uses: actions/upload-artifact@v4

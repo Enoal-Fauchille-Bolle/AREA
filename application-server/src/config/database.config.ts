@@ -14,6 +14,7 @@ export const DB_COLUMN_LENGTHS = {
   areaName: 255,
   executionStatus: 20,
   hookStateKey: 255,
+  oauth2ProviderUserId: 255,
 } as const;
 
 // Default Values

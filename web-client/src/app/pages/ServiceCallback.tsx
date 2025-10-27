@@ -1,73 +1,181 @@
-import React, { useEffect } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { authApi, tokenService } from '../../services/api';
+import { googleOAuth } from '../../lib/googleOAuth';
 
-const ServiceCallback: React.FC = () => {
+function ServiceCallback() {
+  const [status, setStatus] = useState<'loading' | 'success' | 'error'>(
+    'loading',
+  );
+  const [errorMessage, setErrorMessage] = useState('');
+  const navigate = useNavigate();
+  const location = useLocation();
+  const hasHandledRef = useRef(false);
+
   useEffect(() => {
-    console.log('=== ServiceCallback mounted ===');
-    console.log('Full URL:', window.location.href);
-    console.log('Window opener exists:', !!window.opener);
-    console.log('Window origin:', window.location.origin);
+    const handleCallback = async () => {
+      if (hasHandledRef.current) {
+        return;
+      }
+      hasHandledRef.current = true;
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
-    const error = urlParams.get('error');
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+      const error = urlParams.get('error');
 
-    console.log('OAuth params:', {
-      code: code ? `${code.substring(0, 10)}...` : null,
-      error,
-    });
+      // Check if this is a Discord OAuth popup callback
+      if (window.opener) {
+        console.log('=== Discord OAuth Callback (popup) ===');
+        const service = 'DISCORD';
 
-    const service = 'DISCORD';
+        let message;
+        if (error) {
+          message = {
+            type: `${service}_OAUTH_ERROR`,
+            error: error,
+          };
+        } else if (code) {
+          message = {
+            type: `${service}_OAUTH_SUCCESS`,
+            code: code,
+          };
+        } else {
+          message = {
+            type: `${service}_OAUTH_ERROR`,
+            error: 'No authorization code received',
+          };
+        }
 
-    if (!window.opener) {
-      console.error(
-        'ERROR: window.opener is null! Cannot send message to parent.',
-      );
-      alert('Error: Parent window not found. Please try again.');
-      return;
-    }
+        window.opener.postMessage(message, window.location.origin);
+        setTimeout(() => {
+          window.close();
+        }, 1000);
+        return;
+      }
 
-    let message;
-    if (error) {
-      console.log('Sending OAuth error to opener');
-      message = {
-        type: `${service}_OAUTH_ERROR`,
-        error: error,
-      };
-    } else if (code) {
-      console.log('Sending OAuth success to opener with code');
-      message = {
-        type: `${service}_OAUTH_SUCCESS`,
-        code: code,
-      };
-    } else {
-      console.log('No code or error found, sending error');
-      message = {
-        type: `${service}_OAUTH_ERROR`,
-        error: 'No authorization code received',
-      };
-    }
+      // Otherwise, handle Google OAuth callback
+      try {
+        const googleError = googleOAuth.extractErrorFromUrl();
+        if (googleError) {
+          throw new Error(`OAuth error: ${googleError}`);
+        }
 
-    console.log('Posting message:', message);
-    window.opener.postMessage(message, window.location.origin);
-    console.log('Message posted successfully');
+        const googleCode = googleOAuth.extractCodeFromUrl();
+        if (!googleCode) {
+          throw new Error('No authorization code received from Google');
+        }
 
-    setTimeout(() => {
-      console.log('Closing popup window');
-      window.close();
-    }, 1000);
-  }, []);
+        const intent = googleOAuth.extractIntentFromUrl();
+
+        const response =
+          intent === 'register'
+            ? await authApi.registerWithOAuth2({
+                provider: 'google',
+                code: googleCode,
+                redirect_uri: googleOAuth.redirectUri,
+              })
+            : await authApi.loginWithOAuth2({
+                provider: 'google',
+                code: googleCode,
+                redirect_uri: googleOAuth.redirectUri,
+              });
+
+        tokenService.setToken(response.token);
+        if (!tokenService.getToken()) {
+          throw new Error('Failed to save authentication token');
+        }
+        setStatus('success');
+
+        setTimeout(() => {
+          navigate('/profile', { replace: true });
+        }, 1500);
+      } catch (err) {
+        setStatus('error');
+        setErrorMessage(
+          err instanceof Error ? err.message : 'An unexpected error occurred',
+        );
+
+        setTimeout(() => {
+          navigate('/login');
+        }, 3000);
+      }
+    };
+
+    handleCallback();
+  }, [location, navigate]);
 
   return (
     <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-        <p className="text-white">Processing authentication...</p>
-        <p className="text-gray-400 text-sm mt-2">
-          This window will close automatically
-        </p>
+      <div className="bg-white rounded-2xl p-12 shadow-2xl max-w-md w-full mx-4">
+        {status === 'loading' && (
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-black border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <h2 className="text-2xl font-black text-black mb-2">
+              {window.opener
+                ? 'Processing Discord authentication...'
+                : 'Authenticating with Google...'}
+            </h2>
+            <p className="text-gray-600">
+              {window.opener
+                ? 'This window will close automatically'
+                : 'Please wait while we sign you in'}
+            </p>
+          </div>
+        )}
+
+        {status === 'success' && (
+          <div className="text-center">
+            <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg
+                className="w-10 h-10 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-black text-black mb-2">
+              Successfully Authenticated!
+            </h2>
+            <p className="text-gray-600">Redirecting to your profile...</p>
+          </div>
+        )}
+
+        {status === 'error' && (
+          <div className="text-center">
+            <div className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg
+                className="w-10 h-10 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-black text-black mb-2">
+              Authentication Failed
+            </h2>
+            <p className="text-gray-600 mb-4">{errorMessage}</p>
+            <p className="text-sm text-gray-500">
+              Redirecting to login page...
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
-};
+}
 
 export default ServiceCallback;

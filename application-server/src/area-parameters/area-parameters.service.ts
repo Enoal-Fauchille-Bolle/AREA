@@ -11,12 +11,14 @@ import {
   UpdateAreaParameterDto,
   AreaParameterResponseDto,
 } from './dto';
+import { VariableInterpolationService } from '../common/variable-interpolation.service';
 
 @Injectable()
 export class AreaParametersService {
   constructor(
     @InjectRepository(AreaParameter)
     private readonly areaParameterRepository: Repository<AreaParameter>,
+    private readonly variableInterpolationService: VariableInterpolationService,
   ) {}
 
   async create(
@@ -217,6 +219,27 @@ export class AreaParametersService {
     if (areaParameters.length > 0) {
       await this.areaParameterRepository.remove(areaParameters);
     }
+  }
+
+  /**
+   * Get area parameters with variable interpolation applied
+   * @param areaId - The area ID
+   * @param executionContext - Object containing action output variables
+   * @returns Array of interpolated area parameters
+   */
+  async findByAreaWithInterpolation(
+    areaId: number,
+    executionContext: Record<string, unknown> = {},
+  ): Promise<AreaParameterResponseDto[]> {
+    const areaParameters = await this.findByArea(areaId);
+
+    return areaParameters.map((param) => ({
+      ...param,
+      value: this.variableInterpolationService.interpolate(
+        param.value,
+        executionContext,
+      ),
+    }));
   }
 
   private toResponseDto(

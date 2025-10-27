@@ -57,15 +57,33 @@ export class AreasController {
   @Post()
   async create(
     @Request() req: { user: { id: number } },
-    @Body() createAreaDto: CreateAreaDto,
+    @Body()
+    body:
+      | CreateAreaDto
+      | {
+          area: CreateAreaDto;
+          parameters: { [parameterName: string]: string };
+        },
   ) {
     try {
       if (!req.user?.id) {
         throw new UnauthorizedException('User not authenticated');
       }
       const userId = req.user.id;
-      console.log('Controller: Creating area', { userId, createAreaDto });
-      const area = await this.areasService.create(userId, createAreaDto);
+
+      // Check if the request has the create-with-parameters format
+      if ('area' in body && 'parameters' in body) {
+        // Handle the create-with-parameters format
+        return await this.areasService.createWithParameters(
+          userId,
+          body.area,
+          body.parameters,
+        );
+      }
+
+      // Handle regular format
+      console.log('Controller: Creating area', { userId, createAreaDto: body });
+      const area = await this.areasService.create(userId, body);
       console.log('Controller: Area created', area);
       return area;
     } catch (error) {
