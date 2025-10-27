@@ -94,6 +94,7 @@ export const AreaCard = ({
       reddit: 'https://cdn.simpleicons.org/reddit/FF4500',
       google: 'https://cdn.simpleicons.org/google/4285F4',
       spotify: 'https://cdn.simpleicons.org/spotify/1DB954',
+      github: 'https://cdn.simpleicons.org/github/181717',
     };
 
     const logoUrl = logoUrls[name];
