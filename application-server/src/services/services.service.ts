@@ -340,6 +340,60 @@ export class ServicesService {
     }
   }
 
+  async getGitHubProfile(
+    userId: number,
+  ): Promise<{
+    id: string;
+    login: string;
+    avatar_url: string | null;
+    email?: string;
+  }> {
+    const githubService = await this.serviceRepository.findOne({
+      where: { name: 'GitHub' },
+    });
+    if (!githubService) {
+      throw new NotFoundException('GitHub service not found');
+    }
+
+    const userService = await this.userServiceService.findOne(
+      userId,
+      githubService.id,
+    );
+
+    if (!userService || !userService.oauth_token) {
+      throw new NotFoundException('GitHub account not connected');
+    }
+
+    try {
+      const response = await fetch('https://api.github.com/user', {
+        headers: {
+          Authorization: `Bearer ${userService.oauth_token}`,
+          Accept: 'application/vnd.github.v3+json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch GitHub profile');
+      }
+
+      const profile = (await response.json()) as {
+        id: number;
+        login: string;
+        avatar_url: string | null;
+        email?: string;
+      };
+
+      return {
+        id: profile.id.toString(),
+        login: profile.login,
+        avatar_url: profile.avatar_url,
+        email: profile.email,
+      };
+    } catch {
+      throw new BadRequestException('Failed to retrieve GitHub profile');
+    }
+  }
+
   async disconnectService(userId: number, serviceName: string): Promise<void> {
     const service = await this.serviceRepository.findOne({
       where: [

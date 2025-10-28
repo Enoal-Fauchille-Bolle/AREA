@@ -176,6 +176,19 @@ export class ServicesController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('github/profile')
+  async getGitHubProfile(
+    @Request() req: { user: { id: number } },
+  ): Promise<{
+    id: string;
+    login: string;
+    avatar_url: string | null;
+    email?: string;
+  }> {
+    return this.servicesService.getGitHubProfile(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Delete(':serviceName/disconnect')
   @HttpCode(HttpStatus.NO_CONTENT)
   async disconnectService(
