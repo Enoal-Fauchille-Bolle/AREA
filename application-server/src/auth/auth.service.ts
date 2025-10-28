@@ -184,8 +184,9 @@ export class AuthService {
       );
     }
 
-    const serviceName = OAuthProviderServiceNameMap[body.provider];
-    const service = await this.servicesService.findByName(serviceName);
+    const service = await this.servicesService.findByName(
+      OAuthProviderServiceNameMap[body.provider],
+    );
 
     const userAccount =
       await this.userOAuth2AccountsService.findByServiceAccountId(
@@ -193,27 +194,46 @@ export class AuthService {
         userInfo.id,
       );
 
-    if (!userAccount) {
-      throw new UnauthorizedException(
-        'No account associated with this OAuth2 provider. Please register first.',
+    if (userAccount) {
+      if (userInfo.email && userAccount.email !== userInfo.email) {
+        await this.userOAuth2AccountsService.updateEmail(
+          userAccount.user.id,
+          service.id,
+          userInfo.email,
+        );
+      }
+      await this.usersService.updateLastConnection(userAccount.user.id);
+      return new AuthResponseDto(
+        this.jwtService.sign({
+          email: userAccount.user.email,
+          sub: userAccount.user.id,
+          username: userAccount.user.username,
+        }),
       );
     }
 
-    const user = await this.usersService.findOne(userAccount.user.id);
-    if (!user) {
-      throw new NotFoundException('User not found');
+    const user = await this.usersService.findByEmail(userInfo.email);
+    if (user) {
+      await this.userOAuth2AccountsService.create({
+        service_id: service.id,
+        oauth2_provider_user_id: userInfo.id,
+        user_id: user.id,
+        email: userInfo.email,
+      });
+
+      await this.usersService.updateLastConnection(user.id);
+      return new AuthResponseDto(
+        this.jwtService.sign({
+          email: user.email,
+          sub: user.id,
+          username: user.username,
+        }),
+      );
     }
 
-    await this.usersService.updateLastConnection(user.id);
-
-    const payload = {
-      email: user.email,
-      sub: user.id,
-      username: user.username,
-    };
-    const token = this.jwtService.sign(payload);
-
-    return new AuthResponseDto(token);
+    throw new UnauthorizedException(
+      'No account found with this OAuth2 provider. Please sign up first.',
+    );
   }
 
   async registerWithOAuth2(body: OAuthRegisterDto): Promise<AuthResponseDto> {
@@ -229,8 +249,9 @@ export class AuthService {
       );
     }
 
-    const serviceName = OAuthProviderServiceNameMap[body.provider];
-    const service = await this.servicesService.findByName(serviceName);
+    const service = await this.servicesService.findByName(
+      OAuthProviderServiceNameMap[body.provider],
+    );
 
     const userAccount =
       await this.userOAuth2AccountsService.findByServiceAccountId(
@@ -279,13 +300,12 @@ export class AuthService {
 
     await this.usersService.updateLastConnection(newUser.id);
 
-    const payload = {
-      email: newUser.email,
-      sub: newUser.id,
-      username: newUser.username,
-    };
-    const token = this.jwtService.sign(payload);
-
-    return new AuthResponseDto(token);
+    return new AuthResponseDto(
+      this.jwtService.sign({
+        email: newUser.email,
+        sub: newUser.id,
+        username: newUser.username,
+      }),
+    );
   }
 }

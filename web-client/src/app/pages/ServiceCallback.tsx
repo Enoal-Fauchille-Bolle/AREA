@@ -49,7 +49,6 @@ function ServiceCallback() {
         if (!tokenService.getToken()) {
           throw new Error('Failed to save authentication token');
         }
-
         setStatus('success');
 
         setTimeout(() => {

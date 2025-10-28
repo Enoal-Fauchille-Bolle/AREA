@@ -38,13 +38,6 @@ export const appConfig = registerAs('app', () => {
       logging: process.env.NODE_ENV !== 'production',
     },
 
-    // Time Constants (in milliseconds)
-    time: {
-      minuteInMs: 60 * 1000,
-      hourInMs: 60 * 60 * 1000,
-      dayInMs: 24 * 60 * 60 * 1000,
-    },
-
     // OAuth2 Configuration
     oauth2: {
       auth: {

@@ -28,10 +28,10 @@ export class OAuth2Service {
   private readonly TOKEN_URLS: Record<OAuthProvider, string> = {
     [OAuthProvider.DISCORD]: 'https://discord.com/api/oauth2/token',
     [OAuthProvider.GOOGLE]: 'https://oauth2.googleapis.com/token',
+    [OAuthProvider.GMAIL]: 'https://oauth2.googleapis.com/token',
     [OAuthProvider.GITHUB]: 'https://github.com/login/oauth/access_token',
     [OAuthProvider.SPOTIFY]: 'https://accounts.spotify.com/api/token',
     [OAuthProvider.TWITCH]: 'https://id.twitch.tv/oauth2/token',
-    [OAuthProvider.GMAIL]: 'https://oauth2.googleapis.com/token',
   };
   private readonly CLIENT_IDS: Record<OAuthProvider, string | undefined>;
   private readonly CLIENT_SECRETS: Record<OAuthProvider, string | undefined>;
@@ -59,22 +59,6 @@ export class OAuth2Service {
       [OAuthProvider.SPOTIFY]: appConfig.oauth2.spotify.clientSecret,
       [OAuthProvider.TWITCH]: appConfig.oauth2.twitch.clientSecret,
     };
-
-    // Log Gmail config status for debugging
-    if (
-      !this.CLIENT_IDS[OAuthProvider.GMAIL] ||
-      !this.CLIENT_SECRETS[OAuthProvider.GMAIL]
-    ) {
-      console.warn('WARNING: Gmail OAuth2 credentials are not configured!');
-      console.warn(
-        'GMAIL_CLIENT_ID:',
-        this.CLIENT_IDS[OAuthProvider.GMAIL] ? 'present' : 'missing',
-      );
-      console.warn(
-        'GMAIL_CLIENT_SECRET:',
-        this.CLIENT_SECRETS[OAuthProvider.GMAIL] ? 'present' : 'missing',
-      );
-    }
   }
 
   async exchangeCodeForTokens(
@@ -98,25 +82,6 @@ export class OAuth2Service {
         redirect_uri: dto.redirect_uri,
       });
 
-      // Debug logging for Gmail
-      if (dto.provider === OAuthProvider.GMAIL) {
-        console.log('=== GMAIL TOKEN EXCHANGE DEBUG ===');
-        console.log('Token URL:', tokenUrl);
-        console.log('Client ID:', clientId?.substring(0, 20) + '...');
-        console.log(
-          'Client Secret:',
-          clientSecret
-            ? 'present (length: ' + clientSecret.length + ')'
-            : 'missing',
-        );
-        console.log('Redirect URI:', dto.redirect_uri);
-        console.log(
-          'Code (first 30 chars):',
-          dto.code.substring(0, 30) + '...',
-        );
-        console.log('==================================');
-      }
-
       const response = await firstValueFrom(
         this.httpService.post(tokenUrl, params, {
           headers: {
@@ -131,18 +96,8 @@ export class OAuth2Service {
         const errorData = error.response?.data as
           | { error?: string; error_description?: string }
           | undefined;
-
-        // Enhanced error logging for Gmail
-        if (dto.provider === OAuthProvider.GMAIL) {
-          console.error('=== GMAIL TOKEN EXCHANGE ERROR ===');
-          console.error('Error:', errorData?.error);
-          console.error('Error Description:', errorData?.error_description);
-          console.error('Full error data:', JSON.stringify(errorData, null, 2));
-          console.error('==================================');
-        }
-
         throw new BadRequestException(
-          `Invalid authorization code for ${dto.provider}: ${errorData?.error || error.message}`,
+          `Invalid authorization code for ${dto.provider}: ${errorData?.error || error.message} - ${errorData?.error_description || ''}`,
         );
       }
       throw new InternalServerErrorException(
