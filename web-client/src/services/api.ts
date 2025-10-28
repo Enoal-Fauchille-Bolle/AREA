@@ -394,6 +394,28 @@ export const servicesApi = {
     return handleResponse(response);
   },
 
+  async getGitHubProfile(): Promise<{
+    id: string;
+    login: string;
+    avatar_url: string | null;
+    email?: string;
+  }> {
+    const token = tokenService.getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/services/github/profile`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return handleResponse(response);
+  },
+
   async disconnectService(serviceName: string): Promise<void> {
     const token = tokenService.getToken();
     if (!token) {

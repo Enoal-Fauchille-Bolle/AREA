@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useDiscordAuth } from '../../hooks/useDiscordAuth';
+import { useGitHubAuth } from '../../hooks/useGitHubAuth';
 import { servicesApi, componentsApi, areasApi } from '../../services/api';
 import type { Service, Component, ComponentType } from '../../services/api';
 import {
@@ -27,6 +28,12 @@ const CreateArea: React.FC = () => {
   const { user, logout } = useAuth();
   const { isConnecting, isConnected, discordUser, connectToDiscord } =
     useDiscordAuth();
+  const {
+    isConnecting: isConnectingGitHub,
+    isConnected: isConnectedGitHub,
+    githubUser,
+    connectToGitHub,
+  } = useGitHubAuth();
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] =
     useState<CreateAreaStep['step']>('action');
@@ -240,6 +247,10 @@ const CreateArea: React.FC = () => {
     return service?.name.toLowerCase() === 'discord';
   };
 
+  const isGitHubService = (service?: Service) => {
+    return service?.name.toLowerCase() === 'github';
+  };
+
   const requiresAuth = (service?: Service) => {
     return service?.requires_auth === true;
   };
@@ -263,6 +274,22 @@ const CreateArea: React.FC = () => {
       reactionNeedsAuth && isDiscordService(formData.reactionService);
     return actionIsDiscord || reactionIsDiscord;
   };
+
+  const needsGitHubAuth = () => {
+    if (isConnectedGitHub) return false;
+    const actionNeedsAuth =
+      requiresAuth(formData.actionService) &&
+      !isServiceConnected(formData.actionService);
+    const reactionNeedsAuth =
+      requiresAuth(formData.reactionService) &&
+      !isServiceConnected(formData.reactionService);
+    const actionIsGitHub =
+      actionNeedsAuth && isGitHubService(formData.actionService);
+    const reactionIsGitHub =
+      reactionNeedsAuth && isGitHubService(formData.reactionService);
+    return actionIsGitHub || reactionIsGitHub;
+  };
+
   const handleConnectDiscord = async () => {
     try {
       setError(null);
@@ -282,6 +309,27 @@ const CreateArea: React.FC = () => {
         err instanceof Error ? err.message : 'Failed to connect to Discord';
       setError(errorMessage);
       console.error('Discord connection error:', err);
+    }
+  };
+
+  const handleConnectGitHub = async () => {
+    try {
+      setError(null);
+      const githubService = isGitHubService(formData.actionService)
+        ? formData.actionService
+        : formData.reactionService;
+
+      if (!githubService) return;
+
+      await connectToGitHub(githubService.id);
+
+      const userServicesData = await servicesApi.getUserServices();
+      setUserServices(userServicesData);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to connect to GitHub';
+      setError(errorMessage);
+      console.error('GitHub connection error:', err);
     }
   };
 
@@ -693,6 +741,132 @@ const CreateArea: React.FC = () => {
                             ) : (
                               discordUser.username
                             )}
+                          </p>
+                          <p className="text-green-300 text-sm">
+                            Connected Account
+                          </p>
+                        </div>
+                        <div className="text-green-400">
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+            {needsGitHubAuth() && !isConnectedGitHub ? (
+              <div className="bg-gray-800 bg-opacity-50 border border-gray-600 rounded-lg p-6 mb-6">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center">
+                    <svg
+                      className="w-5 h-5 text-white"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.840 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.430.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-white font-semibold">
+                      GitHub Authentication Required
+                    </h3>
+                    <p className="text-gray-300 text-sm">
+                      Connect your GitHub account to use GitHub actions or
+                      reactions
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleConnectGitHub}
+                  disabled={isConnectingGitHub}
+                  className="w-full bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                >
+                  {isConnectingGitHub ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Connecting to GitHub...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg
+                        className="w-5 h-5"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.840 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.430.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                      </svg>
+                      <span>Connect to GitHub</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            ) : null}
+
+            {isConnectedGitHub &&
+              (isGitHubService(formData.actionService) ||
+                isGitHubService(formData.reactionService)) && (
+                <div className="bg-green-900 bg-opacity-50 border border-green-500 rounded-lg p-6 mb-6">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                      <svg
+                        className="w-5 h-5 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-white font-semibold">
+                        GitHub Connected Successfully
+                      </h3>
+                      <p className="text-green-200 text-sm">
+                        Your GitHub account is connected and ready to use
+                      </p>
+                    </div>
+                  </div>
+                  {githubUser && (
+                    <div className="bg-green-800 bg-opacity-30 rounded-lg p-4 mb-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center overflow-hidden">
+                          {githubUser.avatar_url ? (
+                            <img
+                              src={githubUser.avatar_url}
+                              alt="GitHub Avatar"
+                              className="w-full h-full rounded-full object-cover"
+                            />
+                          ) : (
+                            <svg
+                              className="w-6 h-6 text-white"
+                              fill="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                            </svg>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-green-100 font-medium">
+                            {githubUser.login}
                           </p>
                           <p className="text-green-300 text-sm">
                             Connected Account
