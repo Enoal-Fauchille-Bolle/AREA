@@ -340,9 +340,7 @@ export class ServicesService {
     }
   }
 
-  async getGitHubProfile(
-    userId: number,
-  ): Promise<{
+  async getGitHubProfile(userId: number): Promise<{
     id: string;
     login: string;
     avatar_url: string | null;

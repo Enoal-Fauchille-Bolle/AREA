@@ -1,5 +1,4 @@
-const GITHUB_CLIENT_ID =
-  import.meta.env.VITE_GITHUB_CLIENT_ID || '';
+const GITHUB_CLIENT_ID = import.meta.env.VITE_GITHUB_CLIENT_ID || '';
 
 const REDIRECT_URI =
   import.meta.env.VITE_GITHUB_REDIRECT_URI ||

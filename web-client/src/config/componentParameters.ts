@@ -145,7 +145,8 @@ export const discordComponentsConfig: ComponentConfig[] = [
     parameters: [
       {
         name: 'channel_id',
-        description: 'Discord channel ID to monitor for new messages. The AREA bot must have access to this channel.',
+        description:
+          'Discord channel ID to monitor for new messages. The AREA bot must have access to this channel.',
         type: 'string',
         required: true,
         placeholder: '123456789012345678',
@@ -153,14 +154,16 @@ export const discordComponentsConfig: ComponentConfig[] = [
       },
       {
         name: 'author_filter',
-        description: 'Filter messages by author username (optional, case-insensitive)',
+        description:
+          'Filter messages by author username (optional, case-insensitive)',
         type: 'string',
         required: false,
         placeholder: 'username',
       },
       {
         name: 'content_filter',
-        description: 'Filter messages containing this text (optional, case-insensitive)',
+        description:
+          'Filter messages containing this text (optional, case-insensitive)',
         type: 'string',
         required: false,
         placeholder: 'hello',
@@ -172,7 +175,8 @@ export const discordComponentsConfig: ComponentConfig[] = [
     parameters: [
       {
         name: 'channel_id',
-        description: 'Discord channel ID where the message is located. The AREA bot must have access to this channel.',
+        description:
+          'Discord channel ID where the message is located. The AREA bot must have access to this channel.',
         type: 'string',
         required: true,
         placeholder: '123456789012345678',
@@ -200,7 +204,8 @@ export const discordComponentsConfig: ComponentConfig[] = [
     parameters: [
       {
         name: 'channel_id',
-        description: 'Discord channel ID to monitor for reactions. The AREA bot must have access to this channel.',
+        description:
+          'Discord channel ID to monitor for reactions. The AREA bot must have access to this channel.',
         type: 'string',
         required: true,
         placeholder: '123456789012345678',
@@ -208,7 +213,8 @@ export const discordComponentsConfig: ComponentConfig[] = [
       },
       {
         name: 'message_id',
-        description: 'Specific message ID to monitor for reactions (optional, monitors all messages if not specified)',
+        description:
+          'Specific message ID to monitor for reactions (optional, monitors all messages if not specified)',
         type: 'string',
         required: false,
         placeholder: '123456789012345678',
@@ -216,14 +222,16 @@ export const discordComponentsConfig: ComponentConfig[] = [
       },
       {
         name: 'emoji_filter',
-        description: 'Filter reactions by emoji (optional, case-insensitive partial match)',
+        description:
+          'Filter reactions by emoji (optional, case-insensitive partial match)',
         type: 'string',
         required: false,
         placeholder: '👍',
       },
       {
         name: 'user_filter',
-        description: 'Filter reactions by username (optional, case-insensitive partial match)',
+        description:
+          'Filter reactions by username (optional, case-insensitive partial match)',
         type: 'string',
         required: false,
         placeholder: 'username',

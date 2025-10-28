@@ -177,9 +177,7 @@ export class ServicesController {
 
   @UseGuards(JwtAuthGuard)
   @Get('github/profile')
-  async getGitHubProfile(
-    @Request() req: { user: { id: number } },
-  ): Promise<{
+  async getGitHubProfile(@Request() req: { user: { id: number } }): Promise<{
     id: string;
     login: string;
     avatar_url: string | null;
