@@ -26,6 +26,9 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
     await this.createDiscordService();
     await this.createGoogleService();
     await this.createGithubService();
+    await this.createGmailService();
+    await this.createTwitchService();
+    await this.createYoutubeService();
   }
 
   private async createClockService(): Promise<void> {
@@ -603,14 +606,33 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
     console.log('Discord service with all components created successfully');
   }
 
+  private async createGoogleService(): Promise<void> {
+    try {
+      await this.servicesService.findByName('Google');
+      console.log('Google service already exists, skipping creation');
+      return;
+    } catch {
+      console.log('Creating Google service...');
+    }
+
+    await this.servicesService.create({
+      name: 'Google',
+      description: 'Google OAuth authentication service',
+      icon_path:
+        'https://www.gstatic.com/images/branding/product/1x/googleg_48dp.png',
+      requires_auth: true,
+      is_active: true,
+    });
+
+    console.log('Google service created successfully');
+  }
+
   private async createGithubService(): Promise<void> {
     try {
-      // Check if GitHub service already exists
       await this.servicesService.findByName('GitHub');
       console.log('GitHub service already exists, skipping creation');
       return;
     } catch {
-      // Service doesn't exist, create it
       console.log('Creating GitHub service...');
     }
 
@@ -955,24 +977,229 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
     );
   }
 
-  private async createGoogleService(): Promise<void> {
+  private async createGmailService(): Promise<void> {
     try {
-      await this.servicesService.findByName('Google');
-      console.log('Google service already exists, skipping creation');
+      await this.servicesService.findByName('Gmail');
+      console.log('Gmail service already exists, skipping creation');
       return;
     } catch {
-      console.log('Creating Google service...');
+      console.log('Creating Gmail service...');
     }
 
     await this.servicesService.create({
-      name: 'Google',
-      description: 'Google OAuth2 integration for authentication and services',
-      icon_path:
-        'https://www.gstatic.com/images/branding/product/1x/googleg_48dp.png',
+      name: 'Gmail',
+      description: 'Email management and automation with Gmail',
+      icon_path: 'https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico',
       requires_auth: true,
       is_active: true,
     });
 
-    console.log('Google service created successfully');
+    console.log('Gmail service created successfully');
+  }
+
+  private async createTwitchService(): Promise<void> {
+    try {
+      await this.servicesService.findByName('Twitch');
+      console.log('Twitch service already exists, skipping creation');
+      return;
+    } catch {
+      console.log('Creating Twitch service...');
+    }
+
+    const twitchService = await this.servicesService.create({
+      name: 'Twitch',
+      description:
+        'Monitor Twitch streams and interact with Twitch chat channels',
+      icon_path:
+        'https://static.twitchcdn.net/assets/favicon-32-e29e246c157142c94346.png',
+      requires_auth: true,
+      is_active: true,
+    });
+
+    // Create streamer_goes_live action component
+    const streamerGoesLiveAction = await this.componentsService.create({
+      service_id: twitchService.id,
+      type: ComponentType.ACTION,
+      name: 'streamer_goes_live',
+      description: 'Triggers when a specified Twitch streamer goes live',
+      is_active: true,
+      polling_interval: 30000, // Check every 30 seconds
+    });
+
+    await Promise.all([
+      // Streamer username parameter - required
+      this.variablesService.create({
+        component_id: streamerGoesLiveAction.id,
+        name: 'streamer_username',
+        description: 'Twitch username of the streamer to monitor',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: false,
+        placeholder: 'ninja',
+        display_order: 1,
+      }),
+
+      // Return value: streamer ID
+      this.variablesService.create({
+        component_id: streamerGoesLiveAction.id,
+        name: 'streamer_id',
+        description: 'Twitch user ID of the streamer',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 1,
+      }),
+
+      // Return value: streamer username
+      this.variablesService.create({
+        component_id: streamerGoesLiveAction.id,
+        name: 'streamer_username',
+        description: 'Twitch username of the streamer',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 2,
+      }),
+
+      // Return value: stream title
+      this.variablesService.create({
+        component_id: streamerGoesLiveAction.id,
+        name: 'stream_title',
+        description: 'Title of the stream',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 3,
+      }),
+
+      // Return value: game name
+      this.variablesService.create({
+        component_id: streamerGoesLiveAction.id,
+        name: 'game_name',
+        description: 'Name of the game being played',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 4,
+      }),
+
+      // Return value: viewer count
+      this.variablesService.create({
+        component_id: streamerGoesLiveAction.id,
+        name: 'viewer_count',
+        description: 'Current number of viewers',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.NUMBER,
+        nullable: false,
+        display_order: 5,
+      }),
+
+      // Return value: started at
+      this.variablesService.create({
+        component_id: streamerGoesLiveAction.id,
+        name: 'started_at',
+        description: 'Timestamp when the stream started',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.DATE,
+        nullable: false,
+        display_order: 6,
+      }),
+    ]);
+
+    // Create send_chat_message reaction component
+    const sendChatMessageReaction = await this.componentsService.create({
+      service_id: twitchService.id,
+      type: ComponentType.REACTION,
+      name: 'send_chat_message',
+      description: 'Send a message to a Twitch chat channel',
+      is_active: true,
+    });
+
+    await Promise.all([
+      // Broadcaster username - required
+      this.variablesService.create({
+        component_id: sendChatMessageReaction.id,
+        name: 'broadcaster_username',
+        description: 'Twitch username of the channel to send message to',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: false,
+        placeholder: 'ninja',
+        display_order: 1,
+      }),
+
+      // Message - required
+      this.variablesService.create({
+        component_id: sendChatMessageReaction.id,
+        name: 'message',
+        description: 'Message content to send in chat',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: false,
+        placeholder: 'Hello from AREA! 👋',
+        display_order: 2,
+      }),
+
+      // Return value: broadcaster ID
+      this.variablesService.create({
+        component_id: sendChatMessageReaction.id,
+        name: 'broadcaster_id',
+        description: 'Twitch user ID of the broadcaster',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 1,
+      }),
+
+      // Return value: broadcaster username
+      this.variablesService.create({
+        component_id: sendChatMessageReaction.id,
+        name: 'broadcaster_username',
+        description: 'Twitch username of the broadcaster',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 2,
+      }),
+
+      // Return value: sent at
+      this.variablesService.create({
+        component_id: sendChatMessageReaction.id,
+        name: 'sent_at',
+        description: 'Timestamp when the message was sent',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.DATE,
+        nullable: false,
+        display_order: 3,
+      }),
+    ]);
+
+    console.log(
+      'Twitch service with streamer_goes_live action and send_chat_message reaction created successfully',
+    );
+  }
+
+  private async createYoutubeService(): Promise<void> {
+    try {
+      await this.servicesService.findByName('YouTube');
+      console.log('YouTube service already exists, skipping creation');
+      return;
+    } catch {
+      console.log('Creating YouTube service...');
+    }
+
+    await this.servicesService.create({
+      name: 'YouTube',
+      description:
+        'Interact with YouTube - manage videos, playlists, and channels',
+      icon_path:
+        'https://www.youtube.com/s/desktop/f506bd45/img/favicon_32x32.png',
+      requires_auth: true,
+      is_active: true,
+    });
+
+    console.log(
+      'YouTube service created successfully (no actions/reactions yet)',
+    );
   }
 }

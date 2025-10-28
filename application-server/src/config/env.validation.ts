@@ -20,6 +20,10 @@ export const envValidationSchema = z.object({
   DISCORD_BOT_TOKEN: z.string().optional(),
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
+  GMAIL_CLIENT_ID: z.string().optional(),
+  GMAIL_CLIENT_SECRET: z.string().optional(),
+  YOUTUBE_CLIENT_ID: z.string().optional(),
+  YOUTUBE_CLIENT_SECRET: z.string().optional(),
   GITHUB_CLIENT_ID: z.string().optional(),
   GITHUB_CLIENT_SECRET: z.string().optional(),
   SPOTIFY_CLIENT_ID: z.string().optional(),
@@ -77,6 +81,16 @@ export function validateEnv(config: Record<string, unknown>) {
         'Google OAuth2 must be set in production.',
       );
     }
+    if (env.GMAIL_CLIENT_ID && !env.GMAIL_CLIENT_SECRET) {
+      throw new ConfigurationException(
+        'Gmail Client Secret must be set if Gmail Client ID is set in production.',
+      );
+    }
+    if (!env.YOUTUBE_CLIENT_ID || !env.YOUTUBE_CLIENT_SECRET) {
+      throw new ConfigurationException(
+        'YouTube OAuth2 must be set in production.',
+      );
+    }
     if (!env.GITHUB_CLIENT_ID || !env.GITHUB_CLIENT_SECRET) {
       throw new ConfigurationException(
         'GitHub OAuth2 must be set in production.',
@@ -121,6 +135,14 @@ export function validateEnv(config: Record<string, unknown>) {
     }
     if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) {
       console.warn('WARNING: Google OAuth2 not set; server may crash.');
+    }
+    if (env.GMAIL_CLIENT_ID && !env.GMAIL_CLIENT_SECRET) {
+      console.warn(
+        'WARNING: Gmail Client Secret not set; Gmail integration may not work.',
+      );
+    }
+    if (!env.YOUTUBE_CLIENT_ID || !env.YOUTUBE_CLIENT_SECRET) {
+      console.warn('WARNING: YouTube OAuth2 not set; server may crash.');
     }
     if (!env.GITHUB_CLIENT_ID || !env.GITHUB_CLIENT_SECRET) {
       console.warn('WARNING: GitHub OAuth2 not set; server may crash.');

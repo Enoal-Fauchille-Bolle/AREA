@@ -148,6 +148,7 @@ export class OAuth2ResponseDto {
           tokenData as DiscordTokenResponse,
         );
       case OAuthProvider.GOOGLE:
+      case OAuthProvider.GMAIL:
         return mapGoogleUserInfo(
           raw as GoogleUserInfo,
           tokenData as GoogleTokenResponse,

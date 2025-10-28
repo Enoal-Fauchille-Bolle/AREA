@@ -32,6 +32,8 @@ import { EmailModule } from './email/email.module';
 import { GithubModule } from './github/github.module';
 import { DiscordModule } from './discord/discord.module';
 import { CommonModule } from './common/common.module';
+import { GmailModule } from './gmail/gmail.module';
+import { TwitchModule } from './twitch/twitch.module';
 
 @Module({
   imports: [
@@ -91,6 +93,8 @@ import { CommonModule } from './common/common.module';
     GithubModule,
     DiscordModule,
     CommonModule,
+    GmailModule,
+    TwitchModule,
   ],
   controllers: [AppController],
   providers: [AppService],
