@@ -28,6 +28,7 @@ export class OAuth2Service {
   private readonly TOKEN_URLS: Record<OAuthProvider, string> = {
     [OAuthProvider.DISCORD]: 'https://discord.com/api/oauth2/token',
     [OAuthProvider.GOOGLE]: 'https://oauth2.googleapis.com/token',
+    [OAuthProvider.GMAIL]: 'https://oauth2.googleapis.com/token',
     [OAuthProvider.GITHUB]: 'https://github.com/login/oauth/access_token',
     [OAuthProvider.SPOTIFY]: 'https://accounts.spotify.com/api/token',
     [OAuthProvider.TWITCH]: 'https://id.twitch.tv/oauth2/token',
@@ -44,6 +45,7 @@ export class OAuth2Service {
     this.CLIENT_IDS = {
       [OAuthProvider.DISCORD]: appConfig.oauth2.discord.clientId,
       [OAuthProvider.GOOGLE]: appConfig.oauth2.google.clientId,
+      [OAuthProvider.GMAIL]: appConfig.oauth2.gmail.clientId,
       [OAuthProvider.GITHUB]: appConfig.oauth2.github.clientId,
       [OAuthProvider.SPOTIFY]: appConfig.oauth2.spotify.clientId,
       [OAuthProvider.TWITCH]: appConfig.oauth2.twitch.clientId,
@@ -52,6 +54,7 @@ export class OAuth2Service {
     this.CLIENT_SECRETS = {
       [OAuthProvider.DISCORD]: appConfig.oauth2.discord.clientSecret,
       [OAuthProvider.GOOGLE]: appConfig.oauth2.google.clientSecret,
+      [OAuthProvider.GMAIL]: appConfig.oauth2.gmail.clientSecret,
       [OAuthProvider.GITHUB]: appConfig.oauth2.github.clientSecret,
       [OAuthProvider.SPOTIFY]: appConfig.oauth2.spotify.clientSecret,
       [OAuthProvider.TWITCH]: appConfig.oauth2.twitch.clientSecret,
@@ -91,10 +94,10 @@ export class OAuth2Service {
     } catch (error) {
       if (this.isAxiosError(error)) {
         const errorData = error.response?.data as
-          | { error?: string }
+          | { error?: string; error_description?: string }
           | undefined;
         throw new BadRequestException(
-          `Invalid authorization code for ${dto.provider}: ${errorData?.error || error.message}`,
+          `Invalid authorization code for ${dto.provider}: ${errorData?.error || error.message} - ${errorData?.error_description || ''}`,
         );
       }
       throw new InternalServerErrorException(
@@ -155,6 +158,7 @@ export class OAuth2Service {
       case OAuthProvider.DISCORD:
         return this.getDiscordUserInfo(accessToken);
       case OAuthProvider.GOOGLE:
+      case OAuthProvider.GMAIL:
         return this.getGoogleUserInfo(accessToken);
       case OAuthProvider.GITHUB:
         return this.getGithubUserInfo(accessToken);

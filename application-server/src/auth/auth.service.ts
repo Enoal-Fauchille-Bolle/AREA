@@ -60,7 +60,6 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    // Update last connection
     await this.usersService.updateLastConnection(user.id);
 
     const payload = {
@@ -74,7 +73,6 @@ export class AuthService {
   }
 
   async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
-    // Check if user already exists
     const existingUserByEmail = await this.usersService
       .findByEmail(registerDto.email)
       .catch(() => null);
@@ -89,11 +87,10 @@ export class AuthService {
       throw new ConflictException('Username already in use');
     }
 
-    // Create new user
     const user = await this.usersService.create({
       email: registerDto.email,
       username: registerDto.username,
-      password: registerDto.password, // UsersService will hash this
+      password: registerDto.password,
     });
 
     const payload = {
@@ -123,7 +120,6 @@ export class AuthService {
       throw new NotFoundException('User not found');
     }
 
-    // Check for email conflict
     if (updateProfileDto.email && updateProfileDto.email !== user.email) {
       const existingUser = await this.usersService.findByEmail(
         updateProfileDto.email,
@@ -133,7 +129,6 @@ export class AuthService {
       }
     }
 
-    // Check for username conflict
     if (
       updateProfileDto.username &&
       updateProfileDto.username !== user.username
@@ -146,8 +141,6 @@ export class AuthService {
       }
     }
 
-    // Prepare update data
-    // Temporary created a Type based on what's below
     const updateData: {
       email?: string;
       username?: string;
@@ -158,9 +151,9 @@ export class AuthService {
     if (updateProfileDto.username)
       updateData.username = updateProfileDto.username;
     if (updateProfileDto.icon_url)
-      updateData.icon_path = updateProfileDto.icon_url; // Map to icon_path field
+      updateData.icon_path = updateProfileDto.icon_url;
     if (updateProfileDto.password)
-      updateData.password = updateProfileDto.password; // UsersService will hash this
+      updateData.password = updateProfileDto.password;
 
     const updatedUser = await this.usersService.update(userId, updateData);
     if (!updatedUser) {

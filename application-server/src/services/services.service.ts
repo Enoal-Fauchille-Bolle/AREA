@@ -413,44 +413,57 @@ export class ServicesService {
   }
 
   async refreshServiceToken(userId: number, serviceId: number): Promise<void> {
-    const service = await this.serviceRepository.findOne({
-      where: { id: serviceId },
-    });
-    if (!service) {
-      throw new NotFoundException(`Service with ID ${serviceId} not found`);
-    }
-
     const userService = await this.userServiceService.findOne(
       userId,
       serviceId,
     );
 
-    if (!userService || !userService.refresh_token) {
+    if (!userService) {
       throw new NotFoundException(
-        `User service link not found or no refresh token available`,
+        `User service connection not found for user ${userId} and service ${serviceId}`,
       );
+    }
+
+    if (!userService.refresh_token) {
+      throw new BadRequestException(
+        'No refresh token available for this service connection',
+      );
+    }
+
+    const service = await this.serviceRepository.findOne({
+      where: { id: serviceId },
+    });
+
+    if (!service) {
+      throw new NotFoundException(`Service with ID ${serviceId} not found`);
     }
 
     const provider = getOAuthProviderFromString(service.name);
     if (!provider) {
       throw new BadRequestException(
-        `Service ${service.name} does not support token refresh`,
+        `Cannot refresh token for service "${service.name}". The service may not be implemented or is not supported.`,
       );
     }
 
-    const tokens = await this.oauth2Service.refreshAccessToken({
-      provider: provider,
-      refresh_token: userService.refresh_token,
-    });
+    try {
+      const tokens = await this.oauth2Service.refreshAccessToken({
+        provider: provider,
+        refresh_token: userService.refresh_token,
+      });
 
-    await this.userServiceService.update({
-      user_id: userId,
-      service_id: serviceId,
-      oauth_token: tokens.access_token,
-      refresh_token: tokens.refresh_token,
-      token_expires_at: tokens.expires_in
-        ? new Date(Date.now() + tokens.expires_in * 1000)
-        : undefined,
-    });
+      await this.userServiceService.update({
+        user_id: userId,
+        service_id: serviceId,
+        oauth_token: tokens.access_token,
+        refresh_token: tokens.refresh_token ?? userService.refresh_token,
+        token_expires_at: tokens.expires_in
+          ? new Date(Date.now() + tokens.expires_in * 1000)
+          : undefined,
+      });
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Failed to refresh token for service "${service.name}": ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    }
   }
 }

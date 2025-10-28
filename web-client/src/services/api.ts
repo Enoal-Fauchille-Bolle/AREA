@@ -324,7 +324,11 @@ export const servicesApi = {
     return handleResponse(response);
   },
 
-  async linkService(serviceId: number, code?: string): Promise<void> {
+  async linkService(
+    serviceId: number,
+    code: string,
+    platform: 'web' | 'mobile' = 'web',
+  ): Promise<void> {
     const token = tokenService.getToken();
     if (!token) {
       throw new Error('No authentication token found');
@@ -341,7 +345,7 @@ export const servicesApi = {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ code, platform: 'web' }),
+      body: JSON.stringify({ code, platform }),
     });
 
     console.log('Link service response:', response.status, response.statusText);

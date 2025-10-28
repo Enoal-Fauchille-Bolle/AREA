@@ -4,6 +4,7 @@ Thumbs.db
 *.swp
 *.swo
 
+pdftotxt
 # Logs
 *.log
 npm-debug.log*

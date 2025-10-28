@@ -4,6 +4,7 @@ import { IsString, IsNotEmpty, IsEnum, IsUrl } from 'class-validator';
 export enum OAuthProvider {
   DISCORD = 'discord',
   GOOGLE = 'google',
+  GMAIL = 'gmail',
   GITHUB = 'github',
   SPOTIFY = 'spotify',
   TWITCH = 'twitch',
@@ -26,6 +27,7 @@ export function getOAuthProviderFromString(
 export const OAuthProviderServiceNameMap: Record<OAuthProvider, string> = {
   [OAuthProvider.DISCORD]: 'Discord',
   [OAuthProvider.GOOGLE]: 'Google',
+  [OAuthProvider.GMAIL]: 'Gmail',
   [OAuthProvider.GITHUB]: 'GitHub',
   [OAuthProvider.SPOTIFY]: 'Spotify',
   [OAuthProvider.TWITCH]: 'Twitch',
