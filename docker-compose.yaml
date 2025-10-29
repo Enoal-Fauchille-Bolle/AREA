@@ -41,11 +41,9 @@ services:
       - "${FRONTEND_PORT:-8081}:80"
     volumes:
       - mobile-builds:/usr/share/nginx/html/mobile
-    # depends_on:
-      # - server
-      # - client_mobile
-    # networks:
-    #   - default
+    depends_on:
+      - server
+      - client_mobile
 
   client_mobile:
     container_name: mobile-client
