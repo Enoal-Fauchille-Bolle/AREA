@@ -10,6 +10,7 @@ import CreateArea from './CreateArea.tsx';
 import EditArea from './EditArea.tsx';
 import Profile from './Profile.tsx';
 import ServiceCallback from './ServiceCallback.tsx';
+import VerifyEmail from './VerifyEmail.tsx';
 import ProtectedRoute from '../../components/ProtectedRoute.tsx';
 
 createRoot(document.getElementById('root')!).render(
@@ -19,6 +20,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/" element={<App />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/service/callback" element={<ServiceCallback />} />
         <Route
           path="/profile"
