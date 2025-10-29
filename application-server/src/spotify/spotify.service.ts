@@ -78,12 +78,10 @@ export class SpotifyService {
 
       // Update execution as successful
       await this.areaExecutionsService.completeExecution(executionId, {
-        executionResult: {
-          message: `Track ${params.track_uri} added successfully to playlist ${params.playlist_id}`,
-          playlist_id: params.playlist_id,
-          track_uri: params.track_uri,
-          added_at: new Date().toISOString(),
-        },
+        message: `Track ${params.track_uri} added successfully to playlist ${params.playlist_id}`,
+        playlist_id: params.playlist_id,
+        track_uri: params.track_uri,
+        added_at: new Date().toISOString(),
       });
 
       this.logger.log(
@@ -127,11 +125,9 @@ export class SpotifyService {
 
       // Update execution as successful
       await this.areaExecutionsService.completeExecution(executionId, {
-        executionResult: {
-          message: `Track ${params.track_uri} added successfully to playback queue`,
-          track_uri: params.track_uri,
-          added_at: new Date().toISOString(),
-        },
+        message: `Track ${params.track_uri} added successfully to playback queue`,
+        track_uri: params.track_uri,
+        added_at: new Date().toISOString(),
       });
 
       this.logger.log(
