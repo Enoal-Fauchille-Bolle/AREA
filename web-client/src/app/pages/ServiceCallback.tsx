@@ -5,6 +5,7 @@ import { googleOAuth } from '../../lib/googleOAuth';
 import { githubOAuth } from '../../lib/githubOAuth';
 import { discordOAuth } from '../../lib/discordOAuth';
 import { twitchOAuth } from '../../lib/twitchOAuth';
+import { gmailOAuth } from '../../lib/gmailOAuth';
 
 function ServiceCallback() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>(
@@ -35,6 +36,8 @@ function ServiceCallback() {
           service = 'GITHUB';
         } else if (state?.includes('twitch')) {
           service = 'TWITCH';
+        } else if (state?.includes('gmail')) {
+          service = 'GMAIL';
         } else if (state?.includes('google')) {
           service = 'GOOGLE';
         } else {
@@ -75,7 +78,7 @@ function ServiceCallback() {
           throw new Error(`OAuth error: ${error}`);
         }
 
-        let provider: 'google' | 'github' | 'discord' | 'twitch';
+        let provider: 'google' | 'github' | 'discord' | 'twitch' | 'gmail';
         let intent: 'login' | 'register';
         let redirectUri: string;
 
@@ -83,6 +86,10 @@ function ServiceCallback() {
           provider = 'google';
           intent = googleOAuth.extractIntentFromUrl();
           redirectUri = googleOAuth.redirectUri;
+        } else if (state?.startsWith('gmail:')) {
+          provider = 'gmail';
+          intent = 'login';
+          redirectUri = gmailOAuth.redirectUri;
         } else if (state?.startsWith('github:')) {
           provider = 'github';
           intent = githubOAuth.extractIntentFromUrl();

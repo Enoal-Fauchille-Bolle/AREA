@@ -4,6 +4,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useDiscordAuth } from '../../hooks/useDiscordAuth';
 import { useGitHubAuth } from '../../hooks/useGitHubAuth';
 import { useTwitchAuth } from '../../hooks/useTwitchAuth';
+import { useGmailAuth } from '../../hooks/useGmailAuth';
 import { servicesApi, componentsApi, areasApi } from '../../services/api';
 import type { Service, Component, ComponentType } from '../../services/api';
 import {
@@ -41,6 +42,12 @@ const CreateArea: React.FC = () => {
     twitchUser,
     connectToTwitch,
   } = useTwitchAuth();
+  const {
+    isConnecting: isConnectingGmail,
+    isConnected: isConnectedGmail,
+    gmailUser,
+    connectToGmail,
+  } = useGmailAuth();
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] =
     useState<CreateAreaStep['step']>('action');
@@ -254,6 +261,10 @@ const CreateArea: React.FC = () => {
     return service?.name.toLowerCase() === 'twitch';
   };
 
+  const isGmailService = (service?: Service) => {
+    return service?.name.toLowerCase() === 'gmail';
+  };
+
   const requiresAuth = (service?: Service) => {
     return service?.requires_auth === true;
   };
@@ -306,6 +317,21 @@ const CreateArea: React.FC = () => {
     const reactionIsTwitch =
       reactionNeedsAuth && isTwitchService(formData.reactionService);
     return actionIsTwitch || reactionIsTwitch;
+  };
+
+  const needsGmailAuth = () => {
+    if (isConnectedGmail) return false;
+    const actionNeedsAuth =
+      requiresAuth(formData.actionService) &&
+      !isServiceConnected(formData.actionService);
+    const reactionNeedsAuth =
+      requiresAuth(formData.reactionService) &&
+      !isServiceConnected(formData.reactionService);
+    const actionIsGmail =
+      actionNeedsAuth && isGmailService(formData.actionService);
+    const reactionIsGmail =
+      reactionNeedsAuth && isGmailService(formData.reactionService);
+    return actionIsGmail || reactionIsGmail;
   };
 
   const handleConnectDiscord = async () => {
@@ -364,6 +390,26 @@ const CreateArea: React.FC = () => {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to connect to Twitch';
+      setError(errorMessage);
+    }
+  };
+
+  const handleConnectGmail = async () => {
+    try {
+      setError(null);
+      const gmailService = isGmailService(formData.actionService)
+        ? formData.actionService
+        : formData.reactionService;
+
+      if (!gmailService) return;
+
+      await connectToGmail(gmailService.id);
+
+      const userServicesData = await servicesApi.getUserServices();
+      setUserServices(userServicesData);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to connect to Gmail';
       setError(errorMessage);
     }
   };
@@ -907,7 +953,7 @@ const CreateArea: React.FC = () => {
               )}
 
             {needsTwitchAuth() && !isConnectedTwitch ? (
-              <div className="bg-gray-800 bg-opacity-50 border border-gray-600 rounded-lg p-6 mb-6">
+              <div className="bg-purple-950 bg-opacity-60 border border-purple-800 rounded-lg p-6 mb-6">
                 <div className="flex items-center space-x-3 mb-4">
                   <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
                     <svg
@@ -922,7 +968,7 @@ const CreateArea: React.FC = () => {
                     <h3 className="text-white font-semibold">
                       Twitch Authentication Required
                     </h3>
-                    <p className="text-gray-300 text-sm">
+                    <p className="text-purple-200 text-sm">
                       Connect your Twitch account to use Twitch actions or
                       reactions
                     </p>
@@ -1011,6 +1057,139 @@ const CreateArea: React.FC = () => {
                             @{twitchUser.login}
                             {twitchUser.email && ` • ${twitchUser.email}`}
                           </p>
+                        </div>
+                        <div className="text-green-400">
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+            {needsGmailAuth() && !isConnectedGmail ? (
+              <div className="bg-red-950 bg-opacity-60 border border-red-800 rounded-lg p-6 mb-6">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
+                    <svg
+                      className="w-5 h-5 text-white"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.910 1.528-1.145C21.69 2.28 24 3.434 24 5.457z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-white font-semibold">
+                      Gmail Authentication Required
+                    </h3>
+                    <p className="text-red-200 text-sm">
+                      Connect your Gmail account to use Gmail actions or
+                      reactions
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleConnectGmail}
+                  disabled={isConnectingGmail}
+                  className="w-full bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                >
+                  {isConnectingGmail ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Connecting to Gmail...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg
+                        className="w-5 h-5"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.910 1.528-1.145C21.69 2.28 24 3.434 24 5.457z" />
+                      </svg>
+                      <span>Connect to Gmail</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            ) : null}
+
+            {isConnectedGmail &&
+              (isGmailService(formData.actionService) ||
+                isGmailService(formData.reactionService)) && (
+                <div className="bg-green-900 bg-opacity-50 border border-green-500 rounded-lg p-6 mb-6">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                      <svg
+                        className="w-5 h-5 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-white font-semibold">
+                        Gmail Connected Successfully
+                      </h3>
+                      <p className="text-green-200 text-sm">
+                        Your Gmail account is connected and ready to use
+                      </p>
+                    </div>
+                  </div>
+                  {gmailUser && (
+                    <div className="bg-green-800 bg-opacity-30 rounded-lg p-4 mb-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center overflow-hidden">
+                          {gmailUser.picture ? (
+                            <img
+                              src={gmailUser.picture}
+                              alt="Gmail Avatar"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <svg
+                              className="w-6 h-6 text-white"
+                              fill="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.910 1.528-1.145C21.69 2.28 24 3.434 24 5.457z" />
+                            </svg>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-white font-medium">
+                            {gmailUser.name || gmailUser.email}
+                          </p>
+                          {gmailUser.name && (
+                            <p className="text-green-200 text-sm">
+                              {gmailUser.email}
+                            </p>
+                          )}
+                          {!gmailUser.name && (
+                            <p className="text-green-200 text-sm">
+                              Connected Account
+                            </p>
+                          )}
                         </div>
                         <div className="text-green-400">
                           <svg

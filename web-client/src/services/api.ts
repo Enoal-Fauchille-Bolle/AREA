@@ -434,6 +434,28 @@ export const servicesApi = {
     return handleResponse(response);
   },
 
+  async getGmailProfile(): Promise<{
+    id: string;
+    email: string;
+    name?: string;
+    picture?: string;
+  }> {
+    const token = tokenService.getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/services/gmail/profile`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return handleResponse(response);
+  },
+
   async disconnectService(serviceName: string): Promise<void> {
     const token = tokenService.getToken();
     if (!token) {

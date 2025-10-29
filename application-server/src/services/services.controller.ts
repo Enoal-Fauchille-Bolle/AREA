@@ -199,6 +199,17 @@ export class ServicesController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('gmail/profile')
+  async getGmailProfile(@Request() req: { user: { id: number } }): Promise<{
+    id: string;
+    email: string;
+    name?: string;
+    picture?: string;
+  }> {
+    return this.servicesService.getGmailProfile(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Delete(':serviceName/disconnect')
   @HttpCode(HttpStatus.NO_CONTENT)
   async disconnectService(

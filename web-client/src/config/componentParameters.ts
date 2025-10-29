@@ -316,6 +316,74 @@ export const twitchComponentsConfig: ComponentConfig[] = [
   },
 ];
 
+export const gmailComponentsConfig: ComponentConfig[] = [
+  {
+    componentName: 'new_email_received',
+    parameters: [
+      {
+        name: 'from',
+        description:
+          'Filter emails by sender address (optional, leave empty to monitor all emails)',
+        type: 'email',
+        required: false,
+        placeholder: 'sender@example.com',
+        validation: '^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$',
+      },
+      {
+        name: 'subject_contains',
+        description:
+          'Filter emails by subject keywords (optional, case-insensitive)',
+        type: 'string',
+        required: false,
+        placeholder: 'Important',
+      },
+    ],
+  },
+  {
+    componentName: 'send_gmail',
+    parameters: [
+      {
+        name: 'to',
+        description: 'Recipient email address',
+        type: 'email',
+        required: true,
+        placeholder: 'recipient@example.com',
+        validation: '^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$',
+      },
+      {
+        name: 'subject',
+        description: 'Email subject line',
+        type: 'string',
+        required: true,
+        placeholder: 'AREA Notification',
+      },
+      {
+        name: 'body',
+        description: 'Email message body (plain text)',
+        type: 'string',
+        required: true,
+        placeholder: 'Your AREA was triggered successfully.',
+      },
+      {
+        name: 'cc',
+        description:
+          'Carbon copy recipients (optional, comma-separated for multiple)',
+        type: 'email',
+        required: false,
+        placeholder: 'cc@example.com',
+      },
+      {
+        name: 'bcc',
+        description:
+          'Blind carbon copy recipients (optional, comma-separated for multiple)',
+        type: 'email',
+        required: false,
+        placeholder: 'bcc@example.com',
+      },
+    ],
+  },
+];
+
 export function getComponentParameters(
   componentName: string,
 ): ComponentParameter[] {
@@ -325,6 +393,7 @@ export function getComponentParameters(
     ...discordComponentsConfig,
     ...githubComponentsConfig,
     ...twitchComponentsConfig,
+    ...gmailComponentsConfig,
   ];
   const config = allConfigs.find((c) => c.componentName === componentName);
   return config ? config.parameters : [];

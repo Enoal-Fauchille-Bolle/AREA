@@ -463,6 +463,69 @@ export class ServicesService {
     }
   }
 
+  async getGmailProfile(userId: number): Promise<{
+    id: string;
+    email: string;
+    name?: string;
+    picture?: string;
+  }> {
+    const gmailService = await this.serviceRepository.findOne({
+      where: { name: 'Gmail' },
+    });
+    if (!gmailService) {
+      throw new NotFoundException('Gmail service not found');
+    }
+
+    const userService = await this.userServiceService.findOne(
+      userId,
+      gmailService.id,
+    );
+
+    if (!userService || !userService.oauth_token) {
+      throw new NotFoundException('Gmail account not connected');
+    }
+
+    try {
+      const response = await fetch(
+        'https://www.googleapis.com/oauth2/v3/userinfo',
+        {
+          headers: {
+            Authorization: `Bearer ${userService.oauth_token}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Gmail profile fetch failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText,
+        });
+        throw new Error(
+          `Failed to fetch Gmail profile: ${response.status} ${response.statusText}`,
+        );
+      }
+
+      const profile = (await response.json()) as {
+        sub: string;
+        email: string;
+        name?: string;
+        picture?: string;
+      };
+
+      return {
+        id: profile.sub,
+        email: profile.email,
+        name: profile.name,
+        picture: profile.picture,
+      };
+    } catch (error) {
+      console.error('Failed to retrieve Gmail profile:', error);
+      throw new BadRequestException('Failed to retrieve Gmail profile');
+    }
+  }
+
   async disconnectService(userId: number, serviceName: string): Promise<void> {
     let normalizedName = serviceName;
     if (serviceName.toLowerCase() === 'github') {
