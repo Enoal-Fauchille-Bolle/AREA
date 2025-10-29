@@ -139,17 +139,14 @@ export class GmailService {
         `Found ${messages.length} new email(s) for area ${area.id}`,
       );
 
-      // Store the newest message ID
+      // Process only the newest (first) email to avoid triggering multiple reactions
+      // Note: Gmail API returns messages in reverse chronological order (newest first)
       if (messages[0]) {
-        await this.hookStatesService.setState(
-          area.id,
-          stateKey,
-          messages[0].id,
-        );
-      }
+        const message = messages[0];
 
-      // Trigger reaction for each new email
-      for (const message of messages) {
+        // Store the newest message ID
+        await this.hookStatesService.setState(area.id, stateKey, message.id);
+
         const messageDetails = await this.fetchMessageDetails(
           accessToken,
           message.id,
@@ -197,7 +194,7 @@ export class GmailService {
     try {
       const params = new URLSearchParams({
         q: query,
-        maxResults: '10',
+        maxResults: '1', // Fetch only the newest email to avoid processing multiple at once
       });
 
       const response = await fetch(
