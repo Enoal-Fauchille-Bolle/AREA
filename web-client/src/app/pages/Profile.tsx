@@ -143,7 +143,7 @@ const Profile: React.FC = () => {
       setSuccessMessage(null);
 
       await servicesApi.disconnectService(serviceName);
-      const service = connectedServices.find(s => s.name === serviceName);
+      const service = connectedServices.find((s) => s.name === serviceName);
       const displayName = service?.displayName || serviceName;
       setSuccessMessage(`Successfully disconnected from ${displayName}`);
 
@@ -335,9 +335,7 @@ const Profile: React.FC = () => {
                     </div>
                     <div className="flex flex-col items-end">
                       <button
-                        onClick={() =>
-                          handleDisconnectService(service.name)
-                        }
+                        onClick={() => handleDisconnectService(service.name)}
                         className="bg-red-600 hover:bg-red-700 text-white transition-colors text-sm font-medium py-2 px-4 border border-red-500 hover:border-red-600 rounded-lg"
                       >
                         Disconnect

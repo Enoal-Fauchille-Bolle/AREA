@@ -468,7 +468,9 @@ export class ServicesService {
     if (serviceName.toLowerCase() === 'github') {
       normalizedName = 'GitHub';
     } else {
-      normalizedName = serviceName.charAt(0).toUpperCase() + serviceName.slice(1).toLowerCase();
+      normalizedName =
+        serviceName.charAt(0).toUpperCase() +
+        serviceName.slice(1).toLowerCase();
     }
 
     const service = await this.serviceRepository.findOne({
