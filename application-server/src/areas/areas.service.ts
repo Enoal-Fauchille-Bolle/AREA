@@ -438,6 +438,37 @@ export class AreasService {
           },
         ],
       },
+      {
+        componentName: 'add_to_playlist',
+        parameters: [
+          {
+            name: 'playlist_id',
+            description: 'Spotify Playlist ID where the track will be added',
+            type: 'string',
+            required: true,
+            placeholder: '37i9dQZF1DXcBWIGoYBM5M',
+          },
+          {
+            name: 'track_uri',
+            description: 'Spotify Track URI to add to the playlist',
+            type: 'string',
+            required: true,
+            placeholder: 'spotify:track:6rqhFgbbKwnb9MLmUQDhG6',
+          },
+        ],
+      },
+      {
+        componentName: 'add_to_queue',
+        parameters: [
+          {
+            name: 'track_uri',
+            description: 'Spotify Track URI to add to the playback queue',
+            type: 'string',
+            required: true,
+            placeholder: 'spotify:track:6rqhFgbbKwnb9MLmUQDhG6',
+          },
+        ],
+      },
     ];
   }
 

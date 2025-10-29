@@ -6,6 +6,7 @@ import { DiscordService } from '../discord/discord.service';
 import { GmailReactionsService } from '../gmail/reactions/gmail-reactions.service';
 import { TwitchReactionsService } from '../twitch/reactions/twitch-reactions.service';
 import { RedditReactionsService } from '../reddit/reactions/reddit-reactions.service';
+import { SpotifyService } from '../spotify/spotify.service';
 
 @Injectable()
 export class ReactionProcessorService {
@@ -20,6 +21,7 @@ export class ReactionProcessorService {
     private readonly gmailReactionsService: GmailReactionsService,
     private readonly twitchReactionsService: TwitchReactionsService,
     private readonly redditReactionsService: RedditReactionsService,
+    private readonly spotifyService: SpotifyService,
   ) {}
 
   async processReaction(
@@ -69,6 +71,12 @@ export class ReactionProcessorService {
             executionId,
             areaId,
           );
+          break;
+        case 'add_to_playlist':
+          await this.spotifyService.addToPlaylistReaction(executionId, areaId);
+          break;
+        case 'add_to_queue':
+          await this.spotifyService.addToQueueReaction(executionId, areaId);
           break;
         default:
           throw new Error(`Unknown reaction component: ${component.name}`);

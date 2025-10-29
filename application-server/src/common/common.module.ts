@@ -9,6 +9,7 @@ import { TwitchReactionsModule } from '../twitch/reactions/twitch-reactions.modu
 import { TwitchModule } from '../twitch/twitch.module';
 import { RedditReactionsModule } from '../reddit/reactions/reddit-reactions.module';
 import { RedditModule } from '../reddit/reddit.module';
+import { SpotifyModule } from '../spotify/spotify.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { RedditModule } from '../reddit/reddit.module';
     forwardRef(() => TwitchModule),
     RedditReactionsModule,
     forwardRef(() => RedditModule),
+    SpotifyModule,
   ],
   providers: [ReactionProcessorService],
   exports: [ReactionProcessorService],
