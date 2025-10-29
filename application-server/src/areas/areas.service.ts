@@ -431,6 +431,51 @@ export class AreasService {
           },
         ],
       },
+      {
+        componentName: 'new_email_received',
+        parameters: [],
+      },
+      {
+        componentName: 'send_gmail',
+        parameters: [
+          {
+            name: 'to',
+            description: 'Recipient email address',
+            type: 'email',
+            required: true,
+            placeholder: 'recipient@example.com',
+            validation: '^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$',
+          },
+          {
+            name: 'subject',
+            description: 'Email subject line',
+            type: 'string',
+            required: true,
+            placeholder: 'AREA Notification',
+          },
+          {
+            name: 'body',
+            description: 'Email message body',
+            type: 'string',
+            required: true,
+            placeholder: 'Your AREA was triggered successfully.',
+          },
+          {
+            name: 'cc',
+            description: 'CC email addresses (comma-separated, optional)',
+            type: 'string',
+            required: false,
+            placeholder: 'cc@example.com',
+          },
+          {
+            name: 'bcc',
+            description: 'BCC email addresses (comma-separated, optional)',
+            type: 'string',
+            required: false,
+            placeholder: 'bcc@example.com',
+          },
+        ],
+      },
     ];
   }
 
