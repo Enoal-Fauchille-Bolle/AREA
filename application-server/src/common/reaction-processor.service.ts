@@ -3,6 +3,8 @@ import { FakeEmailService } from '../email/email.service';
 import { RealEmailService } from '../email/real-email.service';
 import { ComponentsService } from '../components/components.service';
 import { DiscordService } from '../discord/discord.service';
+import { GmailReactionsService } from '../gmail/reactions/gmail-reactions.service';
+import { TwitchReactionsService } from '../twitch/reactions/twitch-reactions.service';
 
 @Injectable()
 export class ReactionProcessorService {
@@ -14,6 +16,8 @@ export class ReactionProcessorService {
     private readonly componentsService: ComponentsService,
     @Inject(forwardRef(() => DiscordService))
     private readonly discordService: DiscordService,
+    private readonly gmailReactionsService: GmailReactionsService,
+    private readonly twitchReactionsService: TwitchReactionsService,
   ) {}
 
   async processReaction(
@@ -48,6 +52,15 @@ export class ReactionProcessorService {
           break;
         case 'react_to_message':
           await this.discordService.reactToMessageReaction(executionId, areaId);
+          break;
+        case 'send_gmail':
+          await this.gmailReactionsService.processReaction(executionId, areaId);
+          break;
+        case 'send_chat_message':
+          await this.twitchReactionsService.processReaction(
+            executionId,
+            areaId,
+          );
           break;
         default:
           throw new Error(`Unknown reaction component: ${component.name}`);
