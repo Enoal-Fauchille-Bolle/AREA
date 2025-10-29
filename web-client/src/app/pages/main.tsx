@@ -7,6 +7,8 @@ import SignUp from './SignUp.tsx';
 import Login from './Login.tsx';
 import UserProfile from './UserProfile.tsx';
 import CreateArea from './CreateArea.tsx';
+import EditArea from './EditArea.tsx';
+import Profile from './Profile.tsx';
 import ServiceCallback from './ServiceCallback.tsx';
 import ProtectedRoute from '../../components/ProtectedRoute.tsx';
 
@@ -27,10 +29,26 @@ createRoot(document.getElementById('root')!).render(
           }
         />
         <Route
+          path="/profile/settings"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/create"
           element={
             <ProtectedRoute>
               <CreateArea />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/edit/:id"
+          element={
+            <ProtectedRoute>
+              <EditArea />
             </ProtectedRoute>
           }
         />

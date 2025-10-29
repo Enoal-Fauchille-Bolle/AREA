@@ -2,6 +2,9 @@ import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { authApi, tokenService } from '../../services/api';
 import { googleOAuth } from '../../lib/googleOAuth';
+import { githubOAuth } from '../../lib/githubOAuth';
+import { discordOAuth } from '../../lib/discordOAuth';
+import { twitchOAuth } from '../../lib/twitchOAuth';
 
 function ServiceCallback() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>(
@@ -13,36 +16,100 @@ function ServiceCallback() {
   const hasHandledRef = useRef(false);
 
   useEffect(() => {
-    const handleOAuthCallback = async () => {
+    const handleCallback = async () => {
       if (hasHandledRef.current) {
         return;
       }
       hasHandledRef.current = true;
 
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+      const error = urlParams.get('error');
+      const state = urlParams.get('state');
+
+      if (window.opener) {
+        let service = 'UNKNOWN';
+        if (state?.includes('discord')) {
+          service = 'DISCORD';
+        } else if (state?.includes('github')) {
+          service = 'GITHUB';
+        } else if (state?.includes('twitch')) {
+          service = 'TWITCH';
+        } else if (state?.includes('google')) {
+          service = 'GOOGLE';
+        } else {
+          service = 'DISCORD';
+        }
+
+        let message;
+        if (error) {
+          message = {
+            type: `${service}_OAUTH_ERROR`,
+            error: error,
+          };
+        } else if (code) {
+          message = {
+            type: `${service}_OAUTH_SUCCESS`,
+            code: code,
+          };
+        } else {
+          message = {
+            type: `${service}_OAUTH_ERROR`,
+            error: 'No authorization code received',
+          };
+        }
+
+        window.opener.postMessage(message, window.location.origin);
+        setTimeout(() => {
+          window.close();
+        }, 1000);
+        return;
+      }
+
       try {
-        const error = googleOAuth.extractErrorFromUrl();
+        if (!code) {
+          throw new Error('No authorization code received from OAuth provider');
+        }
+
         if (error) {
           throw new Error(`OAuth error: ${error}`);
         }
 
-        const code = googleOAuth.extractCodeFromUrl();
-        if (!code) {
-          throw new Error('No authorization code received from Google');
-        }
+        let provider: 'google' | 'github' | 'discord' | 'twitch';
+        let intent: 'login' | 'register';
+        let redirectUri: string;
 
-        const intent = googleOAuth.extractIntentFromUrl();
+        if (state?.startsWith('google:')) {
+          provider = 'google';
+          intent = googleOAuth.extractIntentFromUrl();
+          redirectUri = googleOAuth.redirectUri;
+        } else if (state?.startsWith('github:')) {
+          provider = 'github';
+          intent = githubOAuth.extractIntentFromUrl();
+          redirectUri = githubOAuth.redirectUri;
+        } else if (state?.startsWith('discord:')) {
+          provider = 'discord';
+          intent = discordOAuth.extractIntentFromUrl();
+          redirectUri = discordOAuth.redirectUri;
+        } else if (state?.startsWith('twitch:')) {
+          provider = 'twitch';
+          intent = twitchOAuth.extractIntentFromUrl();
+          redirectUri = twitchOAuth.redirectUri;
+        } else {
+          throw new Error(`Unknown OAuth provider from state: ${state}`);
+        }
 
         const response =
           intent === 'register'
             ? await authApi.registerWithOAuth2({
-                provider: 'google',
+                provider,
                 code: code,
-                redirect_uri: googleOAuth.redirectUri,
+                redirect_uri: redirectUri,
               })
             : await authApi.loginWithOAuth2({
-                provider: 'google',
+                provider,
                 code: code,
-                redirect_uri: googleOAuth.redirectUri,
+                redirect_uri: redirectUri,
               });
 
         tokenService.setToken(response.token);
@@ -66,7 +133,7 @@ function ServiceCallback() {
       }
     };
 
-    handleOAuthCallback();
+    handleCallback();
   }, [location, navigate]);
 
   return (
@@ -76,9 +143,15 @@ function ServiceCallback() {
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-black border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <h2 className="text-2xl font-black text-black mb-2">
-              Authenticating with Google...
+              {window.opener
+                ? 'Processing authentication...'
+                : 'Authenticating...'}
             </h2>
-            <p className="text-gray-600">Please wait while we sign you in</p>
+            <p className="text-gray-600">
+              {window.opener
+                ? 'This window will close automatically'
+                : 'Please wait while we sign you in'}
+            </p>
           </div>
         )}
 

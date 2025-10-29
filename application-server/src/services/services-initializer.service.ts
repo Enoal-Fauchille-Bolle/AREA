@@ -243,7 +243,6 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
 
   private async createDiscordService(): Promise<void> {
     try {
-      // Check if Discord service already exists
       await this.servicesService.findByName('Discord');
       this.logger.log('Discord service already exists, skipping creation');
       return;
@@ -252,18 +251,16 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       this.logger.log('Creating Discord service...');
     }
 
-    // Create Discord service
     const discordService = await this.servicesService.create({
       name: 'Discord',
       description:
         'Send messages to Discord channels using the AREA Discord Bot. The bot must be added to your server with appropriate permissions.',
       icon_path:
         'https://static.vecteezy.com/system/resources/previews/023/741/147/non_2x/discord-logo-icon-social-media-icon-free-png.png',
-      requires_auth: false, // Discord bot doesn't require user OAuth
+      requires_auth: true,
       is_active: true,
     });
 
-    // Create send_message reaction component
     const sendMessageComponent = await this.componentsService.create({
       service_id: discordService.id,
       type: ComponentType.REACTION,
@@ -284,7 +281,6 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
 
     // Create component parameters for send_message
     await Promise.all([
-      // Channel ID parameter - required
       this.variablesService.create({
         component_id: sendMessageComponent.id,
         name: 'channel_id',
@@ -294,11 +290,10 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
         type: VariableType.STRING,
         nullable: false,
         placeholder: '123456789012345678',
-        validation_regex: '^[0-9]{17,19}$', // Discord snowflake ID pattern
+        validation_regex: '^[0-9]{17,19}$',
         display_order: 1,
       }),
 
-      // Message content parameter - required
       this.variablesService.create({
         component_id: sendMessageComponent.id,
         name: 'content',
@@ -993,7 +988,7 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       this.logger.log('Creating Gmail service...');
     }
 
-    await this.servicesService.create({
+    const gmailService = await this.servicesService.create({
       name: 'Gmail',
       description: 'Email management and automation with Gmail',
       icon_path: 'https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico',
@@ -1002,6 +997,161 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
     });
 
     this.logger.log('Gmail service created successfully');
+    // Create new_email_received action component
+    const newEmailReceivedAction = await this.componentsService.create({
+      service_id: gmailService.id,
+      type: ComponentType.ACTION,
+      name: 'new_email_received',
+      description: 'Triggers when a new email is received in Gmail inbox',
+      is_active: true,
+      polling_interval: 60000, // Check every minute
+    });
+
+    await Promise.all([
+      // Return values for the action
+      this.variablesService.create({
+        component_id: newEmailReceivedAction.id,
+        name: 'email_id',
+        description: 'Gmail message ID',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 1,
+      }),
+
+      this.variablesService.create({
+        component_id: newEmailReceivedAction.id,
+        name: 'subject',
+        description: 'Email subject',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 2,
+      }),
+
+      this.variablesService.create({
+        component_id: newEmailReceivedAction.id,
+        name: 'from',
+        description: 'Sender email address',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.EMAIL,
+        nullable: false,
+        display_order: 3,
+      }),
+
+      this.variablesService.create({
+        component_id: newEmailReceivedAction.id,
+        name: 'snippet',
+        description: 'Email preview snippet',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 4,
+      }),
+
+      this.variablesService.create({
+        component_id: newEmailReceivedAction.id,
+        name: 'received_at',
+        description: 'Timestamp when email was received',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.DATE,
+        nullable: false,
+        display_order: 5,
+      }),
+    ]);
+
+    // Create send_gmail reaction component
+    const sendGmailReaction = await this.componentsService.create({
+      service_id: gmailService.id,
+      type: ComponentType.REACTION,
+      name: 'send_gmail',
+      description: 'Send an email via Gmail',
+      is_active: true,
+    });
+
+    await Promise.all([
+      // Parameters for send_gmail reaction
+      this.variablesService.create({
+        component_id: sendGmailReaction.id,
+        name: 'to',
+        description: 'Recipient email address',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.EMAIL,
+        nullable: false,
+        placeholder: 'recipient@example.com',
+        validation_regex: '^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$',
+        display_order: 1,
+      }),
+
+      this.variablesService.create({
+        component_id: sendGmailReaction.id,
+        name: 'subject',
+        description: 'Email subject line',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: false,
+        placeholder: 'AREA Notification',
+        display_order: 2,
+      }),
+
+      this.variablesService.create({
+        component_id: sendGmailReaction.id,
+        name: 'body',
+        description: 'Email message body',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: false,
+        placeholder: 'Your AREA was triggered successfully.',
+        display_order: 3,
+      }),
+
+      this.variablesService.create({
+        component_id: sendGmailReaction.id,
+        name: 'cc',
+        description: 'CC email addresses (comma-separated, optional)',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: true,
+        placeholder: 'cc@example.com',
+        display_order: 4,
+      }),
+
+      this.variablesService.create({
+        component_id: sendGmailReaction.id,
+        name: 'bcc',
+        description: 'BCC email addresses (comma-separated, optional)',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: true,
+        placeholder: 'bcc@example.com',
+        display_order: 5,
+      }),
+
+      // Return values
+      this.variablesService.create({
+        component_id: sendGmailReaction.id,
+        name: 'message_id',
+        description: 'Gmail message ID of sent email',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 1,
+      }),
+
+      this.variablesService.create({
+        component_id: sendGmailReaction.id,
+        name: 'sent_at',
+        description: 'Timestamp when email was sent',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.DATE,
+        nullable: false,
+        display_order: 2,
+      }),
+    ]);
+
+    console.log(
+      'Gmail service with new_email_received action and send_gmail reaction created successfully',
+    );
   }
 
   private async createTwitchService(): Promise<void> {
@@ -1046,7 +1196,6 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
         display_order: 1,
       }),
 
-      // Return value: streamer ID
       this.variablesService.create({
         component_id: streamerGoesLiveAction.id,
         name: 'streamer_id',
@@ -1057,18 +1206,16 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
         display_order: 1,
       }),
 
-      // Return value: streamer username
       this.variablesService.create({
         component_id: streamerGoesLiveAction.id,
-        name: 'streamer_username',
-        description: 'Twitch username of the streamer',
+        name: 'streamer_login',
+        description: 'Twitch login of the streamer',
         kind: VariableKind.RETURN_VALUE,
         type: VariableType.STRING,
         nullable: false,
         display_order: 2,
       }),
 
-      // Return value: stream title
       this.variablesService.create({
         component_id: streamerGoesLiveAction.id,
         name: 'stream_title',
@@ -1079,7 +1226,6 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
         display_order: 3,
       }),
 
-      // Return value: game name
       this.variablesService.create({
         component_id: streamerGoesLiveAction.id,
         name: 'game_name',
@@ -1090,7 +1236,6 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
         display_order: 4,
       }),
 
-      // Return value: viewer count
       this.variablesService.create({
         component_id: streamerGoesLiveAction.id,
         name: 'viewer_count',
@@ -1101,7 +1246,6 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
         display_order: 5,
       }),
 
-      // Return value: started at
       this.variablesService.create({
         component_id: streamerGoesLiveAction.id,
         name: 'started_at',
@@ -1113,7 +1257,6 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       }),
     ]);
 
-    // Create send_chat_message reaction component
     const sendChatMessageReaction = await this.componentsService.create({
       service_id: twitchService.id,
       type: ComponentType.REACTION,
@@ -1123,7 +1266,6 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
     });
 
     await Promise.all([
-      // Broadcaster username - required
       this.variablesService.create({
         component_id: sendChatMessageReaction.id,
         name: 'broadcaster_username',
@@ -1135,7 +1277,6 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
         display_order: 1,
       }),
 
-      // Message - required
       this.variablesService.create({
         component_id: sendChatMessageReaction.id,
         name: 'message',
@@ -1147,7 +1288,6 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
         display_order: 2,
       }),
 
-      // Return value: broadcaster ID
       this.variablesService.create({
         component_id: sendChatMessageReaction.id,
         name: 'broadcaster_id',
@@ -1158,7 +1298,6 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
         display_order: 1,
       }),
 
-      // Return value: broadcaster username
       this.variablesService.create({
         component_id: sendChatMessageReaction.id,
         name: 'broadcaster_username',
@@ -1169,7 +1308,6 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
         display_order: 2,
       }),
 
-      // Return value: sent at
       this.variablesService.create({
         component_id: sendChatMessageReaction.id,
         name: 'sent_at',

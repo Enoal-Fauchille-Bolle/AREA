@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { useDiscordAuth } from '../../hooks/useDiscordAuth';
+import { useGitHubAuth } from '../../hooks/useGitHubAuth';
+import { useTwitchAuth } from '../../hooks/useTwitchAuth';
 import { servicesApi, componentsApi, areasApi } from '../../services/api';
 import type { Service, Component, ComponentType } from '../../services/api';
 import {
@@ -24,6 +27,20 @@ interface AreaFormData {
 
 const CreateArea: React.FC = () => {
   const { user, logout } = useAuth();
+  const { isConnecting, isConnected, discordUser, connectToDiscord } =
+    useDiscordAuth();
+  const {
+    isConnecting: isConnectingGitHub,
+    isConnected: isConnectedGitHub,
+    githubUser,
+    connectToGitHub,
+  } = useGitHubAuth();
+  const {
+    isConnecting: isConnectingTwitch,
+    isConnected: isConnectedTwitch,
+    twitchUser,
+    connectToTwitch,
+  } = useTwitchAuth();
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] =
     useState<CreateAreaStep['step']>('action');
@@ -34,8 +51,13 @@ const CreateArea: React.FC = () => {
   });
 
   const [services, setServices] = useState<Service[]>([]);
+  const [userServices, setUserServices] = useState<Service[]>([]);
   const [actionComponents, setActionComponents] = useState<Component[]>([]);
   const [reactionComponents, setReactionComponents] = useState<Component[]>([]);
+  const [servicesWithActions, setServicesWithActions] = useState<Service[]>([]);
+  const [servicesWithReactions, setServicesWithReactions] = useState<Service[]>(
+    [],
+  );
   const [requiredParameters, setRequiredParameters] = useState<
     ComponentParameter[]
   >([]);
@@ -81,13 +103,37 @@ const CreateArea: React.FC = () => {
     const fetchServices = async () => {
       try {
         setLoading(true);
-        const servicesData = await servicesApi.getServices();
-        setServices(
-          servicesData.filter((service: Service) => service.is_active),
+        const [servicesData, userServicesData, actionsData, reactionsData] =
+          await Promise.all([
+            servicesApi.getServices(),
+            servicesApi.getUserServices(),
+            componentsApi.getActionComponents(),
+            componentsApi.getReactionComponents(),
+          ]);
+
+        const activeServices = servicesData.filter(
+          (service: Service) => service.is_active,
         );
-      } catch (err) {
+        setServices(activeServices);
+        setUserServices(userServicesData);
+
+        const serviceIdsWithActions = new Set(
+          actionsData.map((action) => action.service_id),
+        );
+        const filteredServicesWithActions = activeServices.filter((service) =>
+          serviceIdsWithActions.has(service.id),
+        );
+        setServicesWithActions(filteredServicesWithActions);
+
+        const serviceIdsWithReactions = new Set(
+          reactionsData.map((reaction) => reaction.service_id),
+        );
+        const filteredServicesWithReactions = activeServices.filter((service) =>
+          serviceIdsWithReactions.has(service.id),
+        );
+        setServicesWithReactions(filteredServicesWithReactions);
+      } catch {
         setError('Error loading services');
-        console.error('Error fetching services:', err);
       } finally {
         setLoading(false);
       }
@@ -111,9 +157,8 @@ const CreateArea: React.FC = () => {
       } else {
         setReactionComponents(filteredComponents);
       }
-    } catch (err) {
+    } catch {
       setError(`Error loading ${type} components`);
-      console.error(`Error fetching ${type} components:`, err);
     }
   };
 
@@ -162,11 +207,14 @@ const CreateArea: React.FC = () => {
         reactionComponent.name,
       );
       setRequiredParameters(parameters);
-      console.log('Required parameters loaded:', parameters);
     }
   };
 
   const handleParametersComplete = () => {
+    if (!areAllRequiredParametersFilled()) {
+      setError('Please fill in all required parameters before proceeding');
+      return;
+    }
     setCurrentStep('config');
   };
 
@@ -181,11 +229,143 @@ const CreateArea: React.FC = () => {
   };
 
   const getAllVariables = () => {
-    console.log(
-      'getAllVariables called - Required parameters:',
-      requiredParameters.length,
-    );
     return requiredParameters;
+  };
+
+  const areAllRequiredParametersFilled = () => {
+    const allRequiredParams = requiredParameters.filter(
+      (param) => param.required,
+    );
+    return allRequiredParams.every((param) => {
+      const value = formData.parameters[param.name];
+      return value && value.trim() !== '';
+    });
+  };
+
+  const isDiscordService = (service?: Service) => {
+    return service?.name.toLowerCase() === 'discord';
+  };
+
+  const isGitHubService = (service?: Service) => {
+    return service?.name.toLowerCase() === 'github';
+  };
+
+  const isTwitchService = (service?: Service) => {
+    return service?.name.toLowerCase() === 'twitch';
+  };
+
+  const requiresAuth = (service?: Service) => {
+    return service?.requires_auth === true;
+  };
+
+  const isServiceConnected = (service?: Service) => {
+    if (!service) return false;
+    return userServices.some((us) => us.id === service.id);
+  };
+
+  const needsDiscordAuth = () => {
+    if (isConnected) return false;
+    const actionNeedsAuth =
+      requiresAuth(formData.actionService) &&
+      !isServiceConnected(formData.actionService);
+    const reactionNeedsAuth =
+      requiresAuth(formData.reactionService) &&
+      !isServiceConnected(formData.reactionService);
+    const actionIsDiscord =
+      actionNeedsAuth && isDiscordService(formData.actionService);
+    const reactionIsDiscord =
+      reactionNeedsAuth && isDiscordService(formData.reactionService);
+    return actionIsDiscord || reactionIsDiscord;
+  };
+
+  const needsGitHubAuth = () => {
+    if (isConnectedGitHub) return false;
+    const actionNeedsAuth =
+      requiresAuth(formData.actionService) &&
+      !isServiceConnected(formData.actionService);
+    const reactionNeedsAuth =
+      requiresAuth(formData.reactionService) &&
+      !isServiceConnected(formData.reactionService);
+    const actionIsGitHub =
+      actionNeedsAuth && isGitHubService(formData.actionService);
+    const reactionIsGitHub =
+      reactionNeedsAuth && isGitHubService(formData.reactionService);
+    return actionIsGitHub || reactionIsGitHub;
+  };
+
+  const needsTwitchAuth = () => {
+    if (isConnectedTwitch) return false;
+    const actionNeedsAuth =
+      requiresAuth(formData.actionService) &&
+      !isServiceConnected(formData.actionService);
+    const reactionNeedsAuth =
+      requiresAuth(formData.reactionService) &&
+      !isServiceConnected(formData.reactionService);
+    const actionIsTwitch =
+      actionNeedsAuth && isTwitchService(formData.actionService);
+    const reactionIsTwitch =
+      reactionNeedsAuth && isTwitchService(formData.reactionService);
+    return actionIsTwitch || reactionIsTwitch;
+  };
+
+  const handleConnectDiscord = async () => {
+    try {
+      setError(null);
+      const discordService = isDiscordService(formData.actionService)
+        ? formData.actionService
+        : formData.reactionService;
+
+      if (!discordService) return;
+
+      await connectToDiscord(discordService.id);
+
+      const userServicesData = await servicesApi.getUserServices();
+      setUserServices(userServicesData);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to connect to Discord';
+      setError(errorMessage);
+    }
+  };
+
+  const handleConnectGitHub = async () => {
+    try {
+      setError(null);
+      const githubService = isGitHubService(formData.actionService)
+        ? formData.actionService
+        : formData.reactionService;
+
+      if (!githubService) return;
+
+      await connectToGitHub(githubService.id);
+
+      const userServicesData = await servicesApi.getUserServices();
+      setUserServices(userServicesData);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to connect to GitHub';
+      setError(errorMessage);
+    }
+  };
+
+  const handleConnectTwitch = async () => {
+    try {
+      setError(null);
+      const twitchService = isTwitchService(formData.actionService)
+        ? formData.actionService
+        : formData.reactionService;
+
+      if (!twitchService) return;
+
+      await connectToTwitch(twitchService.id);
+
+      const userServicesData = await servicesApi.getUserServices();
+      setUserServices(userServicesData);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to connect to Twitch';
+      setError(errorMessage);
+    }
   };
 
   const handleCreateArea = async () => {
@@ -202,7 +382,7 @@ const CreateArea: React.FC = () => {
     try {
       setLoading(true);
 
-      const createdArea = await areasApi.createAreaWithParameters(
+      await areasApi.createAreaWithParameters(
         {
           component_action_id: formData.actionComponent.id,
           component_reaction_id: formData.reactionComponent.id,
@@ -213,14 +393,12 @@ const CreateArea: React.FC = () => {
         formData.parameters,
       );
 
-      console.log('AREA created successfully with parameters:', createdArea);
       setCurrentStep('complete');
       setTimeout(() => {
         navigate('/profile');
       }, 2000);
-    } catch (err) {
+    } catch {
       setError('Error creating AREA');
-      console.error('Error creating area:', err);
     } finally {
       setLoading(false);
     }
@@ -237,19 +415,19 @@ const CreateArea: React.FC = () => {
                     currentStep,
                   )
                 ? 'bg-green-600 text-white'
-                : 'bg-gray-600 text-gray-300'
+                : 'bg-gray-500 text-gray-100'
           }`}
         >
           1
         </div>
-        <div className="w-16 h-0.5 bg-gray-600">
+        <div className="w-16 h-0.5 bg-gray-500">
           <div
             className={`h-full transition-all duration-300 ${
               ['reaction', 'parameters', 'config', 'complete'].includes(
                 currentStep,
               )
                 ? 'bg-green-600 w-full'
-                : 'bg-gray-600 w-0'
+                : 'bg-gray-500 w-0'
             }`}
           />
         </div>
@@ -259,17 +437,17 @@ const CreateArea: React.FC = () => {
               ? 'bg-blue-600 text-white'
               : ['parameters', 'config', 'complete'].includes(currentStep)
                 ? 'bg-green-600 text-white'
-                : 'bg-gray-600 text-gray-300'
+                : 'bg-gray-500 text-gray-100'
           }`}
         >
           2
         </div>
-        <div className="w-16 h-0.5 bg-gray-600">
+        <div className="w-16 h-0.5 bg-gray-500">
           <div
             className={`h-full transition-all duration-300 ${
               ['parameters', 'config', 'complete'].includes(currentStep)
                 ? 'bg-green-600 w-full'
-                : 'bg-gray-600 w-0'
+                : 'bg-gray-500 w-0'
             }`}
           />
         </div>
@@ -279,17 +457,17 @@ const CreateArea: React.FC = () => {
               ? 'bg-blue-600 text-white'
               : ['config', 'complete'].includes(currentStep)
                 ? 'bg-green-600 text-white'
-                : 'bg-gray-600 text-gray-300'
+                : 'bg-gray-500 text-gray-100'
           }`}
         >
           3
         </div>
-        <div className="w-16 h-0.5 bg-gray-600">
+        <div className="w-16 h-0.5 bg-gray-500">
           <div
             className={`h-full transition-all duration-300 ${
               ['config', 'complete'].includes(currentStep)
                 ? 'bg-green-600 w-full'
-                : 'bg-gray-600 w-0'
+                : 'bg-gray-500 w-0'
             }`}
           />
         </div>
@@ -299,7 +477,7 @@ const CreateArea: React.FC = () => {
               ? 'bg-blue-600 text-white'
               : currentStep === 'complete'
                 ? 'bg-green-600 text-white'
-                : 'bg-gray-600 text-gray-300'
+                : 'bg-gray-500 text-gray-100'
           }`}
         >
           4
@@ -312,64 +490,25 @@ const CreateArea: React.FC = () => {
     title: string,
     selectedService: Service | undefined,
     onServiceSelect: (service: Service) => void,
+    availableServices: Service[] = services,
   ) => (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold text-white">{title}</h3>
+      <h2 className="text-lg font-semibold text-white">{title}</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {services.map((service) => (
+        {availableServices.map((service) => (
           <button
             key={service.id}
             onClick={() => onServiceSelect(service)}
             className={`p-4 border-2 rounded-lg transition-all hover:shadow-md ${
               selectedService?.id === service.id
                 ? 'border-blue-500 bg-blue-900 bg-opacity-50'
-                : 'border-gray-600 hover:border-gray-500 bg-gray-700'
+                : 'border-gray-500 hover:border-gray-400 bg-gray-600'
             }`}
           >
             <div className="flex items-center space-x-3">
-              {service.icon_path ? (
-                <div className="w-8 h-8 flex items-center justify-center">
-                  <img
-                    src={service.icon_path}
-                    alt={service.name}
-                    className="w-6 h-6"
-                    crossOrigin="anonymous"
-                    onLoad={() => {
-                      console.log(
-                        `Icon loaded successfully for ${service.name}:`,
-                        service.icon_path,
-                      );
-                    }}
-                    onError={(e) => {
-                      console.error(
-                        `Failed to load icon for ${service.name}:`,
-                        service.icon_path,
-                      );
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
-                      const fallback = target.nextElementSibling as HTMLElement;
-                      if (fallback) fallback.style.display = 'flex';
-                    }}
-                  />
-                  <div
-                    className="w-8 h-8 bg-gray-600 rounded flex items-center justify-center"
-                    style={{ display: 'none' }}
-                  >
-                    <span className="text-gray-300 text-sm font-medium">
-                      {service.name.charAt(0)}
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                <div className="w-8 h-8 bg-gray-600 rounded flex items-center justify-center">
-                  <span className="text-gray-300 text-sm font-medium">
-                    {service.name.charAt(0)}
-                  </span>
-                </div>
-              )}
               <div className="text-left">
                 <p className="font-medium text-white">{service.name}</p>
-                <p className="text-sm text-gray-400">{service.description}</p>
+                <p className="text-sm text-gray-200">{service.description}</p>
               </div>
             </div>
           </button>
@@ -385,9 +524,9 @@ const CreateArea: React.FC = () => {
     onComponentSelect: (component: Component) => void,
   ) => (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold text-white">{title}</h3>
+      <h2 className="text-lg font-semibold text-white">{title}</h2>
       {components.length === 0 ? (
-        <p className="text-gray-400">
+        <p className="text-gray-200">
           No components available for this service.
         </p>
       ) : (
@@ -399,11 +538,11 @@ const CreateArea: React.FC = () => {
               className={`w-full p-4 border-2 rounded-lg text-left transition-all hover:shadow-md ${
                 selectedComponent?.id === component.id
                   ? 'border-blue-500 bg-blue-900 bg-opacity-50'
-                  : 'border-gray-600 hover:border-gray-500 bg-gray-700'
+                  : 'border-gray-500 hover:border-gray-400 bg-gray-600'
               }`}
             >
-              <h4 className="font-medium text-white">{component.name}</h4>
-              <p className="text-sm text-gray-400 mt-1">
+              <h3 className="font-medium text-white">{component.name}</h3>
+              <p className="text-sm text-gray-200 mt-1">
                 {component.description}
               </p>
             </button>
@@ -422,6 +561,7 @@ const CreateArea: React.FC = () => {
               'Choose a service for the action (trigger)',
               formData.actionService,
               handleActionServiceSelect,
+              servicesWithActions,
             )}
             {formData.actionService && (
               <div>
@@ -459,6 +599,7 @@ const CreateArea: React.FC = () => {
               'Choose a service for the reaction',
               formData.reactionService,
               handleReactionServiceSelect,
+              servicesWithReactions,
             )}
             {formData.reactionService && (
               <div>
@@ -473,7 +614,7 @@ const CreateArea: React.FC = () => {
             <div className="flex justify-between">
               <button
                 onClick={() => setCurrentStep('action')}
-                className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
+                className="px-4 py-2 text-gray-200 hover:text-white transition-colors"
               >
                 ← Back
               </button>
@@ -492,16 +633,405 @@ const CreateArea: React.FC = () => {
 
       case 'parameters': {
         const allVariables = getAllVariables();
+        const showDiscordAuth = needsDiscordAuth();
         return (
           <div className="space-y-6">
             <div className="text-center mb-6">
               <h2 className="text-2xl font-bold text-white mb-2">
                 Configure Parameters
               </h2>
-              <p className="text-gray-400">
+              <p className="text-base text-gray-200">
                 Set up any required parameters for your action and reaction
               </p>
             </div>
+
+            {showDiscordAuth ? (
+              <div className="bg-blue-900 bg-opacity-50 border border-blue-500 rounded-lg p-6 mb-6">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                    <svg
+                      className="w-5 h-5 text-white"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419-.0190 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9460 2.4189-2.1568 2.4189Z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-white font-semibold">
+                      Discord Authentication Required
+                    </h3>
+                    <p className="text-blue-200 text-sm">
+                      Connect your Discord account to use Discord actions or
+                      reactions
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleConnectDiscord}
+                  disabled={isConnecting}
+                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                >
+                  {isConnecting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Connecting to Discord...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg
+                        className="w-5 h-5"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419-.0190 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9460 2.4189-2.1568 2.4189Z" />
+                      </svg>
+                      <span>Connect to Discord</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            ) : null}
+
+            {isConnected &&
+              !showDiscordAuth &&
+              (isDiscordService(formData.actionService) ||
+                isDiscordService(formData.reactionService)) && (
+                <div className="bg-green-900 bg-opacity-50 border border-green-500 rounded-lg p-6 mb-6">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                      <svg
+                        className="w-5 h-5 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-white font-semibold">
+                        Discord Connected Successfully
+                      </h3>
+                      <p className="text-green-200 text-sm">
+                        Your Discord account is connected and ready to use
+                      </p>
+                    </div>
+                  </div>
+                  {discordUser && (
+                    <div className="bg-green-800 bg-opacity-30 rounded-lg p-4 mb-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center overflow-hidden">
+                          {discordUser.avatar ? (
+                            <img
+                              src={discordUser.avatar}
+                              alt="Discord Avatar"
+                              className="w-full h-full rounded-full object-cover"
+                            />
+                          ) : (
+                            <svg
+                              className="w-6 h-6 text-white"
+                              fill="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                            </svg>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-green-100 font-medium">
+                            {discordUser.discriminator !== '0' &&
+                            discordUser.discriminator !== '0000' ? (
+                              <>
+                                #{discordUser.discriminator}{' '}
+                                {discordUser.username}
+                              </>
+                            ) : (
+                              discordUser.username
+                            )}
+                          </p>
+                          <p className="text-green-300 text-sm">
+                            Connected Account
+                          </p>
+                        </div>
+                        <div className="text-green-400">
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+            {needsGitHubAuth() && !isConnectedGitHub ? (
+              <div className="bg-gray-800 bg-opacity-50 border border-gray-600 rounded-lg p-6 mb-6">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center">
+                    <svg
+                      className="w-5 h-5 text-white"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.840 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.430.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-white font-semibold">
+                      GitHub Authentication Required
+                    </h3>
+                    <p className="text-gray-300 text-sm">
+                      Connect your GitHub account to use GitHub actions or
+                      reactions
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleConnectGitHub}
+                  disabled={isConnectingGitHub}
+                  className="w-full bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                >
+                  {isConnectingGitHub ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Connecting to GitHub...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg
+                        className="w-5 h-5"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.840 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.430.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                      </svg>
+                      <span>Connect to GitHub</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            ) : null}
+
+            {isConnectedGitHub &&
+              (isGitHubService(formData.actionService) ||
+                isGitHubService(formData.reactionService)) && (
+                <div className="bg-green-900 bg-opacity-50 border border-green-500 rounded-lg p-6 mb-6">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                      <svg
+                        className="w-5 h-5 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-white font-semibold">
+                        GitHub Connected Successfully
+                      </h3>
+                      <p className="text-green-200 text-sm">
+                        Your GitHub account is connected and ready to use
+                      </p>
+                    </div>
+                  </div>
+                  {githubUser && (
+                    <div className="bg-green-800 bg-opacity-30 rounded-lg p-4 mb-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center overflow-hidden">
+                          {githubUser.avatar_url ? (
+                            <img
+                              src={githubUser.avatar_url}
+                              alt="GitHub Avatar"
+                              className="w-full h-full rounded-full object-cover"
+                            />
+                          ) : (
+                            <svg
+                              className="w-6 h-6 text-white"
+                              fill="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                            </svg>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-green-100 font-medium">
+                            {githubUser.login}
+                          </p>
+                          <p className="text-green-300 text-sm">
+                            Connected Account
+                          </p>
+                        </div>
+                        <div className="text-green-400">
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+            {needsTwitchAuth() && !isConnectedTwitch ? (
+              <div className="bg-gray-800 bg-opacity-50 border border-gray-600 rounded-lg p-6 mb-6">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
+                    <svg
+                      className="w-5 h-5 text-white"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-white font-semibold">
+                      Twitch Authentication Required
+                    </h3>
+                    <p className="text-gray-300 text-sm">
+                      Connect your Twitch account to use Twitch actions or
+                      reactions
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleConnectTwitch}
+                  disabled={isConnectingTwitch}
+                  className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                >
+                  {isConnectingTwitch ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Connecting to Twitch...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg
+                        className="w-5 h-5"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z" />
+                      </svg>
+                      <span>Connect to Twitch</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            ) : null}
+
+            {isConnectedTwitch &&
+              (isTwitchService(formData.actionService) ||
+                isTwitchService(formData.reactionService)) && (
+                <div className="bg-green-900 bg-opacity-50 border border-green-500 rounded-lg p-6 mb-6">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                      <svg
+                        className="w-5 h-5 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-white font-semibold">
+                        Twitch Connected Successfully
+                      </h3>
+                      <p className="text-green-200 text-sm">
+                        Your Twitch account is connected and ready to use
+                      </p>
+                    </div>
+                  </div>
+                  {twitchUser && (
+                    <div className="bg-green-800 bg-opacity-30 rounded-lg p-4 mb-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center overflow-hidden">
+                          {twitchUser.profile_image_url ? (
+                            <img
+                              src={twitchUser.profile_image_url}
+                              alt={twitchUser.display_name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <svg
+                              className="w-6 h-6 text-white"
+                              fill="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z" />
+                            </svg>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-white font-medium">
+                            {twitchUser.display_name}
+                          </p>
+                          <p className="text-green-200 text-sm">
+                            @{twitchUser.login}
+                            {twitchUser.email && ` • ${twitchUser.email}`}
+                          </p>
+                        </div>
+                        <div className="text-green-400">
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
             {allVariables.length === 0 ? (
               <div className="bg-gray-800 rounded-lg p-6 text-center">
@@ -580,7 +1110,8 @@ const CreateArea: React.FC = () => {
               </button>
               <button
                 onClick={handleParametersComplete}
-                className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors"
+                disabled={!areAllRequiredParametersFilled() || showDiscordAuth}
+                className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Next →
               </button>
@@ -615,7 +1146,7 @@ const CreateArea: React.FC = () => {
                   htmlFor="name"
                   className="block text-sm font-medium text-white mb-2"
                 >
-                  AREA Name *
+                  AREA Name <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="text"
@@ -700,7 +1231,7 @@ const CreateArea: React.FC = () => {
             <h2 className="text-2xl font-bold text-white">
               AREA created successfully!
             </h2>
-            <p className="text-gray-400">Redirecting to your profile...</p>
+            <p className="text-gray-200">Redirecting to your profile...</p>
           </div>
         );
 
@@ -753,23 +1284,27 @@ const CreateArea: React.FC = () => {
               <button
                 onClick={toggleProfileMenu}
                 className="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center hover:bg-gray-500 transition-colors"
+                aria-label="Open profile menu"
+                aria-expanded={isProfileMenuOpen}
+                aria-haspopup="true"
               >
                 <svg
                   className="w-6 h-6 text-gray-300"
                   fill="currentColor"
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
                 >
                   <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
                 </svg>
               </button>
               {isProfileMenuOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-lg py-2 z-50">
-                  <div className="px-4 py-2 text-sm text-gray-300 border-b border-gray-700">
+                <div className="absolute right-0 mt-2 w-48 bg-gray-700 border border-gray-600 rounded-lg shadow-lg py-2 z-50">
+                  <div className="px-4 py-2 text-sm text-white border-b border-gray-600">
                     <div className="font-semibold">
                       {user ? `${user.username}` : 'Loading...'}
                     </div>
                     <div
-                      className="text-gray-400 text-xs truncate"
+                      className="text-gray-100 text-xs truncate"
                       title={user?.email || 'Loading...'}
                     >
                       {user?.email || 'Loading...'}
@@ -778,9 +1313,9 @@ const CreateArea: React.FC = () => {
                   <button
                     onClick={() => {
                       setIsProfileMenuOpen(false);
-                      console.log('Profile settings');
+                      navigate('/profile/settings');
                     }}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors flex items-center"
+                    className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600 transition-colors flex items-center"
                   >
                     <svg
                       className="w-4 h-4 mr-3"
@@ -832,7 +1367,7 @@ const CreateArea: React.FC = () => {
             <h1 className="text-3xl font-bold text-white mb-2">
               Create a new AREA
             </h1>
-            <p className="text-gray-400">
+            <p className="text-xl md:text-2xl text-gray-400">
               Set up an automation by choosing a trigger action and a reaction
             </p>
           </div>

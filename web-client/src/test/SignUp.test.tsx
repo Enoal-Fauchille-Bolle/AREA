@@ -43,7 +43,7 @@ describe('SignUp Page', () => {
 
   it('renders Google sign up button', () => {
     renderWithRouter(<SignUp />);
-    expect(screen.getByText('Continue with Google')).toBeInTheDocument();
+    expect(screen.getByText('Sign up with Google')).toBeInTheDocument();
   });
 
   it('renders login link', () => {

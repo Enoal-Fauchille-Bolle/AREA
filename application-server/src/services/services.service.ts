@@ -291,6 +291,199 @@ export class ServicesService {
     await this.userServiceService.removeOne(userId, serviceId);
   }
 
+  async getDiscordProfile(
+    userId: number,
+  ): Promise<{ username: string; avatar: string | null; id: string }> {
+    // Find Discord service
+    const discordService = await this.serviceRepository.findOne({
+      where: { name: 'Discord' },
+    });
+    if (!discordService) {
+      throw new NotFoundException('Discord service not found');
+    }
+
+    // Find user's Discord connection
+    const userService = await this.userServiceService.findOne(
+      userId,
+      discordService.id,
+    );
+
+    if (!userService || !userService.oauth_token) {
+      throw new NotFoundException('Discord account not connected');
+    }
+
+    try {
+      const response = await fetch('https://discord.com/api/users/@me', {
+        headers: {
+          Authorization: `Bearer ${userService.oauth_token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch Discord profile');
+      }
+
+      const profile = (await response.json()) as {
+        id: string;
+        username: string;
+        avatar: string | null;
+      };
+      return {
+        username: profile.username,
+        avatar: profile.avatar
+          ? `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png`
+          : null,
+        id: profile.id,
+      };
+    } catch {
+      throw new BadRequestException('Failed to retrieve Discord profile');
+    }
+  }
+
+  async getGitHubProfile(userId: number): Promise<{
+    id: string;
+    login: string;
+    avatar_url: string | null;
+    email?: string;
+  }> {
+    const githubService = await this.serviceRepository.findOne({
+      where: { name: 'GitHub' },
+    });
+    if (!githubService) {
+      throw new NotFoundException('GitHub service not found');
+    }
+
+    const userService = await this.userServiceService.findOne(
+      userId,
+      githubService.id,
+    );
+
+    if (!userService || !userService.oauth_token) {
+      throw new NotFoundException('GitHub account not connected');
+    }
+
+    try {
+      const response = await fetch('https://api.github.com/user', {
+        headers: {
+          Authorization: `Bearer ${userService.oauth_token}`,
+          Accept: 'application/vnd.github.v3+json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch GitHub profile');
+      }
+
+      const profile = (await response.json()) as {
+        id: number;
+        login: string;
+        avatar_url: string | null;
+        email?: string;
+      };
+
+      return {
+        id: profile.id.toString(),
+        login: profile.login,
+        avatar_url: profile.avatar_url,
+        email: profile.email,
+      };
+    } catch {
+      throw new BadRequestException('Failed to retrieve GitHub profile');
+    }
+  }
+
+  async getTwitchProfile(userId: number): Promise<{
+    id: string;
+    login: string;
+    display_name: string;
+    profile_image_url: string | null;
+    email?: string;
+  }> {
+    const twitchService = await this.serviceRepository.findOne({
+      where: { name: 'Twitch' },
+    });
+    if (!twitchService) {
+      throw new NotFoundException('Twitch service not found');
+    }
+
+    const userService = await this.userServiceService.findOne(
+      userId,
+      twitchService.id,
+    );
+
+    if (!userService || !userService.oauth_token) {
+      throw new NotFoundException('Twitch account not connected');
+    }
+
+    try {
+      const appConfig = this.configService.get('app');
+      const clientId = appConfig.oauth2.twitch?.clientId;
+
+      if (!clientId) {
+        throw new Error('Twitch client ID not configured');
+      }
+
+      const response = await fetch('https://api.twitch.tv/helix/users', {
+        headers: {
+          Authorization: `Bearer ${userService.oauth_token}`,
+          'Client-Id': clientId,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch Twitch profile');
+      }
+
+      const data = (await response.json()) as {
+        data: Array<{
+          id: string;
+          login: string;
+          display_name: string;
+          profile_image_url: string;
+          email?: string;
+        }>;
+      };
+
+      if (!data.data || data.data.length === 0) {
+        throw new Error('No Twitch user data returned');
+      }
+
+      const profile = data.data[0];
+
+      return {
+        id: profile.id,
+        login: profile.login,
+        display_name: profile.display_name,
+        profile_image_url: profile.profile_image_url,
+        email: profile.email,
+      };
+    } catch (error) {
+      console.error('Failed to retrieve Twitch profile:', error);
+      throw new BadRequestException('Failed to retrieve Twitch profile');
+    }
+  }
+
+  async disconnectService(userId: number, serviceName: string): Promise<void> {
+    let normalizedName = serviceName;
+    if (serviceName.toLowerCase() === 'github') {
+      normalizedName = 'GitHub';
+    } else {
+      normalizedName =
+        serviceName.charAt(0).toUpperCase() +
+        serviceName.slice(1).toLowerCase();
+    }
+
+    const service = await this.serviceRepository.findOne({
+      where: { name: normalizedName },
+    });
+
+    if (!service) {
+      throw new NotFoundException(`Service ${serviceName} not found`);
+    }
+
+    await this.userServiceService.removeOne(userId, service.id);
+  }
+
   async refreshServiceToken(userId: number, serviceId: number): Promise<void> {
     const userService = await this.userServiceService.findOne(
       userId,
