@@ -51,8 +51,6 @@ function ServiceCallback() {
           service = 'DISCORD';
         }
 
-        console.log(`Final detected service: ${service}`);
-
         console.log(`Detected service: ${service}`);
 
         let message;
