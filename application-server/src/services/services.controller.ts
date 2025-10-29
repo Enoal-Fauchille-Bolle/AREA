@@ -187,6 +187,18 @@ export class ServicesController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('twitch/profile')
+  async getTwitchProfile(@Request() req: { user: { id: number } }): Promise<{
+    id: string;
+    login: string;
+    display_name: string;
+    profile_image_url: string | null;
+    email?: string;
+  }> {
+    return this.servicesService.getTwitchProfile(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Delete(':serviceName/disconnect')
   @HttpCode(HttpStatus.NO_CONTENT)
   async disconnectService(

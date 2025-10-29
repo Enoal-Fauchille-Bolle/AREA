@@ -35,7 +35,6 @@ const Profile: React.FC = () => {
       setLoading(true);
       const services: ConnectedService[] = [];
 
-      // Check Discord connection
       try {
         const discordProfile = await servicesApi.getDiscordProfile();
         services.push({
@@ -67,7 +66,6 @@ const Profile: React.FC = () => {
         console.log('Discord not connected');
       }
 
-      // Check GitHub connection
       try {
         const githubProfile = await servicesApi.getGitHubProfile();
         services.push({
@@ -99,6 +97,37 @@ const Profile: React.FC = () => {
         console.log('GitHub not connected');
       }
 
+      try {
+        const twitchProfile = await servicesApi.getTwitchProfile();
+        services.push({
+          id: 3,
+          name: 'twitch',
+          displayName: 'Twitch',
+          icon: (
+            <svg
+              width="32"
+              height="32"
+              viewBox="0 0 24 24"
+              className="w-8 h-8"
+              fill="#9146FF"
+            >
+              <path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z" />
+            </svg>
+          ),
+          user: twitchProfile
+            ? {
+                id: twitchProfile.id,
+                username: twitchProfile.login,
+                email: twitchProfile.email,
+                avatar: twitchProfile.profile_image_url ?? undefined,
+              }
+            : undefined,
+          connectedAt: new Date().toISOString(),
+        });
+      } catch {
+        console.log('Twitch not connected');
+      }
+
       setConnectedServices(services);
     } catch (error) {
       console.error('Failed to load connected services:', error);
@@ -113,10 +142,10 @@ const Profile: React.FC = () => {
       setError(null);
       setSuccessMessage(null);
 
-      const serviceNameLower = serviceName.toLowerCase();
-
-      await servicesApi.disconnectService(serviceNameLower);
-      setSuccessMessage(`Successfully disconnected from ${serviceName}`);
+      await servicesApi.disconnectService(serviceName);
+      const service = connectedServices.find(s => s.name === serviceName);
+      const displayName = service?.displayName || serviceName;
+      setSuccessMessage(`Successfully disconnected from ${displayName}`);
 
       await loadConnectedServices();
     } catch (error) {
@@ -307,7 +336,7 @@ const Profile: React.FC = () => {
                     <div className="flex flex-col items-end">
                       <button
                         onClick={() =>
-                          handleDisconnectService(service.displayName)
+                          handleDisconnectService(service.name)
                         }
                         className="bg-red-600 hover:bg-red-700 text-white transition-colors text-sm font-medium py-2 px-4 border border-red-500 hover:border-red-600 rounded-lg"
                       >

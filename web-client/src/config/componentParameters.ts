@@ -282,6 +282,40 @@ export const githubComponentsConfig: ComponentConfig[] = [
   },
 ];
 
+export const twitchComponentsConfig: ComponentConfig[] = [
+  {
+    componentName: 'streamer_goes_live',
+    parameters: [
+      {
+        name: 'streamer_username',
+        description: 'Twitch username of the streamer to monitor',
+        type: 'string',
+        required: true,
+        placeholder: 'name',
+      },
+    ],
+  },
+  {
+    componentName: 'send_chat_message',
+    parameters: [
+      {
+        name: 'broadcaster_username',
+        description: 'Twitch username of the channel to send message to',
+        type: 'string',
+        required: true,
+        placeholder: 'name',
+      },
+      {
+        name: 'message',
+        description: 'Message content to send in chat',
+        type: 'string',
+        required: true,
+        placeholder: 'Hello from AREA! 👋',
+      },
+    ],
+  },
+];
+
 export function getComponentParameters(
   componentName: string,
 ): ComponentParameter[] {
@@ -290,6 +324,7 @@ export function getComponentParameters(
     ...emailComponentsConfig,
     ...discordComponentsConfig,
     ...githubComponentsConfig,
+    ...twitchComponentsConfig,
   ];
   const config = allConfigs.find((c) => c.componentName === componentName);
   return config ? config.parameters : [];

@@ -392,17 +392,87 @@ export class ServicesService {
     }
   }
 
-  async disconnectService(userId: number, serviceName: string): Promise<void> {
-    const service = await this.serviceRepository.findOne({
-      where: [
-        { name: serviceName },
-        { name: serviceName.toLowerCase() },
-        {
-          name:
-            serviceName.charAt(0).toUpperCase() +
-            serviceName.slice(1).toLowerCase(),
+  async getTwitchProfile(userId: number): Promise<{
+    id: string;
+    login: string;
+    display_name: string;
+    profile_image_url: string | null;
+    email?: string;
+  }> {
+    const twitchService = await this.serviceRepository.findOne({
+      where: { name: 'Twitch' },
+    });
+    if (!twitchService) {
+      throw new NotFoundException('Twitch service not found');
+    }
+
+    const userService = await this.userServiceService.findOne(
+      userId,
+      twitchService.id,
+    );
+
+    if (!userService || !userService.oauth_token) {
+      throw new NotFoundException('Twitch account not connected');
+    }
+
+    try {
+      const appConfig = this.configService.get('app');
+      const clientId = appConfig.oauth2.twitch?.clientId;
+
+      if (!clientId) {
+        throw new Error('Twitch client ID not configured');
+      }
+
+      const response = await fetch('https://api.twitch.tv/helix/users', {
+        headers: {
+          Authorization: `Bearer ${userService.oauth_token}`,
+          'Client-Id': clientId,
         },
-      ],
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch Twitch profile');
+      }
+
+      const data = (await response.json()) as {
+        data: Array<{
+          id: string;
+          login: string;
+          display_name: string;
+          profile_image_url: string;
+          email?: string;
+        }>;
+      };
+
+      if (!data.data || data.data.length === 0) {
+        throw new Error('No Twitch user data returned');
+      }
+
+      const profile = data.data[0];
+
+      return {
+        id: profile.id,
+        login: profile.login,
+        display_name: profile.display_name,
+        profile_image_url: profile.profile_image_url,
+        email: profile.email,
+      };
+    } catch (error) {
+      console.error('Failed to retrieve Twitch profile:', error);
+      throw new BadRequestException('Failed to retrieve Twitch profile');
+    }
+  }
+
+  async disconnectService(userId: number, serviceName: string): Promise<void> {
+    let normalizedName = serviceName;
+    if (serviceName.toLowerCase() === 'github') {
+      normalizedName = 'GitHub';
+    } else {
+      normalizedName = serviceName.charAt(0).toUpperCase() + serviceName.slice(1).toLowerCase();
+    }
+
+    const service = await this.serviceRepository.findOne({
+      where: { name: normalizedName },
     });
 
     if (!service) {

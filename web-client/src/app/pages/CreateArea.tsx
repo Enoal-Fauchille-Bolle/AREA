@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useDiscordAuth } from '../../hooks/useDiscordAuth';
 import { useGitHubAuth } from '../../hooks/useGitHubAuth';
+import { useTwitchAuth } from '../../hooks/useTwitchAuth';
 import { servicesApi, componentsApi, areasApi } from '../../services/api';
 import type { Service, Component, ComponentType } from '../../services/api';
 import {
@@ -34,6 +35,12 @@ const CreateArea: React.FC = () => {
     githubUser,
     connectToGitHub,
   } = useGitHubAuth();
+  const {
+    isConnecting: isConnectingTwitch,
+    isConnected: isConnectedTwitch,
+    twitchUser,
+    connectToTwitch,
+  } = useTwitchAuth();
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] =
     useState<CreateAreaStep['step']>('action');
@@ -251,6 +258,10 @@ const CreateArea: React.FC = () => {
     return service?.name.toLowerCase() === 'github';
   };
 
+  const isTwitchService = (service?: Service) => {
+    return service?.name.toLowerCase() === 'twitch';
+  };
+
   const requiresAuth = (service?: Service) => {
     return service?.requires_auth === true;
   };
@@ -288,6 +299,21 @@ const CreateArea: React.FC = () => {
     const reactionIsGitHub =
       reactionNeedsAuth && isGitHubService(formData.reactionService);
     return actionIsGitHub || reactionIsGitHub;
+  };
+
+  const needsTwitchAuth = () => {
+    if (isConnectedTwitch) return false;
+    const actionNeedsAuth =
+      requiresAuth(formData.actionService) &&
+      !isServiceConnected(formData.actionService);
+    const reactionNeedsAuth =
+      requiresAuth(formData.reactionService) &&
+      !isServiceConnected(formData.reactionService);
+    const actionIsTwitch =
+      actionNeedsAuth && isTwitchService(formData.actionService);
+    const reactionIsTwitch =
+      reactionNeedsAuth && isTwitchService(formData.reactionService);
+    return actionIsTwitch || reactionIsTwitch;
   };
 
   const handleConnectDiscord = async () => {
@@ -330,6 +356,27 @@ const CreateArea: React.FC = () => {
         err instanceof Error ? err.message : 'Failed to connect to GitHub';
       setError(errorMessage);
       console.error('GitHub connection error:', err);
+    }
+  };
+
+  const handleConnectTwitch = async () => {
+    try {
+      setError(null);
+      const twitchService = isTwitchService(formData.actionService)
+        ? formData.actionService
+        : formData.reactionService;
+
+      if (!twitchService) return;
+
+      await connectToTwitch(twitchService.id);
+
+      const userServicesData = await servicesApi.getUserServices();
+      setUserServices(userServicesData);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to connect to Twitch';
+      setError(errorMessage);
+      console.error('Twitch connection error:', err);
     }
   };
 
@@ -870,6 +917,133 @@ const CreateArea: React.FC = () => {
                           </p>
                           <p className="text-green-300 text-sm">
                             Connected Account
+                          </p>
+                        </div>
+                        <div className="text-green-400">
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+            {needsTwitchAuth() && !isConnectedTwitch ? (
+              <div className="bg-gray-800 bg-opacity-50 border border-gray-600 rounded-lg p-6 mb-6">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
+                    <svg
+                      className="w-5 h-5 text-white"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-white font-semibold">
+                      Twitch Authentication Required
+                    </h3>
+                    <p className="text-gray-300 text-sm">
+                      Connect your Twitch account to use Twitch actions or
+                      reactions
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleConnectTwitch}
+                  disabled={isConnectingTwitch}
+                  className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                >
+                  {isConnectingTwitch ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Connecting to Twitch...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg
+                        className="w-5 h-5"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z" />
+                      </svg>
+                      <span>Connect to Twitch</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            ) : null}
+
+            {isConnectedTwitch &&
+              (isTwitchService(formData.actionService) ||
+                isTwitchService(formData.reactionService)) && (
+                <div className="bg-green-900 bg-opacity-50 border border-green-500 rounded-lg p-6 mb-6">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                      <svg
+                        className="w-5 h-5 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-white font-semibold">
+                        Twitch Connected Successfully
+                      </h3>
+                      <p className="text-green-200 text-sm">
+                        Your Twitch account is connected and ready to use
+                      </p>
+                    </div>
+                  </div>
+                  {twitchUser && (
+                    <div className="bg-green-800 bg-opacity-30 rounded-lg p-4 mb-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center overflow-hidden">
+                          {twitchUser.profile_image_url ? (
+                            <img
+                              src={twitchUser.profile_image_url}
+                              alt={twitchUser.display_name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <svg
+                              className="w-6 h-6 text-white"
+                              fill="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z" />
+                            </svg>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-white font-medium">
+                            {twitchUser.display_name}
+                          </p>
+                          <p className="text-green-200 text-sm">
+                            @{twitchUser.login}
+                            {twitchUser.email && ` • ${twitchUser.email}`}
                           </p>
                         </div>
                         <div className="text-green-400">

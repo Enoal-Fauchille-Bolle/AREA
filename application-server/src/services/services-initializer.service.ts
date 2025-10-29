@@ -1033,7 +1033,6 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
         display_order: 1,
       }),
 
-      // Return value: streamer ID
       this.variablesService.create({
         component_id: streamerGoesLiveAction.id,
         name: 'streamer_id',
@@ -1044,18 +1043,16 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
         display_order: 1,
       }),
 
-      // Return value: streamer username
       this.variablesService.create({
         component_id: streamerGoesLiveAction.id,
-        name: 'streamer_username',
-        description: 'Twitch username of the streamer',
+        name: 'streamer_login',
+        description: 'Twitch login of the streamer',
         kind: VariableKind.RETURN_VALUE,
         type: VariableType.STRING,
         nullable: false,
         display_order: 2,
       }),
 
-      // Return value: stream title
       this.variablesService.create({
         component_id: streamerGoesLiveAction.id,
         name: 'stream_title',
@@ -1066,7 +1063,6 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
         display_order: 3,
       }),
 
-      // Return value: game name
       this.variablesService.create({
         component_id: streamerGoesLiveAction.id,
         name: 'game_name',
@@ -1077,7 +1073,6 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
         display_order: 4,
       }),
 
-      // Return value: viewer count
       this.variablesService.create({
         component_id: streamerGoesLiveAction.id,
         name: 'viewer_count',
@@ -1088,7 +1083,6 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
         display_order: 5,
       }),
 
-      // Return value: started at
       this.variablesService.create({
         component_id: streamerGoesLiveAction.id,
         name: 'started_at',
@@ -1100,7 +1094,6 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       }),
     ]);
 
-    // Create send_chat_message reaction component
     const sendChatMessageReaction = await this.componentsService.create({
       service_id: twitchService.id,
       type: ComponentType.REACTION,
@@ -1110,7 +1103,6 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
     });
 
     await Promise.all([
-      // Broadcaster username - required
       this.variablesService.create({
         component_id: sendChatMessageReaction.id,
         name: 'broadcaster_username',
@@ -1122,7 +1114,6 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
         display_order: 1,
       }),
 
-      // Message - required
       this.variablesService.create({
         component_id: sendChatMessageReaction.id,
         name: 'message',
@@ -1134,7 +1125,6 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
         display_order: 2,
       }),
 
-      // Return value: broadcaster ID
       this.variablesService.create({
         component_id: sendChatMessageReaction.id,
         name: 'broadcaster_id',
@@ -1145,7 +1135,6 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
         display_order: 1,
       }),
 
-      // Return value: broadcaster username
       this.variablesService.create({
         component_id: sendChatMessageReaction.id,
         name: 'broadcaster_username',
@@ -1156,7 +1145,6 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
         display_order: 2,
       }),
 
-      // Return value: sent at
       this.variablesService.create({
         component_id: sendChatMessageReaction.id,
         name: 'sent_at',

@@ -4,6 +4,7 @@ import { authApi, tokenService } from '../../services/api';
 import { googleOAuth } from '../../lib/googleOAuth';
 import { githubOAuth } from '../../lib/githubOAuth';
 import { discordOAuth } from '../../lib/discordOAuth';
+import { twitchOAuth } from '../../lib/twitchOAuth';
 
 function ServiceCallback() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>(
@@ -39,6 +40,9 @@ function ServiceCallback() {
         } else if (state?.includes('github')) {
           service = 'GITHUB';
           console.log('Detected GitHub from state');
+        } else if (state?.includes('twitch')) {
+          service = 'TWITCH';
+          console.log('Detected Twitch from state');
         } else if (state?.includes('google')) {
           service = 'GOOGLE';
           console.log('Detected Google from state');
@@ -85,7 +89,7 @@ function ServiceCallback() {
           throw new Error(`OAuth error: ${error}`);
         }
 
-        let provider: 'google' | 'github' | 'discord';
+        let provider: 'google' | 'github' | 'discord' | 'twitch';
         let intent: 'login' | 'register';
         let redirectUri: string;
 
@@ -101,6 +105,10 @@ function ServiceCallback() {
           provider = 'discord';
           intent = discordOAuth.extractIntentFromUrl();
           redirectUri = discordOAuth.redirectUri;
+        } else if (state?.startsWith('twitch:')) {
+          provider = 'twitch';
+          intent = twitchOAuth.extractIntentFromUrl();
+          redirectUri = twitchOAuth.redirectUri;
         } else {
           throw new Error(`Unknown OAuth provider from state: ${state}`);
         }
@@ -150,7 +158,7 @@ function ServiceCallback() {
             <div className="w-16 h-16 border-4 border-black border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <h2 className="text-2xl font-black text-black mb-2">
               {window.opener
-                ? 'Processing Discord authentication...'
+                ? 'Processing authentication...'
                 : 'Authenticating...'}
             </h2>
             <p className="text-gray-600">

@@ -420,6 +420,29 @@ export const servicesApi = {
     return handleResponse(response);
   },
 
+  async getTwitchProfile(): Promise<{
+    id: string;
+    login: string;
+    display_name: string;
+    profile_image_url: string | null;
+    email?: string;
+  }> {
+    const token = tokenService.getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/services/twitch/profile`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return handleResponse(response);
+  },
+
   async disconnectService(serviceName: string): Promise<void> {
     const token = tokenService.getToken();
     if (!token) {
