@@ -5,6 +5,7 @@ import { ComponentsService } from '../components/components.service';
 import { DiscordService } from '../discord/discord.service';
 import { GmailReactionsService } from '../gmail/reactions/gmail-reactions.service';
 import { TwitchReactionsService } from '../twitch/reactions/twitch-reactions.service';
+import { RedditReactionsService } from '../reddit/reactions/reddit-reactions.service';
 import { SpotifyService } from '../spotify/spotify.service';
 
 @Injectable()
@@ -19,6 +20,7 @@ export class ReactionProcessorService {
     private readonly discordService: DiscordService,
     private readonly gmailReactionsService: GmailReactionsService,
     private readonly twitchReactionsService: TwitchReactionsService,
+    private readonly redditReactionsService: RedditReactionsService,
     private readonly spotifyService: SpotifyService,
   ) {}
 
@@ -60,6 +62,12 @@ export class ReactionProcessorService {
           break;
         case 'send_chat_message':
           await this.twitchReactionsService.processReaction(
+            executionId,
+            areaId,
+          );
+          break;
+        case 'create_reddit_post':
+          await this.redditReactionsService.processReaction(
             executionId,
             areaId,
           );
