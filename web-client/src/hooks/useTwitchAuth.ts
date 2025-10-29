@@ -39,7 +39,7 @@ export const useTwitchAuth = () => {
       const clientId = import.meta.env.VITE_TWITCH_CLIENT_ID;
       const redirectUri = `${window.location.origin}/service/callback`;
       const encodedRedirectUri = encodeURIComponent(redirectUri);
-      const scope = encodeURIComponent('user:read:email chat:read chat:edit');
+      const scope = encodeURIComponent('user:read:email user:write:chat');
       const state = encodeURIComponent('twitch:service_link');
 
       console.log('Twitch OAuth2 config:', {

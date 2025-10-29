@@ -19,7 +19,7 @@ export function getTwitchAuthUrl(
   const config: TwitchOAuthConfig = {
     clientId: TWITCH_CLIENT_ID,
     redirectUri: REDIRECT_URI,
-    scope: 'user:read:email chat:read chat:edit',
+    scope: 'user:read:email user:write:chat',
     responseType: 'code',
   };
 
