@@ -1208,4 +1208,83 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       'YouTube service created successfully (no actions/reactions yet)',
     );
   }
+
+  private async createSpotifyService(): Promise<void> {
+    try {
+      await this.servicesService.findByName('Spotify');
+      this.logger.log('Spotify service already exists, skipping creation');
+      return;
+    } catch {
+      this.logger.log('Creating Spotify service...');
+    }
+
+    await this.servicesService.create({
+      name: 'Spotify',
+      description: 'Interact with Spotify - manage playlists and music tracks',
+      icon_path: 'https://www.spotify.com/favicon.ico',
+      requires_auth: true,
+      is_active: true,
+    });
+
+    // Create add_to_playlist reaction component
+    const addToPlaylistReaction = await this.componentsService.create({
+      service_id: (await this.servicesService.findByName('Spotify')).id,
+      type: ComponentType.REACTION,
+      name: 'add_to_playlist',
+      description: 'Add a track to a Spotify playlist',
+      is_active: true,
+    });
+
+    await Promise.all([
+      // Playlist ID parameter - required
+      this.variablesService.create({
+        component_id: addToPlaylistReaction.id,
+        name: 'playlist_id',
+        description: 'Spotify ID of the playlist to add the track to',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: false,
+        placeholder: '37i9dQZF1DXcBWIGoYBM5M',
+        display_order: 1,
+      }),
+
+      // Track URI parameter - required
+      this.variablesService.create({
+        component_id: addToPlaylistReaction.id,
+        name: 'track_uri',
+        description:
+          'Spotify URI of the track to add (e.g., spotify:track:...)',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: false,
+        placeholder: 'spotify:track:6rqhFgbbKwnb9MLmUQDhG6',
+        display_order: 2,
+      }),
+    ]);
+
+    // Create add_to_queue reaction component
+    const addToQueueReaction = await this.componentsService.create({
+      service_id: (await this.servicesService.findByName('Spotify')).id,
+      type: ComponentType.REACTION,
+      name: 'add_to_queue',
+      description: "Add a track to the user's Spotify playback queue",
+      is_active: true,
+    });
+
+    await this.variablesService.create({
+      component_id: addToQueueReaction.id,
+      name: 'track_uri',
+      description:
+        'Spotify URI of the track to add to the queue (e.g., spotify:track:...)',
+      kind: VariableKind.PARAMETER,
+      type: VariableType.STRING,
+      nullable: false,
+      placeholder: 'spotify:track:6rqhFgbbKwnb9MLmUQDhG6',
+      display_order: 1,
+    });
+
+    this.logger.log(
+      'Spotify service with add_to_playlist and add_to_queue reactions created successfully',
+    );
+  }
 }
