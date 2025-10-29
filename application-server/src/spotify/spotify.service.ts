@@ -151,6 +151,20 @@ export class SpotifyService {
   // ==================== PRIVATE HELPER METHODS ====================
 
   /**
+   * Get execution context for variable interpolation
+   */
+  private async getExecutionContext(
+    executionId?: number,
+  ): Promise<Record<string, unknown>> {
+    if (!executionId) {
+      return {};
+    }
+
+    const execution = await this.areaExecutionsService.findOne(executionId);
+    return execution.triggerData || {};
+  }
+
+  /**
    * Get playlist parameters with variable interpolation
    */
   private async getPlaylistParameters(
@@ -159,13 +173,7 @@ export class SpotifyService {
   ): Promise<AddToPlaylistParams | null> {
     try {
       // Get execution context for variable interpolation
-      let executionContext: Record<string, unknown> = {};
-      if (executionId) {
-        const execution = await this.areaExecutionsService.findOne(executionId);
-        if (execution.triggerData) {
-          executionContext = execution.triggerData;
-        }
-      }
+      const executionContext = await this.getExecutionContext(executionId);
 
       // Get parameters with variable interpolation
       const parameters =
@@ -208,13 +216,7 @@ export class SpotifyService {
   ): Promise<AddToQueueParams | null> {
     try {
       // Get execution context for variable interpolation
-      let executionContext: Record<string, unknown> = {};
-      if (executionId) {
-        const execution = await this.areaExecutionsService.findOne(executionId);
-        if (execution.triggerData) {
-          executionContext = execution.triggerData;
-        }
-      }
+      const executionContext = await this.getExecutionContext(executionId);
 
       // Get parameters with variable interpolation
       const parameters =
