@@ -1,4 +1,4 @@
-import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
+import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { ServicesService } from './services.service';
 import { ComponentsService } from '../components/components.service';
 import { ComponentType } from '../components/entities/component.entity';
@@ -10,6 +10,8 @@ import {
 
 @Injectable()
 export class ServicesInitializerService implements OnApplicationBootstrap {
+  private readonly logger = new Logger(ServicesInitializerService.name);
+
   constructor(
     private readonly servicesService: ServicesService,
     private readonly componentsService: ComponentsService,
@@ -34,10 +36,10 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
   private async createClockService(): Promise<void> {
     try {
       await this.servicesService.findByName('Clock');
-      console.log('Clock service already exists, skipping creation');
+      this.logger.log('Clock service already exists, skipping creation');
       return;
     } catch {
-      console.log('Creating Clock service...');
+      this.logger.log('Creating Clock service...');
     }
 
     const clockService = await this.servicesService.create({
@@ -167,16 +169,18 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       display_order: 2,
     });
 
-    console.log('Clock service with all timer components created successfully');
+    this.logger.log(
+      'Clock service with all timer components created successfully',
+    );
   }
 
   private async createEmailService(): Promise<void> {
     try {
       await this.servicesService.findByName('Email');
-      console.log('Email service already exists, skipping creation');
+      this.logger.log('Email service already exists, skipping creation');
       return;
     } catch {
-      console.log('Creating Email service...');
+      this.logger.log('Creating Email service...');
     }
 
     const emailService = await this.servicesService.create({
@@ -231,18 +235,20 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       }),
     ]);
 
-    console.log('Email service and send_email component created successfully');
+    this.logger.log(
+      'Email service and send_email component created successfully',
+    );
   }
 
   private async createDiscordService(): Promise<void> {
     try {
       // Check if Discord service already exists
       await this.servicesService.findByName('Discord');
-      console.log('Discord service already exists, skipping creation');
+      this.logger.log('Discord service already exists, skipping creation');
       return;
     } catch {
       // Service doesn't exist, create it
-      console.log('Creating Discord service...');
+      this.logger.log('Creating Discord service...');
     }
 
     // Create Discord service
@@ -603,16 +609,16 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       }),
     ]);
 
-    console.log('Discord service with all components created successfully');
+    this.logger.log('Discord service with all components created successfully');
   }
 
   private async createGoogleService(): Promise<void> {
     try {
       await this.servicesService.findByName('Google');
-      console.log('Google service already exists, skipping creation');
+      this.logger.log('Google service already exists, skipping creation');
       return;
     } catch {
-      console.log('Creating Google service...');
+      this.logger.log('Creating Google service...');
     }
 
     await this.servicesService.create({
@@ -624,16 +630,16 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       is_active: true,
     });
 
-    console.log('Google service created successfully');
+    this.logger.log('Google service created successfully');
   }
 
   private async createGithubService(): Promise<void> {
     try {
       await this.servicesService.findByName('GitHub');
-      console.log('GitHub service already exists, skipping creation');
+      this.logger.log('GitHub service already exists, skipping creation');
       return;
     } catch {
-      console.log('Creating GitHub service...');
+      this.logger.log('Creating GitHub service...');
     }
 
     // Create GitHub service
@@ -972,7 +978,7 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       }),
     ]);
 
-    console.log(
+    this.logger.log(
       'GitHub service and webhook action components created successfully',
     );
   }
@@ -980,10 +986,10 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
   private async createGmailService(): Promise<void> {
     try {
       await this.servicesService.findByName('Gmail');
-      console.log('Gmail service already exists, skipping creation');
+      this.logger.log('Gmail service already exists, skipping creation');
       return;
     } catch {
-      console.log('Creating Gmail service...');
+      this.logger.log('Creating Gmail service...');
     }
 
     await this.servicesService.create({
@@ -994,16 +1000,16 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       is_active: true,
     });
 
-    console.log('Gmail service created successfully');
+    this.logger.log('Gmail service created successfully');
   }
 
   private async createTwitchService(): Promise<void> {
     try {
       await this.servicesService.findByName('Twitch');
-      console.log('Twitch service already exists, skipping creation');
+      this.logger.log('Twitch service already exists, skipping creation');
       return;
     } catch {
-      console.log('Creating Twitch service...');
+      this.logger.log('Creating Twitch service...');
     }
 
     const twitchService = await this.servicesService.create({
@@ -1174,7 +1180,7 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       }),
     ]);
 
-    console.log(
+    this.logger.log(
       'Twitch service with streamer_goes_live action and send_chat_message reaction created successfully',
     );
   }
@@ -1182,10 +1188,10 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
   private async createYoutubeService(): Promise<void> {
     try {
       await this.servicesService.findByName('YouTube');
-      console.log('YouTube service already exists, skipping creation');
+      this.logger.log('YouTube service already exists, skipping creation');
       return;
     } catch {
-      console.log('Creating YouTube service...');
+      this.logger.log('Creating YouTube service...');
     }
 
     await this.servicesService.create({
@@ -1198,7 +1204,7 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       is_active: true,
     });
 
-    console.log(
+    this.logger.log(
       'YouTube service created successfully (no actions/reactions yet)',
     );
   }
