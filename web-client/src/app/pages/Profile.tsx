@@ -62,9 +62,7 @@ const Profile: React.FC = () => {
             : undefined,
           connectedAt: new Date().toISOString(),
         });
-      } catch {
-        console.log('Discord not connected');
-      }
+      } catch {}
 
       try {
         const githubProfile = await servicesApi.getGitHubProfile();
@@ -94,7 +92,7 @@ const Profile: React.FC = () => {
           connectedAt: new Date().toISOString(),
         });
       } catch {
-        console.log('GitHub not connected');
+        // GitHub not connected
       }
 
       try {
@@ -125,12 +123,11 @@ const Profile: React.FC = () => {
           connectedAt: new Date().toISOString(),
         });
       } catch {
-        console.log('Twitch not connected');
+        // Twitch not connected
       }
 
       setConnectedServices(services);
     } catch (error) {
-      console.error('Failed to load connected services:', error);
       setError('Failed to load connected services');
     } finally {
       setLoading(false);
@@ -149,7 +146,6 @@ const Profile: React.FC = () => {
 
       await loadConnectedServices();
     } catch (error) {
-      console.error(`Failed to disconnect from ${serviceName}:`, error);
       const errorMessage =
         error instanceof Error
           ? error.message

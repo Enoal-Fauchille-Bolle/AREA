@@ -16,13 +16,10 @@ export const useGitHubAuth = () => {
   useEffect(() => {
     const checkConnection = async () => {
       try {
-        console.log('Checking GitHub connection at startup...');
         const profile = await servicesApi.getGitHubProfile();
-        console.log('GitHub profile at startup:', profile);
         setGitHubUser(profile);
         setIsConnected(true);
       } catch (error) {
-        console.log('GitHub not connected at startup:', error);
         setIsConnected(false);
         setGitHubUser(null);
       }
@@ -41,51 +38,28 @@ export const useGitHubAuth = () => {
       const scope = encodeURIComponent('read:user user:email repo');
       const state = encodeURIComponent('github:service_link');
 
-      console.log('GitHub OAuth2 config:', {
-        clientId,
-        redirectUri,
-        encodedRedirectUri,
-        state,
-        origin: window.location.origin,
-      });
-
       if (!clientId) {
         throw new Error('GitHub OAuth2 not configured');
       }
 
       const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodedRedirectUri}&scope=${scope}&state=${state}`;
-      console.log('GitHub auth URL:', githubAuthUrl);
 
       let popup: Window | null = null;
 
       const messageListener = async (event: MessageEvent) => {
-        console.log('=== Message received in parent window ===');
-        console.log('Event origin:', event.origin);
-        console.log('Window origin:', window.location.origin);
-        console.log('Event data:', event.data);
-
         if (event.origin !== window.location.origin) {
-          console.log('Origin mismatch, ignoring message');
           return;
         }
 
         if (event.data.type === 'GITHUB_OAUTH_SUCCESS' && event.data.code) {
-          console.log('Received GitHub OAuth success');
           try {
-            console.log(
-              'Attempting to link GitHub service with ID:',
-              serviceId,
-            );
             await servicesApi.linkService(serviceId, event.data.code);
-            console.log('Successfully linked GitHub service');
             setIsConnected(true);
 
             try {
               const profile = await servicesApi.getGitHubProfile();
-              console.log('GitHub profile received:', profile);
               setGitHubUser(profile);
             } catch {
-              console.log('Could not fetch GitHub profile, using placeholder');
               setGitHubUser({
                 id: 'connected',
                 login: 'GitHub User',
@@ -101,7 +75,6 @@ export const useGitHubAuth = () => {
             window.removeEventListener('message', messageListener);
             setIsConnecting(false);
           } catch (error) {
-            console.error('Failed to link GitHub service:', error);
             if (popup && !popup.closed) {
               popup.close();
             }
@@ -111,7 +84,6 @@ export const useGitHubAuth = () => {
             throw error;
           }
         } else if (event.data.type === 'GITHUB_OAUTH_ERROR') {
-          console.error('GitHub OAuth error:', event.data.error);
           if (popup && !popup.closed) {
             popup.close();
           }
@@ -123,7 +95,6 @@ export const useGitHubAuth = () => {
       };
 
       window.addEventListener('message', messageListener);
-      console.log('Message listener attached');
 
       popup = window.open(
         githubAuthUrl,
@@ -139,7 +110,6 @@ export const useGitHubAuth = () => {
 
       const checkClosed = setInterval(() => {
         if (popup && popup.closed) {
-          console.log('Popup closed by user');
           clearInterval(checkClosed);
           window.removeEventListener('message', messageListener);
           setIsConnecting(false);
@@ -148,7 +118,6 @@ export const useGitHubAuth = () => {
 
       setTimeout(() => {
         if (popup && !popup.closed) {
-          console.log('OAuth timeout, closing popup');
           popup.close();
         }
         clearInterval(checkClosed);

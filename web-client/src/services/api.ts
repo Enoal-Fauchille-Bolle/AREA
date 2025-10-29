@@ -334,11 +334,6 @@ export const servicesApi = {
       throw new Error('No authentication token found');
     }
 
-    console.log('Linking service:', {
-      serviceId,
-      code: code ? 'present' : 'missing',
-    });
-
     const response = await fetch(`${API_BASE_URL}/services/${serviceId}/link`, {
       method: 'POST',
       headers: {
@@ -348,16 +343,12 @@ export const servicesApi = {
       body: JSON.stringify({ code, platform }),
     });
 
-    console.log('Link service response:', response.status, response.statusText);
-
     if (!response.ok) {
       let errorMessage = 'Failed to link service';
       try {
         const errorData = await response.json();
-        console.error('Link service error data:', errorData);
         errorMessage = errorData.message || errorData.error || errorMessage;
       } catch (e) {
-        console.error('Failed to parse error response:', e);
         errorMessage = `HTTP ${response.status}: ${response.statusText}`;
       }
       throw new Error(errorMessage);
@@ -590,14 +581,12 @@ export const variablesApi = {
   },
 
   async getInputVariablesByComponent(componentId: number): Promise<Variable[]> {
-    console.log('API: Getting input variables for component ID:', componentId);
     const token = tokenService.getToken();
     if (!token) {
       throw new Error('No authentication token found');
     }
 
     const url = `${API_BASE_URL}/variables/component/${componentId}/inputs`;
-    console.log('API: Fetching from URL:', url);
     const response = await fetch(url, {
       method: 'GET',
       headers: {
@@ -607,7 +596,6 @@ export const variablesApi = {
     });
 
     const result = await handleResponse(response);
-    console.log('API: Variables result:', result);
     return result;
   },
 };
@@ -683,12 +671,6 @@ export const areaParametersApi = {
 export const authApi = {
   async register(userData: RegisterRequest): Promise<AuthResponse> {
     try {
-      console.log('Attempting registration with:', {
-        email: userData.email,
-        username: userData.username,
-        password: '[HIDDEN]',
-      });
-      console.log('API URL:', `${API_BASE_URL}/auth/register`);
       const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: 'POST',
         headers: {
@@ -697,15 +679,8 @@ export const authApi = {
         body: JSON.stringify(userData),
       });
 
-      console.log('Response status:', response.status);
-      console.log(
-        'Response headers:',
-        Object.fromEntries(response.headers.entries()),
-      );
-
       return handleResponse(response);
     } catch (error) {
-      console.error('Registration error:', error);
       throw error;
     }
   },
@@ -755,8 +730,6 @@ export const authApi = {
     }
 
     try {
-      console.log('Fetching user profile...');
-      console.log('API URL:', `${API_BASE_URL}/auth/me`);
       const response = await fetch(`${API_BASE_URL}/auth/me`, {
         method: 'GET',
         headers: {
@@ -765,10 +738,8 @@ export const authApi = {
         },
       });
 
-      console.log('Profile response status:', response.status);
       return handleResponse(response);
     } catch (error) {
-      console.error('Profile fetch error:', error);
       throw error;
     }
   },
@@ -786,7 +757,6 @@ export const tokenService = {
     try {
       return localStorage.getItem(TOKEN_KEY);
     } catch (error) {
-      console.warn('Failed to access localStorage:', error);
       return null;
     }
   },
@@ -795,7 +765,7 @@ export const tokenService = {
     try {
       localStorage.removeItem(TOKEN_KEY);
     } catch (error) {
-      console.warn('Failed to remove token from localStorage:', error);
+      // Silently fail if localStorage is not accessible
     }
   },
 

@@ -68,7 +68,6 @@ function EditArea() {
 
         setIsLoading(false);
       } catch (err) {
-        console.error('Failed to load area:', err);
         setError('Failed to load area');
         setIsLoading(false);
       }
@@ -97,7 +96,6 @@ function EditArea() {
 
       navigate('/profile');
     } catch (err) {
-      console.error('Failed to update area:', err);
       setError('Failed to update area');
     }
   };

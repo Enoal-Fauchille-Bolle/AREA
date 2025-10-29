@@ -14,7 +14,6 @@ export const useAreas = () => {
       const userAreas = await areasApi.getAreas();
       setAreas(userAreas);
     } catch (err) {
-      console.error('Failed to fetch areas:', err);
       setError(err instanceof Error ? err.message : 'Failed to load areas');
     } finally {
       setIsLoading(false);
@@ -29,7 +28,6 @@ export const useAreas = () => {
       setAreas((prev) => [newArea, ...prev]);
       return newArea;
     } catch (err) {
-      console.error('Failed to create area:', err);
       throw err;
     }
   };
@@ -45,7 +43,6 @@ export const useAreas = () => {
       );
       return updatedArea;
     } catch (err) {
-      console.error('Failed to update area:', err);
       throw err;
     }
   };
@@ -55,7 +52,6 @@ export const useAreas = () => {
       await areasApi.deleteArea(id);
       setAreas((prev) => prev.filter((area) => area.id !== id));
     } catch (err) {
-      console.error('Failed to delete area:', err);
       throw err;
     }
   };
@@ -72,7 +68,6 @@ export const useAreas = () => {
       );
       return updatedArea;
     } catch (err) {
-      console.error('Failed to toggle area status:', err);
       throw err;
     }
   };

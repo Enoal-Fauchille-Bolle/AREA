@@ -32,18 +32,14 @@ function UserProfile() {
     if (window.confirm('Are you sure you want to delete this area?')) {
       try {
         await deleteArea(id);
-      } catch (error) {
-        console.error('Failed to delete area:', error);
-      }
+      } catch (error) {}
     }
   };
 
   const handleToggleArea = async (id: number) => {
     try {
       await toggleAreaStatus(id);
-    } catch (error) {
-      console.error('Failed to toggle area status:', error);
-    }
+    } catch (error) {}
   };
 
   const handleEditArea = (id: number) => {

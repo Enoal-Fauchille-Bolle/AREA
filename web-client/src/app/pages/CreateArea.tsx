@@ -135,7 +135,6 @@ const CreateArea: React.FC = () => {
         setServicesWithReactions(filteredServicesWithReactions);
       } catch (err) {
         setError('Error loading services');
-        console.error('Error fetching services:', err);
       } finally {
         setLoading(false);
       }
@@ -161,7 +160,6 @@ const CreateArea: React.FC = () => {
       }
     } catch (err) {
       setError(`Error loading ${type} components`);
-      console.error(`Error fetching ${type} components:`, err);
     }
   };
 
@@ -210,7 +208,6 @@ const CreateArea: React.FC = () => {
         reactionComponent.name,
       );
       setRequiredParameters(parameters);
-      console.log('Required parameters loaded:', parameters);
     }
   };
 
@@ -233,10 +230,6 @@ const CreateArea: React.FC = () => {
   };
 
   const getAllVariables = () => {
-    console.log(
-      'getAllVariables called - Required parameters:',
-      requiredParameters.length,
-    );
     return requiredParameters;
   };
 
@@ -334,7 +327,6 @@ const CreateArea: React.FC = () => {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to connect to Discord';
       setError(errorMessage);
-      console.error('Discord connection error:', err);
     }
   };
 
@@ -355,7 +347,6 @@ const CreateArea: React.FC = () => {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to connect to GitHub';
       setError(errorMessage);
-      console.error('GitHub connection error:', err);
     }
   };
 
@@ -376,7 +367,6 @@ const CreateArea: React.FC = () => {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to connect to Twitch';
       setError(errorMessage);
-      console.error('Twitch connection error:', err);
     }
   };
 
@@ -394,7 +384,7 @@ const CreateArea: React.FC = () => {
     try {
       setLoading(true);
 
-      const createdArea = await areasApi.createAreaWithParameters(
+      await areasApi.createAreaWithParameters(
         {
           component_action_id: formData.actionComponent.id,
           component_reaction_id: formData.reactionComponent.id,
@@ -405,14 +395,12 @@ const CreateArea: React.FC = () => {
         formData.parameters,
       );
 
-      console.log('AREA created successfully with parameters:', createdArea);
       setCurrentStep('complete');
       setTimeout(() => {
         navigate('/profile');
       }, 2000);
     } catch (err) {
       setError('Error creating AREA');
-      console.error('Error creating area:', err);
     } finally {
       setLoading(false);
     }
@@ -648,13 +636,6 @@ const CreateArea: React.FC = () => {
       case 'parameters': {
         const allVariables = getAllVariables();
         const showDiscordAuth = needsDiscordAuth();
-        console.log('Discord auth state:', {
-          showDiscordAuth,
-          userServices: userServices.length,
-          actionService: formData.actionService?.name,
-          reactionService: formData.reactionService?.name,
-          discordConnectionTrigger,
-        });
         return (
           <div className="space-y-6">
             <div className="text-center mb-6">
@@ -753,19 +734,6 @@ const CreateArea: React.FC = () => {
                               src={discordUser.avatar}
                               alt="Discord Avatar"
                               className="w-full h-full rounded-full object-cover"
-                              onLoad={() =>
-                                console.log('Avatar loaded successfully')
-                              }
-                              onError={(e) => {
-                                console.error('Avatar failed to load:', e);
-                                console.log('Avatar URL:', discordUser.avatar);
-                                console.log('Discord user data:', discordUser);
-                                console.log('Discord user ID:', discordUser.id);
-                                console.log(
-                                  'Discord user avatar:',
-                                  discordUser.avatar,
-                                );
-                              }}
                             />
                           ) : (
                             <svg

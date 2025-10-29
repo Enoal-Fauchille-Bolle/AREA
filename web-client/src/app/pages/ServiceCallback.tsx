@@ -28,30 +28,18 @@ function ServiceCallback() {
       const state = urlParams.get('state');
 
       if (window.opener) {
-        console.log('=== Service OAuth Callback (popup) ===');
-        console.log('State parameter:', state);
-        console.log('Code parameter:', code);
-        console.log('Error parameter:', error);
-
         let service = 'UNKNOWN';
         if (state?.includes('discord')) {
           service = 'DISCORD';
-          console.log('Detected Discord from state');
         } else if (state?.includes('github')) {
           service = 'GITHUB';
-          console.log('Detected GitHub from state');
         } else if (state?.includes('twitch')) {
           service = 'TWITCH';
-          console.log('Detected Twitch from state');
         } else if (state?.includes('google')) {
           service = 'GOOGLE';
-          console.log('Detected Google from state');
         } else {
-          console.log('Could not detect service from state, using default');
           service = 'DISCORD';
         }
-
-        console.log(`Detected service: ${service}`);
 
         let message;
         if (error) {
