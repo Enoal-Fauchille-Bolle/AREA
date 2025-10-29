@@ -980,7 +980,7 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       console.log('Creating Gmail service...');
     }
 
-    await this.servicesService.create({
+    const gmailService = await this.servicesService.create({
       name: 'Gmail',
       description: 'Email management and automation with Gmail',
       icon_path: 'https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico',
@@ -988,7 +988,161 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       is_active: true,
     });
 
-    console.log('Gmail service created successfully');
+    // Create new_email_received action component
+    const newEmailReceivedAction = await this.componentsService.create({
+      service_id: gmailService.id,
+      type: ComponentType.ACTION,
+      name: 'new_email_received',
+      description: 'Triggers when a new email is received in Gmail inbox',
+      is_active: true,
+      polling_interval: 60000, // Check every minute
+    });
+
+    await Promise.all([
+      // Return values for the action
+      this.variablesService.create({
+        component_id: newEmailReceivedAction.id,
+        name: 'email_id',
+        description: 'Gmail message ID',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 1,
+      }),
+
+      this.variablesService.create({
+        component_id: newEmailReceivedAction.id,
+        name: 'subject',
+        description: 'Email subject',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 2,
+      }),
+
+      this.variablesService.create({
+        component_id: newEmailReceivedAction.id,
+        name: 'from',
+        description: 'Sender email address',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.EMAIL,
+        nullable: false,
+        display_order: 3,
+      }),
+
+      this.variablesService.create({
+        component_id: newEmailReceivedAction.id,
+        name: 'snippet',
+        description: 'Email preview snippet',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 4,
+      }),
+
+      this.variablesService.create({
+        component_id: newEmailReceivedAction.id,
+        name: 'received_at',
+        description: 'Timestamp when email was received',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.DATE,
+        nullable: false,
+        display_order: 5,
+      }),
+    ]);
+
+    // Create send_gmail reaction component
+    const sendGmailReaction = await this.componentsService.create({
+      service_id: gmailService.id,
+      type: ComponentType.REACTION,
+      name: 'send_gmail',
+      description: 'Send an email via Gmail',
+      is_active: true,
+    });
+
+    await Promise.all([
+      // Parameters for send_gmail reaction
+      this.variablesService.create({
+        component_id: sendGmailReaction.id,
+        name: 'to',
+        description: 'Recipient email address',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.EMAIL,
+        nullable: false,
+        placeholder: 'recipient@example.com',
+        validation_regex: '^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$',
+        display_order: 1,
+      }),
+
+      this.variablesService.create({
+        component_id: sendGmailReaction.id,
+        name: 'subject',
+        description: 'Email subject line',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: false,
+        placeholder: 'AREA Notification',
+        display_order: 2,
+      }),
+
+      this.variablesService.create({
+        component_id: sendGmailReaction.id,
+        name: 'body',
+        description: 'Email message body',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: false,
+        placeholder: 'Your AREA was triggered successfully.',
+        display_order: 3,
+      }),
+
+      this.variablesService.create({
+        component_id: sendGmailReaction.id,
+        name: 'cc',
+        description: 'CC email addresses (comma-separated, optional)',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: true,
+        placeholder: 'cc@example.com',
+        display_order: 4,
+      }),
+
+      this.variablesService.create({
+        component_id: sendGmailReaction.id,
+        name: 'bcc',
+        description: 'BCC email addresses (comma-separated, optional)',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: true,
+        placeholder: 'bcc@example.com',
+        display_order: 5,
+      }),
+
+      // Return values
+      this.variablesService.create({
+        component_id: sendGmailReaction.id,
+        name: 'message_id',
+        description: 'Gmail message ID of sent email',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 1,
+      }),
+
+      this.variablesService.create({
+        component_id: sendGmailReaction.id,
+        name: 'sent_at',
+        description: 'Timestamp when email was sent',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.DATE,
+        nullable: false,
+        display_order: 2,
+      }),
+    ]);
+
+    console.log(
+      'Gmail service with new_email_received action and send_gmail reaction created successfully',
+    );
   }
 
   private async createTwitchService(): Promise<void> {
