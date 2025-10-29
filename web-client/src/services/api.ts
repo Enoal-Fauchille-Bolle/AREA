@@ -348,7 +348,7 @@ export const servicesApi = {
       try {
         const errorData = await response.json();
         errorMessage = errorData.message || errorData.error || errorMessage;
-      } catch (e) {
+      } catch {
         errorMessage = `HTTP ${response.status}: ${response.statusText}`;
       }
       throw new Error(errorMessage);
@@ -670,19 +670,15 @@ export const areaParametersApi = {
 
 export const authApi = {
   async register(userData: RegisterRequest): Promise<AuthResponse> {
-    try {
-      const response = await fetch(`${API_BASE_URL}/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userData),
-      });
+    const response = await fetch(`${API_BASE_URL}/auth/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(userData),
+    });
 
-      return handleResponse(response);
-    } catch (error) {
-      throw error;
-    }
+    return handleResponse(response);
   },
 
   async login(credentials: LoginRequest): Promise<AuthResponse> {
@@ -729,19 +725,15 @@ export const authApi = {
       throw new Error('No authentication token found');
     }
 
-    try {
-      const response = await fetch(`${API_BASE_URL}/auth/me`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      });
+    const response = await fetch(`${API_BASE_URL}/auth/me`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
-      return handleResponse(response);
-    } catch (error) {
-      throw error;
-    }
+    return handleResponse(response);
   },
 };
 
@@ -756,7 +748,7 @@ export const tokenService = {
   getToken(): string | null {
     try {
       return localStorage.getItem(TOKEN_KEY);
-    } catch (error) {
+    } catch {
       return null;
     }
   },
@@ -764,7 +756,7 @@ export const tokenService = {
   removeToken() {
     try {
       localStorage.removeItem(TOKEN_KEY);
-    } catch (error) {
+    } catch {
       // Silently fail if localStorage is not accessible
     }
   },

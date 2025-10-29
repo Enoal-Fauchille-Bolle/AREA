@@ -19,7 +19,7 @@ export const useGitHubAuth = () => {
         const profile = await servicesApi.getGitHubProfile();
         setGitHubUser(profile);
         setIsConnected(true);
-      } catch (error) {
+      } catch {
         setIsConnected(false);
         setGitHubUser(null);
       }

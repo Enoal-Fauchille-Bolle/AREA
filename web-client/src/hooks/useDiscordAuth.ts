@@ -20,7 +20,7 @@ export const useDiscordAuth = () => {
         const profile = await servicesApi.getDiscordProfile();
         setDiscordUser(profile);
         setIsConnected(true);
-      } catch (error) {
+      } catch {
         setIsConnected(false);
         setDiscordUser(null);
       }

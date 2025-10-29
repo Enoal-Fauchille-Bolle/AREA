@@ -20,7 +20,7 @@ export const useTwitchAuth = () => {
         const profile = await servicesApi.getTwitchProfile();
         setTwitchUser(profile);
         setIsConnected(true);
-      } catch (error) {
+      } catch {
         setIsConnected(false);
         setTwitchUser(null);
       }
@@ -53,33 +53,28 @@ export const useTwitchAuth = () => {
         }
 
         if (event.data.type === 'TWITCH_OAUTH_SUCCESS' && event.data.code) {
+          await servicesApi.linkService(serviceId, event.data.code);
+          setIsConnected(true);
+
           try {
-            await servicesApi.linkService(serviceId, event.data.code);
-            setIsConnected(true);
-
-            try {
-              const profile = await servicesApi.getTwitchProfile();
-              setTwitchUser(profile);
-            } catch {
-              setTwitchUser({
-                id: 'connected',
-                login: 'Twitch User',
-                display_name: 'Twitch User',
-                profile_image_url: null,
-                email: undefined,
-              });
-            }
-
-            if (popup && !popup.closed) {
-              popup.close();
-            }
-            clearInterval(checkClosed);
-          } catch (error) {
-            throw error;
-          } finally {
-            window.removeEventListener('message', messageListener);
-            setIsConnecting(false);
+            const profile = await servicesApi.getTwitchProfile();
+            setTwitchUser(profile);
+          } catch {
+            setTwitchUser({
+              id: 'connected',
+              login: 'Twitch User',
+              display_name: 'Twitch User',
+              profile_image_url: null,
+              email: undefined,
+            });
           }
+
+          if (popup && !popup.closed) {
+            popup.close();
+          }
+          clearInterval(checkClosed);
+          window.removeEventListener('message', messageListener);
+          setIsConnecting(false);
         } else if (event.data.type === 'TWITCH_OAUTH_ERROR') {
           if (popup && !popup.closed) {
             popup.close();
@@ -122,13 +117,9 @@ export const useTwitchAuth = () => {
   };
 
   const disconnectTwitch = async () => {
-    try {
-      await servicesApi.disconnectService('twitch');
-      setIsConnected(false);
-      setTwitchUser(null);
-    } catch (error) {
-      throw error;
-    }
+    await servicesApi.disconnectService('twitch');
+    setIsConnected(false);
+    setTwitchUser(null);
   };
 
   return {

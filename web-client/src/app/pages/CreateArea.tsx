@@ -63,7 +63,6 @@ const CreateArea: React.FC = () => {
   >([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [discordConnectionTrigger, setDiscordConnectionTrigger] = useState(0);
 
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
@@ -133,7 +132,7 @@ const CreateArea: React.FC = () => {
           serviceIdsWithReactions.has(service.id),
         );
         setServicesWithReactions(filteredServicesWithReactions);
-      } catch (err) {
+      } catch {
         setError('Error loading services');
       } finally {
         setLoading(false);
@@ -158,7 +157,7 @@ const CreateArea: React.FC = () => {
       } else {
         setReactionComponents(filteredComponents);
       }
-    } catch (err) {
+    } catch {
       setError(`Error loading ${type} components`);
     }
   };
@@ -322,7 +321,6 @@ const CreateArea: React.FC = () => {
 
       const userServicesData = await servicesApi.getUserServices();
       setUserServices(userServicesData);
-      setDiscordConnectionTrigger((prev) => prev + 1);
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to connect to Discord';
@@ -399,7 +397,7 @@ const CreateArea: React.FC = () => {
       setTimeout(() => {
         navigate('/profile');
       }, 2000);
-    } catch (err) {
+    } catch {
       setError('Error creating AREA');
     } finally {
       setLoading(false);

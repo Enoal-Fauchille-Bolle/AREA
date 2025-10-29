@@ -23,53 +23,37 @@ export const useAreas = () => {
   const createArea = async (
     areaData: Parameters<typeof areasApi.createArea>[0],
   ) => {
-    try {
-      const newArea = await areasApi.createArea(areaData);
-      setAreas((prev) => [newArea, ...prev]);
-      return newArea;
-    } catch (err) {
-      throw err;
-    }
+    const newArea = await areasApi.createArea(areaData);
+    setAreas((prev) => [newArea, ...prev]);
+    return newArea;
   };
 
   const updateArea = async (
     id: number,
     areaData: Parameters<typeof areasApi.updateArea>[1],
   ) => {
-    try {
-      const updatedArea = await areasApi.updateArea(id, areaData);
-      setAreas((prev) =>
-        prev.map((area) => (area.id === id ? updatedArea : area)),
-      );
-      return updatedArea;
-    } catch (err) {
-      throw err;
-    }
+    const updatedArea = await areasApi.updateArea(id, areaData);
+    setAreas((prev) =>
+      prev.map((area) => (area.id === id ? updatedArea : area)),
+    );
+    return updatedArea;
   };
 
   const deleteArea = async (id: number) => {
-    try {
-      await areasApi.deleteArea(id);
-      setAreas((prev) => prev.filter((area) => area.id !== id));
-    } catch (err) {
-      throw err;
-    }
+    await areasApi.deleteArea(id);
+    setAreas((prev) => prev.filter((area) => area.id !== id));
   };
 
   const toggleAreaStatus = async (id: number) => {
     const area = areas.find((a) => a.id === id);
     if (!area) throw new Error('Area not found');
-    try {
-      const updatedArea = await areasApi.updateArea(id, {
-        is_active: !area.is_active,
-      });
-      setAreas((prev) =>
-        prev.map((a) => (a.id === id ? { ...a, ...updatedArea } : a)),
-      );
-      return updatedArea;
-    } catch (err) {
-      throw err;
-    }
+    const updatedArea = await areasApi.updateArea(id, {
+      is_active: !area.is_active,
+    });
+    setAreas((prev) =>
+      prev.map((a) => (a.id === id ? { ...a, ...updatedArea } : a)),
+    );
+    return updatedArea;
   };
 
   useEffect(() => {

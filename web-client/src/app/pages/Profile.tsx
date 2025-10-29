@@ -62,7 +62,9 @@ const Profile: React.FC = () => {
             : undefined,
           connectedAt: new Date().toISOString(),
         });
-      } catch {}
+      } catch {
+        // Discord not connected
+      }
 
       try {
         const githubProfile = await servicesApi.getGitHubProfile();
@@ -127,7 +129,7 @@ const Profile: React.FC = () => {
       }
 
       setConnectedServices(services);
-    } catch (error) {
+    } catch {
       setError('Failed to load connected services');
     } finally {
       setLoading(false);

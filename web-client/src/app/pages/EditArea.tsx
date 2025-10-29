@@ -67,7 +67,7 @@ function EditArea() {
         setParameters(paramsMap);
 
         setIsLoading(false);
-      } catch (err) {
+      } catch {
         setError('Failed to load area');
         setIsLoading(false);
       }
@@ -95,7 +95,7 @@ function EditArea() {
       }
 
       navigate('/profile');
-    } catch (err) {
+    } catch {
       setError('Failed to update area');
     }
   };
