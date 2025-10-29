@@ -394,7 +394,6 @@ export class SpotifyService {
     params: AddToQueueParams,
   ): Promise<void> {
     try {
-      console.log(params.track_uri);
       const url = `https://api.spotify.com/v1/me/player/queue?uri=${encodeURIComponent(params.track_uri)}`;
 
       const response = await fetch(url, {
