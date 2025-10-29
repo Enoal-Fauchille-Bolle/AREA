@@ -31,6 +31,7 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
     await this.createGmailService();
     await this.createTwitchService();
     await this.createYoutubeService();
+    await this.createSpotifyService();
   }
 
   private async createClockService(): Promise<void> {
