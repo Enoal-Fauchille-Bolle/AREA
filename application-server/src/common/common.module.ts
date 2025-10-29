@@ -7,6 +7,7 @@ import { GmailReactionsModule } from '../gmail/reactions/gmail-reactions.module'
 import { GmailModule } from '../gmail/gmail.module';
 import { TwitchReactionsModule } from '../twitch/reactions/twitch-reactions.module';
 import { TwitchModule } from '../twitch/twitch.module';
+import { SpotifyModule } from '../spotify/spotify.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { TwitchModule } from '../twitch/twitch.module';
     forwardRef(() => GmailModule),
     TwitchReactionsModule,
     forwardRef(() => TwitchModule),
+    SpotifyModule,
   ],
   providers: [ReactionProcessorService],
   exports: [ReactionProcessorService],
