@@ -119,10 +119,213 @@ export const emailComponentsConfig: ComponentConfig[] = [
   },
 ];
 
+export const discordComponentsConfig: ComponentConfig[] = [
+  {
+    componentName: 'send_message',
+    parameters: [
+      {
+        name: 'channel_id',
+        description: 'Discord channel ID where the message will be sent',
+        type: 'string',
+        required: true,
+        placeholder: '123456789012345678',
+        validation: '^[0-9]{17,19}$',
+      },
+      {
+        name: 'content',
+        description: 'Message content to send (supports Discord markdown)',
+        type: 'string',
+        required: true,
+        placeholder: 'Hello from AREA! 👋',
+      },
+    ],
+  },
+  {
+    componentName: 'message_posted',
+    parameters: [
+      {
+        name: 'channel_id',
+        description:
+          'Discord channel ID to monitor for new messages. The AREA bot must have access to this channel.',
+        type: 'string',
+        required: true,
+        placeholder: '123456789012345678',
+        validation: '^[0-9]{17,19}$',
+      },
+      {
+        name: 'author_filter',
+        description:
+          'Filter messages by author username (optional, case-insensitive)',
+        type: 'string',
+        required: false,
+        placeholder: 'username',
+      },
+      {
+        name: 'content_filter',
+        description:
+          'Filter messages containing this text (optional, case-insensitive)',
+        type: 'string',
+        required: false,
+        placeholder: 'hello',
+      },
+    ],
+  },
+  {
+    componentName: 'react_to_message',
+    parameters: [
+      {
+        name: 'channel_id',
+        description:
+          'Discord channel ID where the message is located. The AREA bot must have access to this channel.',
+        type: 'string',
+        required: true,
+        placeholder: '123456789012345678',
+        validation: '^[0-9]{17,19}$',
+      },
+      {
+        name: 'message_id',
+        description: 'Discord message ID to react to',
+        type: 'string',
+        required: true,
+        placeholder: '123456789012345678',
+        validation: '^[0-9]{17,19}$',
+      },
+      {
+        name: 'emoji',
+        description: 'Emoji to react with (Unicode emoji or custom emoji name)',
+        type: 'string',
+        required: true,
+        placeholder: '👍',
+      },
+    ],
+  },
+  {
+    componentName: 'reaction_added',
+    parameters: [
+      {
+        name: 'channel_id',
+        description:
+          'Discord channel ID to monitor for reactions. The AREA bot must have access to this channel.',
+        type: 'string',
+        required: true,
+        placeholder: '123456789012345678',
+        validation: '^[0-9]{17,19}$',
+      },
+      {
+        name: 'message_id',
+        description:
+          'Specific message ID to monitor for reactions (optional, monitors all messages if not specified)',
+        type: 'string',
+        required: false,
+        placeholder: '123456789012345678',
+        validation: '^[0-9]{17,19}$',
+      },
+      {
+        name: 'emoji_filter',
+        description:
+          'Filter reactions by emoji (optional, case-insensitive partial match)',
+        type: 'string',
+        required: false,
+        placeholder: '👍',
+      },
+      {
+        name: 'user_filter',
+        description:
+          'Filter reactions by username (optional, case-insensitive partial match)',
+        type: 'string',
+        required: false,
+        placeholder: 'username',
+      },
+    ],
+  },
+];
+
+export const githubComponentsConfig: ComponentConfig[] = [
+  {
+    componentName: 'push_event',
+    parameters: [
+      {
+        name: 'repository',
+        description:
+          'Full repository name (owner/repo, e.g., "octocat/Hello-World"). Leave empty to match all repositories.',
+        type: 'string',
+        required: false,
+        placeholder: 'octocat/Hello-World',
+      },
+    ],
+  },
+  {
+    componentName: 'pull_request_event',
+    parameters: [
+      {
+        name: 'repository',
+        description:
+          'Full repository name (owner/repo, e.g., "octocat/Hello-World"). Leave empty to match all repositories.',
+        type: 'string',
+        required: false,
+        placeholder: 'octocat/Hello-World',
+      },
+    ],
+  },
+  {
+    componentName: 'issue_event',
+    parameters: [
+      {
+        name: 'repository',
+        description:
+          'Full repository name (owner/repo, e.g., "octocat/Hello-World"). Leave empty to match all repositories.',
+        type: 'string',
+        required: false,
+        placeholder: 'octocat/Hello-World',
+      },
+    ],
+  },
+];
+
+export const twitchComponentsConfig: ComponentConfig[] = [
+  {
+    componentName: 'streamer_goes_live',
+    parameters: [
+      {
+        name: 'streamer_username',
+        description: 'Twitch username of the streamer to monitor',
+        type: 'string',
+        required: true,
+        placeholder: 'name',
+      },
+    ],
+  },
+  {
+    componentName: 'send_chat_message',
+    parameters: [
+      {
+        name: 'broadcaster_username',
+        description: 'Twitch username of the channel to send message to',
+        type: 'string',
+        required: true,
+        placeholder: 'name',
+      },
+      {
+        name: 'message',
+        description: 'Message content to send in chat',
+        type: 'string',
+        required: true,
+        placeholder: 'Hello from AREA! 👋',
+      },
+    ],
+  },
+];
+
 export function getComponentParameters(
   componentName: string,
 ): ComponentParameter[] {
-  const allConfigs = [...clockComponentsConfig, ...emailComponentsConfig];
+  const allConfigs = [
+    ...clockComponentsConfig,
+    ...emailComponentsConfig,
+    ...discordComponentsConfig,
+    ...githubComponentsConfig,
+    ...twitchComponentsConfig,
+  ];
   const config = allConfigs.find((c) => c.componentName === componentName);
   return config ? config.parameters : [];
 }
