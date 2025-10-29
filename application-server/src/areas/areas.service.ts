@@ -400,6 +400,44 @@ export class AreasService {
           },
         ],
       },
+      {
+        componentName: 'hot_post_in_subreddit',
+        parameters: [
+          {
+            name: 'subreddit',
+            description: 'Subreddit name to monitor (without r/)',
+            type: 'string',
+            required: true,
+            placeholder: 'programming',
+          },
+        ],
+      },
+      {
+        componentName: 'create_reddit_post',
+        parameters: [
+          {
+            name: 'subreddit',
+            description: 'Subreddit name to post in (without r/)',
+            type: 'string',
+            required: true,
+            placeholder: 'test',
+          },
+          {
+            name: 'title',
+            description: 'Post title',
+            type: 'string',
+            required: true,
+            placeholder: 'My automated post from AREA',
+          },
+          {
+            name: 'text',
+            description: 'Post text content (optional for link posts)',
+            type: 'string',
+            required: false,
+            placeholder: 'This post was created automatically',
+          },
+        ],
+      },
     ];
   }
 

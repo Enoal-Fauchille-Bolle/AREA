@@ -29,6 +29,7 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
     await this.createGmailService();
     await this.createTwitchService();
     await this.createYoutubeService();
+    await this.createRedditService();
   }
 
   private async createClockService(): Promise<void> {
@@ -1200,6 +1201,190 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
 
     console.log(
       'YouTube service created successfully (no actions/reactions yet)',
+    );
+  }
+
+  private async createRedditService(): Promise<void> {
+    try {
+      await this.servicesService.findByName('Reddit');
+      console.log('Reddit service already exists, skipping creation');
+      return;
+    } catch {
+      console.log('Creating Reddit service...');
+    }
+
+    const redditService = await this.servicesService.create({
+      name: 'Reddit',
+      description: 'Monitor Reddit posts and create posts in subreddits',
+      icon_path:
+        'https://www.redditstatic.com/desktop2x/img/favicon/favicon-32x32.png',
+      requires_auth: false,
+      is_active: true,
+    });
+
+    // Create hot_post_in_subreddit action component
+    const hotPostAction = await this.componentsService.create({
+      service_id: redditService.id,
+      type: ComponentType.ACTION,
+      name: 'hot_post_in_subreddit',
+      description: 'Triggers when a new hot post appears in a subreddit',
+      is_active: true,
+      polling_interval: 60000, // Check every minute
+    });
+
+    await Promise.all([
+      // Parameter: subreddit name
+      this.variablesService.create({
+        component_id: hotPostAction.id,
+        name: 'subreddit',
+        description: 'Subreddit name to monitor (without r/)',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: false,
+        placeholder: 'programming',
+        display_order: 1,
+      }),
+
+      // Return values
+      this.variablesService.create({
+        component_id: hotPostAction.id,
+        name: 'post_id',
+        description: 'Reddit post ID',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 1,
+      }),
+
+      this.variablesService.create({
+        component_id: hotPostAction.id,
+        name: 'post_title',
+        description: 'Post title',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 2,
+      }),
+
+      this.variablesService.create({
+        component_id: hotPostAction.id,
+        name: 'post_author',
+        description: 'Post author username',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 3,
+      }),
+
+      this.variablesService.create({
+        component_id: hotPostAction.id,
+        name: 'subreddit',
+        description: 'Subreddit name',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 4,
+      }),
+
+      this.variablesService.create({
+        component_id: hotPostAction.id,
+        name: 'post_url',
+        description: 'Full URL to the Reddit post',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.URL,
+        nullable: false,
+        display_order: 5,
+      }),
+
+      this.variablesService.create({
+        component_id: hotPostAction.id,
+        name: 'score',
+        description: 'Post score (upvotes)',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.NUMBER,
+        nullable: false,
+        display_order: 6,
+      }),
+
+      this.variablesService.create({
+        component_id: hotPostAction.id,
+        name: 'created_at',
+        description: 'When the post was created',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.DATE,
+        nullable: false,
+        display_order: 7,
+      }),
+    ]);
+
+    // Create create_reddit_post reaction component
+    const createPostReaction = await this.componentsService.create({
+      service_id: redditService.id,
+      type: ComponentType.REACTION,
+      name: 'create_reddit_post',
+      description: 'Create a post in a specified subreddit',
+      is_active: true,
+    });
+
+    await Promise.all([
+      // Parameters
+      this.variablesService.create({
+        component_id: createPostReaction.id,
+        name: 'subreddit',
+        description: 'Subreddit name to post in (without r/)',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: false,
+        placeholder: 'test',
+        display_order: 1,
+      }),
+
+      this.variablesService.create({
+        component_id: createPostReaction.id,
+        name: 'title',
+        description: 'Post title',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: false,
+        placeholder: 'My automated post from AREA',
+        display_order: 2,
+      }),
+
+      this.variablesService.create({
+        component_id: createPostReaction.id,
+        name: 'text',
+        description: 'Post text content (optional for link posts)',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: true,
+        placeholder: 'This post was created automatically',
+        display_order: 3,
+      }),
+
+      // Return values
+      this.variablesService.create({
+        component_id: createPostReaction.id,
+        name: 'post_id',
+        description: 'Reddit post ID of created post',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 1,
+      }),
+
+      this.variablesService.create({
+        component_id: createPostReaction.id,
+        name: 'post_url',
+        description: 'URL of the created post',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.URL,
+        nullable: false,
+        display_order: 2,
+      }),
+    ]);
+
+    console.log(
+      'Reddit service with hot_post_in_subreddit action and create_reddit_post reaction created successfully',
     );
   }
 }
