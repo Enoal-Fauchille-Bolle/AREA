@@ -83,8 +83,12 @@ export const appConfig = registerAs('app', () => {
         clientSecret: process.env.GITHUB_CLIENT_SECRET,
       },
       reddit: {
-        clientId: process.env.REDDIT_CLIENT_ID,
-        clientSecret: process.env.REDDIT_CLIENT_SECRET,
+        devUserAgent: process.env.REDDIT_DEV_USER_AGENT,
+        clientIdDev: process.env.REDDIT_DEV_CLIENT_ID,
+        clientSecretDev: process.env.REDDIT_DEV_CLIENT_SECRET,
+        prodUserAgent: process.env.REDDIT_PROD_USER_AGENT,
+        clientIdProd: process.env.REDDIT_PROD_CLIENT_ID,
+        clientSecretProd: process.env.REDDIT_PROD_CLIENT_SECRET,
       },
       twitch: {
         clientId: process.env.TWITCH_CLIENT_ID,

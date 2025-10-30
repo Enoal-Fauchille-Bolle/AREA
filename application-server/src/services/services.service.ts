@@ -27,6 +27,7 @@ import { getOAuthProviderFromString } from '../oauth2/dto';
 export class ServicesService {
   private readonly webRedirectUri: string;
   private readonly mobileRedirectUri: string;
+  private readonly redditRedirectUri: string;
 
   constructor(
     @InjectRepository(Service)
@@ -40,6 +41,7 @@ export class ServicesService {
     const appConfig = this.configService.get('app');
     this.webRedirectUri = appConfig.oauth2.service.web_redirect_uri;
     this.mobileRedirectUri = appConfig.oauth2.service.mobile_redirect_uri;
+    this.redditRedirectUri = `${appConfig.serverUrl}/reddit/callback`;
   }
 
   async findAll(): Promise<ServiceResponseDto[]> {
@@ -239,10 +241,15 @@ export class ServicesService {
       );
     }
 
-    const redirectUri =
+    let redirectUri =
       body.platform === LinkPlatform.WEB
         ? this.webRedirectUri
         : this.mobileRedirectUri;
+
+    if (service.name === 'Reddit') {
+      // Reddit requires different redirect URIs for dev and prod
+      redirectUri = this.redditRedirectUri;
+    }
 
     const provider = getOAuthProviderFromString(service.name);
     if (!provider) {

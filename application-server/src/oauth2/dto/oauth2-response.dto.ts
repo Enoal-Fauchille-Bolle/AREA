@@ -123,15 +123,10 @@ export class OAuth2ResponseDto {
       { $ref: '#/components/schemas/RedditUserInfo' },
       { $ref: '#/components/schemas/SpotifyUserInfo' },
       { $ref: '#/components/schemas/TwitchUserInfo' },
+      { $ref: '#/components/schemas/RedditUserInfo' },
     ],
   })
-  rawData:
-    | DiscordUserInfo
-    | GoogleUserInfo
-    | GitHubUserInfo
-    | RedditUserInfo
-    | SpotifyUserInfo
-    | TwitchUserInfo;
+  rawData: ProviderUserInfo;
 
   constructor(
     data: Omit<OAuth2ResponseDto, 'isTokenExpired' | 'getTokenExpirationInfo'>,
@@ -177,6 +172,11 @@ export class OAuth2ResponseDto {
         return mapTwitchUserInfo(
           raw as TwitchUserInfo,
           tokenData as TwitchTokenResponse,
+        );
+      case OAuthProvider.REDDIT:
+        return mapRedditUserInfo(
+          raw as RedditUserInfo,
+          tokenData as RedditTokenResponse,
         );
       default:
         throw new Error(`Unsupported provider: ${provider as string}`);

@@ -117,7 +117,8 @@ export type ProviderTokenResponse =
   | GithubTokenResponse
   | RedditTokenResponse
   | SpotifyTokenResponse
-  | TwitchTokenResponse;
+  | TwitchTokenResponse
+  | RedditTokenResponse;
 
 export class DiscordUserInfo {
   id: string;
@@ -234,7 +235,8 @@ export type ProviderUserInfo =
   | GitHubUserInfo
   | RedditUserInfo
   | SpotifyUserInfo
-  | TwitchUserInfo;
+  | TwitchUserInfo
+  | RedditUserInfo;
 
 export function isDiscordUserInfo(
   data: ProviderUserInfo,
