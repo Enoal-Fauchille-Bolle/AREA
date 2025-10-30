@@ -178,18 +178,15 @@ export class RedditReactionsService {
         api_type: 'json',
       });
 
-      const response = await fetch(
-        `${this.redditOAuthApiUrl}/api/submit`,
-        {
-          method: 'POST',
-          headers: {
-            'User-Agent': 'AREA-Application/1.0',
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: formData.toString(),
+      const response = await fetch(`${this.redditOAuthApiUrl}/api/submit`, {
+        method: 'POST',
+        headers: {
+          'User-Agent': 'AREA-Application/1.0',
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
-      );
+        body: formData.toString(),
+      });
 
       if (!response.ok) {
         const errorData = await response.text();
@@ -251,7 +248,10 @@ export class RedditReactionsService {
         this.logger.log(
           `Reddit token expired for user ${userId}, refreshing...`,
         );
-        await this.servicesService.refreshServiceToken(userId, redditService.id);
+        await this.servicesService.refreshServiceToken(
+          userId,
+          redditService.id,
+        );
 
         // Fetch the updated token
         const updatedUserService = await this.userServicesService.findOne(
