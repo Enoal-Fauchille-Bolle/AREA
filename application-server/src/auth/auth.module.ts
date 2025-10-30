@@ -12,6 +12,7 @@ import { UserOAuth2AccountsService } from './user-oauth2-account';
 import { AuthController } from './auth.controller';
 import { LocalStrategy } from './strategies/local.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { EmailVerificationService } from './email-verification.service';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     LocalStrategy,
     JwtStrategy,
     UserOAuth2AccountsService,
+    EmailVerificationService,
   ],
   controllers: [AuthController],
   exports: [AuthService, UserOAuth2AccountsService],

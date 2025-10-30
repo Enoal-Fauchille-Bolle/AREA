@@ -136,4 +136,58 @@ export class UsersService {
     const result = await this.usersRepository.delete(id);
     return (result.affected ?? 0) > 0;
   }
+
+  async setVerificationCode(
+    email: string,
+    code: string,
+    expiresAt: Date,
+  ): Promise<void> {
+    await this.usersRepository.update(
+      { email },
+      {
+        email_verification_code: code,
+        email_verification_expires: expiresAt,
+        is_email_verified: false,
+      },
+    );
+  }
+
+  async verifyEmail(email: string, code: string): Promise<boolean> {
+    const user = await this.usersRepository.findOne({ where: { email } });
+
+    if (!user) {
+      return false;
+    }
+
+    // Check if code matches
+    if (user.email_verification_code !== code) {
+      return false;
+    }
+
+    // Check if code is expired
+    if (
+      !user.email_verification_expires ||
+      user.email_verification_expires < new Date()
+    ) {
+      return false;
+    }
+
+    // Mark as verified and clear verification data
+    await this.usersRepository.update(
+      { email },
+      {
+        is_email_verified: true,
+        email_verified_at: new Date(),
+        email_verification_code: null,
+        email_verification_expires: null,
+      },
+    );
+
+    return true;
+  }
+
+  async isEmailVerified(email: string): Promise<boolean> {
+    const user = await this.usersRepository.findOne({ where: { email } });
+    return user?.is_email_verified ?? false;
+  }
 }

@@ -34,6 +34,8 @@ import { DiscordModule } from './discord/discord.module';
 import { CommonModule } from './common/common.module';
 import { GmailModule } from './gmail/gmail.module';
 import { TwitchModule } from './twitch/twitch.module';
+import { RedditModule } from './reddit/reddit.module';
+import { SpotifyModule } from './spotify/spotify.module';
 
 @Module({
   imports: [
@@ -95,6 +97,8 @@ import { TwitchModule } from './twitch/twitch.module';
     CommonModule,
     GmailModule,
     TwitchModule,
+    RedditModule,
+    SpotifyModule,
   ],
   controllers: [AppController],
   providers: [AppService],

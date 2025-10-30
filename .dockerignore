@@ -1,0 +1,20 @@
+# Web client ignores
+web-client/node_modules
+web-client/dist
+web-client/coverage
+
+# Application server ignores
+application-server/node_modules
+application-server/dist
+application-server/coverage
+
+# Mobile client ignores
+mobile-client/build
+
+# General ignores
+.git
+.env
+*.log
+.DS_Store
+.vscode
+.idea

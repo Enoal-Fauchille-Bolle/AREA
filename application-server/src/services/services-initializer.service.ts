@@ -1,4 +1,4 @@
-import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
+import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { ServicesService } from './services.service';
 import { ComponentsService } from '../components/components.service';
 import { ComponentType } from '../components/entities/component.entity';
@@ -10,6 +10,8 @@ import {
 
 @Injectable()
 export class ServicesInitializerService implements OnApplicationBootstrap {
+  private readonly logger = new Logger(ServicesInitializerService.name);
+
   constructor(
     private readonly servicesService: ServicesService,
     private readonly componentsService: ComponentsService,
@@ -29,15 +31,17 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
     await this.createGmailService();
     await this.createTwitchService();
     await this.createYoutubeService();
+    await this.createRedditService();
+    await this.createSpotifyService();
   }
 
   private async createClockService(): Promise<void> {
     try {
       await this.servicesService.findByName('Clock');
-      console.log('Clock service already exists, skipping creation');
+      this.logger.log('Clock service already exists, skipping creation');
       return;
     } catch {
-      console.log('Creating Clock service...');
+      this.logger.log('Creating Clock service...');
     }
 
     const clockService = await this.servicesService.create({
@@ -167,16 +171,18 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       display_order: 2,
     });
 
-    console.log('Clock service with all timer components created successfully');
+    this.logger.log(
+      'Clock service with all timer components created successfully',
+    );
   }
 
   private async createEmailService(): Promise<void> {
     try {
       await this.servicesService.findByName('Email');
-      console.log('Email service already exists, skipping creation');
+      this.logger.log('Email service already exists, skipping creation');
       return;
     } catch {
-      console.log('Creating Email service...');
+      this.logger.log('Creating Email service...');
     }
 
     const emailService = await this.servicesService.create({
@@ -231,16 +237,19 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       }),
     ]);
 
-    console.log('Email service and send_email component created successfully');
+    this.logger.log(
+      'Email service and send_email component created successfully',
+    );
   }
 
   private async createDiscordService(): Promise<void> {
     try {
       await this.servicesService.findByName('Discord');
-      console.log('Discord service already exists, skipping creation');
+      this.logger.log('Discord service already exists, skipping creation');
       return;
     } catch {
-      console.log('Creating Discord service...');
+      // Service doesn't exist, create it
+      this.logger.log('Creating Discord service...');
     }
 
     const discordService = await this.servicesService.create({
@@ -597,16 +606,16 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       }),
     ]);
 
-    console.log('Discord service with all components created successfully');
+    this.logger.log('Discord service with all components created successfully');
   }
 
   private async createGoogleService(): Promise<void> {
     try {
       await this.servicesService.findByName('Google');
-      console.log('Google service already exists, skipping creation');
+      this.logger.log('Google service already exists, skipping creation');
       return;
     } catch {
-      console.log('Creating Google service...');
+      this.logger.log('Creating Google service...');
     }
 
     await this.servicesService.create({
@@ -618,16 +627,16 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       is_active: true,
     });
 
-    console.log('Google service created successfully');
+    this.logger.log('Google service created successfully');
   }
 
   private async createGithubService(): Promise<void> {
     try {
       await this.servicesService.findByName('GitHub');
-      console.log('GitHub service already exists, skipping creation');
+      this.logger.log('GitHub service already exists, skipping creation');
       return;
     } catch {
-      console.log('Creating GitHub service...');
+      this.logger.log('Creating GitHub service...');
     }
 
     // Create GitHub service
@@ -966,7 +975,7 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       }),
     ]);
 
-    console.log(
+    this.logger.log(
       'GitHub service and webhook action components created successfully',
     );
   }
@@ -974,10 +983,10 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
   private async createGmailService(): Promise<void> {
     try {
       await this.servicesService.findByName('Gmail');
-      console.log('Gmail service already exists, skipping creation');
+      this.logger.log('Gmail service already exists, skipping creation');
       return;
     } catch {
-      console.log('Creating Gmail service...');
+      this.logger.log('Creating Gmail service...');
     }
 
     const gmailService = await this.servicesService.create({
@@ -988,6 +997,7 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       is_active: true,
     });
 
+    this.logger.log('Gmail service created successfully');
     // Create new_email_received action component
     const newEmailReceivedAction = await this.componentsService.create({
       service_id: gmailService.id,
@@ -1148,10 +1158,10 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
   private async createTwitchService(): Promise<void> {
     try {
       await this.servicesService.findByName('Twitch');
-      console.log('Twitch service already exists, skipping creation');
+      this.logger.log('Twitch service already exists, skipping creation');
       return;
     } catch {
-      console.log('Creating Twitch service...');
+      this.logger.log('Creating Twitch service...');
     }
 
     const twitchService = await this.servicesService.create({
@@ -1310,7 +1320,7 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       }),
     ]);
 
-    console.log(
+    this.logger.log(
       'Twitch service with streamer_goes_live action and send_chat_message reaction created successfully',
     );
   }
@@ -1318,10 +1328,10 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
   private async createYoutubeService(): Promise<void> {
     try {
       await this.servicesService.findByName('YouTube');
-      console.log('YouTube service already exists, skipping creation');
+      this.logger.log('YouTube service already exists, skipping creation');
       return;
     } catch {
-      console.log('Creating YouTube service...');
+      this.logger.log('Creating YouTube service...');
     }
 
     await this.servicesService.create({
@@ -1334,8 +1344,271 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       is_active: true,
     });
 
-    console.log(
+    this.logger.log(
       'YouTube service created successfully (no actions/reactions yet)',
+    );
+  }
+
+  private async createRedditService(): Promise<void> {
+    try {
+      await this.servicesService.findByName('Reddit');
+      console.log('Reddit service already exists, skipping creation');
+      return;
+    } catch {
+      console.log('Creating Reddit service...');
+    }
+
+    const redditService = await this.servicesService.create({
+      name: 'Reddit',
+      description: 'Monitor Reddit posts and create posts in subreddits',
+      icon_path:
+        'https://www.redditstatic.com/desktop2x/img/favicon/favicon-32x32.png',
+      requires_auth: false,
+      is_active: true,
+    });
+
+    // Create hot_post_in_subreddit action component
+    const hotPostAction = await this.componentsService.create({
+      service_id: redditService.id,
+      type: ComponentType.ACTION,
+      name: 'hot_post_in_subreddit',
+      description: 'Triggers when a new hot post appears in a subreddit',
+      is_active: true,
+      polling_interval: 60000, // Check every minute
+    });
+
+    await Promise.all([
+      // Parameter: subreddit name
+      this.variablesService.create({
+        component_id: hotPostAction.id,
+        name: 'subreddit',
+        description: 'Subreddit name to monitor (without r/)',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: false,
+        placeholder: 'programming',
+        display_order: 1,
+      }),
+
+      // Return values
+      this.variablesService.create({
+        component_id: hotPostAction.id,
+        name: 'post_id',
+        description: 'Reddit post ID',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 1,
+      }),
+
+      this.variablesService.create({
+        component_id: hotPostAction.id,
+        name: 'post_title',
+        description: 'Post title',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 2,
+      }),
+
+      this.variablesService.create({
+        component_id: hotPostAction.id,
+        name: 'post_author',
+        description: 'Post author username',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 3,
+      }),
+
+      this.variablesService.create({
+        component_id: hotPostAction.id,
+        name: 'subreddit',
+        description: 'Subreddit name',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 4,
+      }),
+
+      this.variablesService.create({
+        component_id: hotPostAction.id,
+        name: 'post_url',
+        description: 'Full URL to the Reddit post',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.URL,
+        nullable: false,
+        display_order: 5,
+      }),
+
+      this.variablesService.create({
+        component_id: hotPostAction.id,
+        name: 'score',
+        description: 'Post score (upvotes)',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.NUMBER,
+        nullable: false,
+        display_order: 6,
+      }),
+
+      this.variablesService.create({
+        component_id: hotPostAction.id,
+        name: 'created_at',
+        description: 'When the post was created',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.DATE,
+        nullable: false,
+        display_order: 7,
+      }),
+    ]);
+
+    // Create create_reddit_post reaction component
+    const createPostReaction = await this.componentsService.create({
+      service_id: redditService.id,
+      type: ComponentType.REACTION,
+      name: 'create_reddit_post',
+      description: 'Create a post in a specified subreddit',
+      is_active: true,
+    });
+
+    await Promise.all([
+      // Parameters
+      this.variablesService.create({
+        component_id: createPostReaction.id,
+        name: 'subreddit',
+        description: 'Subreddit name to post in (without r/)',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: false,
+        placeholder: 'test',
+        display_order: 1,
+      }),
+
+      this.variablesService.create({
+        component_id: createPostReaction.id,
+        name: 'title',
+        description: 'Post title',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: false,
+        placeholder: 'My automated post from AREA',
+        display_order: 2,
+      }),
+
+      this.variablesService.create({
+        component_id: createPostReaction.id,
+        name: 'text',
+        description: 'Post text content (optional for link posts)',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: true,
+        placeholder: 'This post was created automatically',
+        display_order: 3,
+      }),
+
+      // Return values
+      this.variablesService.create({
+        component_id: createPostReaction.id,
+        name: 'post_id',
+        description: 'Reddit post ID of created post',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 1,
+      }),
+
+      this.variablesService.create({
+        component_id: createPostReaction.id,
+        name: 'post_url',
+        description: 'URL of the created post',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.URL,
+        nullable: false,
+        display_order: 2,
+      }),
+    ]);
+
+    console.log(
+      'Reddit service with hot_post_in_subreddit action and create_reddit_post reaction created successfully',
+    );
+  }
+
+  private async createSpotifyService(): Promise<void> {
+    try {
+      await this.servicesService.findByName('Spotify');
+      this.logger.log('Spotify service already exists, skipping creation');
+      return;
+    } catch {
+      this.logger.log('Creating Spotify service...');
+    }
+
+    await this.servicesService.create({
+      name: 'Spotify',
+      description: 'Interact with Spotify - manage playlists and music tracks',
+      icon_path: 'https://www.spotify.com/favicon.ico',
+      requires_auth: true,
+      is_active: true,
+    });
+
+    // Create add_to_playlist reaction component
+    const addToPlaylistReaction = await this.componentsService.create({
+      service_id: (await this.servicesService.findByName('Spotify')).id,
+      type: ComponentType.REACTION,
+      name: 'add_to_playlist',
+      description: 'Add a track to a Spotify playlist',
+      is_active: true,
+    });
+
+    await Promise.all([
+      // Playlist ID parameter - required
+      this.variablesService.create({
+        component_id: addToPlaylistReaction.id,
+        name: 'playlist_id',
+        description: 'Spotify ID of the playlist to add the track to',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: false,
+        placeholder: '37i9dQZF1DXcBWIGoYBM5M',
+        display_order: 1,
+      }),
+
+      // Track URI parameter - required
+      this.variablesService.create({
+        component_id: addToPlaylistReaction.id,
+        name: 'track_uri',
+        description:
+          'Spotify URI of the track to add (e.g., spotify:track:...)',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: false,
+        placeholder: 'spotify:track:6rqhFgbbKwnb9MLmUQDhG6',
+        display_order: 2,
+      }),
+    ]);
+
+    // Create add_to_queue reaction component
+    const addToQueueReaction = await this.componentsService.create({
+      service_id: (await this.servicesService.findByName('Spotify')).id,
+      type: ComponentType.REACTION,
+      name: 'add_to_queue',
+      description: "Add a track to the user's Spotify playback queue",
+      is_active: true,
+    });
+
+    await this.variablesService.create({
+      component_id: addToQueueReaction.id,
+      name: 'track_uri',
+      description:
+        'Spotify URI of the track to add to the queue (e.g., spotify:track:...)',
+      kind: VariableKind.PARAMETER,
+      type: VariableType.STRING,
+      nullable: false,
+      placeholder: 'spotify:track:6rqhFgbbKwnb9MLmUQDhG6',
+      display_order: 1,
+    });
+
+    this.logger.log(
+      'Spotify service with add_to_playlist and add_to_queue reactions created successfully',
     );
   }
 }

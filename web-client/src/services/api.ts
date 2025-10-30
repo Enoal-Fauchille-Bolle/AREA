@@ -158,6 +158,19 @@ export interface AuthResponse {
   token: string;
 }
 
+export interface VerifyEmailRequest {
+  email: string;
+  code: string;
+}
+
+export interface ResendVerificationRequest {
+  email: string;
+}
+
+export interface VerificationResponse {
+  message: string;
+}
+
 export interface UserProfile {
   id: number;
   email: string;
@@ -753,6 +766,34 @@ export const authApi = {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
+    });
+
+    return handleResponse(response);
+  },
+
+  async verifyEmail(
+    verifyData: VerifyEmailRequest,
+  ): Promise<VerificationResponse> {
+    const response = await fetch(`${API_BASE_URL}/auth/verify-email`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(verifyData),
+    });
+
+    return handleResponse(response);
+  },
+
+  async resendVerification(
+    resendData: ResendVerificationRequest,
+  ): Promise<VerificationResponse> {
+    const response = await fetch(`${API_BASE_URL}/auth/resend-verification`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(resendData),
     });
 
     return handleResponse(response);

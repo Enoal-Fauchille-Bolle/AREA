@@ -76,7 +76,8 @@ function SignUp() {
 
       const response = await authApi.register(formData);
       tokenService.setToken(response.token);
-      navigate('/profile');
+      // Redirect to email verification page
+      navigate('/verify-email', { state: { email: formData.email } });
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'An unexpected error occurred',

@@ -38,6 +38,18 @@ export class User {
   @Column({ type: 'boolean', default: DB_DEFAULTS.isActive })
   is_active: boolean;
 
+  @Column({ type: 'boolean', default: true })
+  is_email_verified: boolean;
+
+  @Column({ type: 'varchar', length: 6, nullable: true })
+  email_verification_code: string | null;
+
+  @Column({ type: 'timestamp with time zone', nullable: true })
+  email_verification_expires: Date | null;
+
+  @Column({ type: 'timestamp with time zone', nullable: true })
+  email_verified_at: Date | null;
+
   @CreateDateColumn({ type: 'timestamp with time zone' })
   created_at: Date;
 
