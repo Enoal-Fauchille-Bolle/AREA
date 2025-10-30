@@ -5,7 +5,8 @@ import 'runtime_config.dart';
 
 class TwitchOAuthService {
   static String get clientId => dotenv.env['TWITCH_CLIENT_ID'] ?? '';
-  static const String scope = 'user:read:email chat:edit chat:read';
+  static const String scope =
+      'user:read:email user:write:chat chat:edit chat:read';
 
   static Future<String> _buildAuthUrl({required bool forService}) async {
     final baseUrl = await RuntimeConfig().getServerUrl();
