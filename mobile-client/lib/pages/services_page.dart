@@ -5,6 +5,8 @@ import '../services/github_oauth_service.dart';
 import '../services/gmail_oauth_service.dart';
 import '../services/twitch_oauth_service.dart';
 import '../services/youtube_oauth_service.dart';
+import '../services/spotify_oauth_service.dart';
+import '../services/reddit_oauth_service.dart';
 import '../widgets/service_card.dart';
 import '../utils/app_logger.dart';
 
@@ -73,7 +75,7 @@ class _ServicesPageState extends State<ServicesPage> {
           await _loadServices();
         }
       } else {
-        // Handle OAuth flow for Discord, GitHub, Gmail, Twitch, and YouTube
+        // Handle OAuth flow for Discord, GitHub, Gmail, Twitch, YouTube, Spotify, and Reddit
         AppLogger.log('Checking service type: ${serviceName.toLowerCase()}');
         final serviceNameLower = serviceName.toLowerCase();
 
@@ -81,7 +83,9 @@ class _ServicesPageState extends State<ServicesPage> {
             serviceNameLower == 'github' ||
             serviceNameLower == 'gmail' ||
             serviceNameLower == 'twitch' ||
-            serviceNameLower == 'youtube') {
+            serviceNameLower == 'youtube' ||
+            serviceNameLower == 'spotify' ||
+            serviceNameLower == 'reddit') {
           AppLogger.log('Service is $serviceName, starting OAuth flow...');
           if (mounted) {
             String? code;
@@ -102,6 +106,12 @@ class _ServicesPageState extends State<ServicesPage> {
             } else if (serviceNameLower == 'youtube') {
               code = await YoutubeOAuthService.authorize(context,
                   forService: true);
+            } else if (serviceNameLower == 'spotify') {
+              code = await SpotifyOAuthService.authorize(context,
+                  forService: true);
+            } else if (serviceNameLower == 'reddit') {
+              code =
+                  await RedditOAuthService.authorize(context, forService: true);
             }
 
             AppLogger.log(
