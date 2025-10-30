@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 class ComponentSelector extends StatefulWidget {
   final String label;
@@ -83,8 +84,8 @@ class _ComponentSelectorState extends State<ComponentSelector> {
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: (component['type'] ?? component['kind']) == 'action'
-                      ? Colors.blue[100]
-                      : Colors.green[100],
+                      ? AppTheme.accentColor.withOpacity(0.1)
+                      : AppTheme.successColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -96,8 +97,8 @@ class _ComponentSelectorState extends State<ComponentSelector> {
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                     color: (component['type'] ?? component['kind']) == 'action'
-                        ? Colors.blue[700]
-                        : Colors.green[700],
+                        ? AppTheme.accentColor
+                        : AppTheme.successColor,
                   ),
                 ),
               ),
