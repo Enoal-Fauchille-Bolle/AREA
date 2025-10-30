@@ -8,6 +8,7 @@ export enum OAuthProvider {
   GITHUB = 'github',
   SPOTIFY = 'spotify',
   TWITCH = 'twitch',
+  REDDIT = 'reddit',
 }
 
 export function isOAuthProvider(value: string): value is OAuthProvider {
@@ -31,6 +32,7 @@ export const OAuthProviderServiceNameMap: Record<OAuthProvider, string> = {
   [OAuthProvider.GITHUB]: 'GitHub',
   [OAuthProvider.SPOTIFY]: 'Spotify',
   [OAuthProvider.TWITCH]: 'Twitch',
+  [OAuthProvider.REDDIT]: 'Reddit',
 };
 
 export class ExchangeOAuthCodeDto {
@@ -107,12 +109,15 @@ export class SpotifyTokenResponse extends OAuthTokenResponse {}
 
 export class TwitchTokenResponse extends OAuthTokenResponse {}
 
+export class RedditTokenResponse extends OAuthTokenResponse {}
+
 export type ProviderTokenResponse =
   | DiscordTokenResponse
   | GoogleTokenResponse
   | GithubTokenResponse
   | SpotifyTokenResponse
-  | TwitchTokenResponse;
+  | TwitchTokenResponse
+  | RedditTokenResponse;
 
 export class DiscordUserInfo {
   id: string;
@@ -208,12 +213,33 @@ export class TwitchUserInfo {
   created_at: string;
 }
 
+export class RedditUserInfo {
+  id: string;
+  name: string;
+  created_at: string;
+  icon_img: string;
+  banner_img: string;
+  is_employee: boolean;
+  is_mod: boolean;
+  is_suspended: boolean;
+  verified: boolean;
+  subreddit: {
+    id: string;
+    name: string;
+    created_at: string;
+    icon_img: string;
+    banner_img: string;
+    subscribers: number;
+  };
+}
+
 export type ProviderUserInfo =
   | DiscordUserInfo
   | GoogleUserInfo
   | GitHubUserInfo
   | SpotifyUserInfo
-  | TwitchUserInfo;
+  | TwitchUserInfo
+  | RedditUserInfo;
 
 export function isDiscordUserInfo(
   data: ProviderUserInfo,
@@ -245,6 +271,12 @@ export function isTwitchUserInfo(
   return 'broadcaster_type' in data && 'offline_image_url' in data;
 }
 
+export function isRedditUserInfo(
+  data: ProviderUserInfo,
+): data is RedditUserInfo {
+  return 'id' in data && 'name' in data && 'subreddit' in data;
+}
+
 export function createUsernameFromProviderInfo(
   data: ProviderUserInfo,
 ): string | null {
@@ -262,6 +294,8 @@ export function createUsernameFromProviderInfo(
     return data.display_name || 'spotify_user_' + data.id;
   } else if (isTwitchUserInfo(data)) {
     return data.login || 'twitch_user_' + data.id;
+  } else if (isRedditUserInfo(data)) {
+    return data.name || 'reddit_user_' + data.id;
   } else {
     return null;
   }

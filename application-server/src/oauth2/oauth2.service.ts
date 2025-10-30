@@ -20,6 +20,7 @@ import {
   GitHubEmailInfo,
   SpotifyUserInfo,
   TwitchUserInfo,
+  RedditUserInfo,
   ProviderUserInfo,
 } from './dto/oauth-providers.dto';
 
@@ -32,9 +33,11 @@ export class OAuth2Service {
     [OAuthProvider.GITHUB]: 'https://github.com/login/oauth/access_token',
     [OAuthProvider.SPOTIFY]: 'https://accounts.spotify.com/api/token',
     [OAuthProvider.TWITCH]: 'https://id.twitch.tv/oauth2/token',
+    [OAuthProvider.REDDIT]: 'https://www.reddit.com/api/v1/access_token',
   };
   private readonly CLIENT_IDS: Record<OAuthProvider, string | undefined>;
   private readonly CLIENT_SECRETS: Record<OAuthProvider, string | undefined>;
+  private readonly REDDIT_USER_AGENT: string | undefined;
 
   constructor(
     private readonly httpService: HttpService,
@@ -49,6 +52,10 @@ export class OAuth2Service {
       [OAuthProvider.GITHUB]: appConfig.oauth2.github.clientId,
       [OAuthProvider.SPOTIFY]: appConfig.oauth2.spotify.clientId,
       [OAuthProvider.TWITCH]: appConfig.oauth2.twitch.clientId,
+      [OAuthProvider.REDDIT]:
+        appConfig.nodeEnv === 'production'
+          ? appConfig.oauth2.reddit.clientIdProd
+          : appConfig.oauth2.reddit.clientIdDev,
     };
 
     this.CLIENT_SECRETS = {
@@ -58,7 +65,16 @@ export class OAuth2Service {
       [OAuthProvider.GITHUB]: appConfig.oauth2.github.clientSecret,
       [OAuthProvider.SPOTIFY]: appConfig.oauth2.spotify.clientSecret,
       [OAuthProvider.TWITCH]: appConfig.oauth2.twitch.clientSecret,
+      [OAuthProvider.REDDIT]:
+        appConfig.nodeEnv === 'production'
+          ? appConfig.oauth2.reddit.clientSecretProd
+          : appConfig.oauth2.reddit.clientSecretDev,
     };
+
+    this.REDDIT_USER_AGENT =
+      appConfig.nodeEnv === 'production'
+        ? appConfig.oauth2.reddit.prodUserAgent
+        : appConfig.oauth2.reddit.devUserAgent;
   }
 
   async exchangeCodeForTokens(
@@ -166,6 +182,8 @@ export class OAuth2Service {
         return this.getSpotifyUserInfo(accessToken);
       case OAuthProvider.TWITCH:
         return this.getTwitchUserInfo(accessToken);
+      case OAuthProvider.REDDIT:
+        return this.getRedditUserInfo(accessToken);
       default:
         throw new BadRequestException(
           `Unsupported OAuth provider: ${provider as string}`,
@@ -343,6 +361,32 @@ export class OAuth2Service {
       return response.data.data[0];
     } catch (error) {
       this.handleProviderError(error, 'Twitch');
+    }
+  }
+
+  private async getRedditUserInfo(
+    accessToken: string,
+  ): Promise<RedditUserInfo> {
+    try {
+      if (!this.REDDIT_USER_AGENT) {
+        throw new InternalServerErrorException(
+          'Reddit User-Agent is not configured properly.',
+        );
+      }
+      const response = await firstValueFrom(
+        this.httpService.get<RedditUserInfo>(
+          'https://oauth.reddit.com/api/v1/me',
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'User-Agent': this.REDDIT_USER_AGENT,
+            },
+          },
+        ),
+      );
+      return response.data;
+    } catch (error) {
+      this.handleProviderError(error, 'Reddit');
     }
   }
 
