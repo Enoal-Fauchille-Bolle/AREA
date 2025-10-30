@@ -12,8 +12,14 @@ Future<void> main() async {
     debugPrint('Successfully loaded .env file');
   } catch (e) {
     debugPrint('Warning: Could not load .env file: $e');
-    debugPrint('Using default environment values');
-    // Continue with default values if .env file doesn't exist
+    try {
+      await dotenv.load(fileName: ".env.example");
+      debugPrint('Successfully loaded .env.example file as fallback');
+    } catch (e2) {
+      debugPrint('Warning: Could not load .env.example file: $e2');
+      debugPrint('Using default environment values');
+      // Continue with default values if neither file exists
+    }
   }
 
   runApp(const MyApp());
