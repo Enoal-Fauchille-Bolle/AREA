@@ -48,7 +48,7 @@ describe('Login Page', () => {
 
   it('renders Google sign in button', () => {
     renderWithRouter(<Login />);
-    expect(screen.getByText('Continue with Google')).toBeInTheDocument();
+    expect(screen.getByText('Login with Google')).toBeInTheDocument();
   });
 
   it('renders forgot password link', () => {

@@ -158,6 +158,19 @@ export interface AuthResponse {
   token: string;
 }
 
+export interface VerifyEmailRequest {
+  email: string;
+  code: string;
+}
+
+export interface ResendVerificationRequest {
+  email: string;
+}
+
+export interface VerificationResponse {
+  message: string;
+}
+
 export interface UserProfile {
   id: number;
   email: string;
@@ -181,6 +194,8 @@ export interface Area {
   updated_at: string;
   last_triggered_at: string | null;
   triggered_count: number;
+  componentAction?: Component;
+  componentReaction?: Component;
 }
 
 export interface CreateAreaRequest {
@@ -242,10 +257,30 @@ export interface Variable {
   };
 }
 
+export interface DiscordUser {
+  id: string;
+  username: string;
+  discriminator: string;
+  avatar: string | null;
+  email?: string;
+}
+
 export interface AreaParameter {
   area_id: number;
   variable_id: number;
   value: string;
+  variable?: {
+    id: number;
+    component_id: number;
+    name: string;
+    description: string | null;
+    kind: VariableKind;
+    type: VariableType;
+    nullable: boolean;
+    placeholder: string | null;
+    validation_regex: string | null;
+    display_order: number;
+  };
 }
 
 export interface ApiError {
@@ -322,15 +357,128 @@ export const servicesApi = {
     });
 
     if (!response.ok) {
+      let errorMessage = 'Failed to link service';
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorData.error || errorMessage;
+      } catch {
+        errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
+    }
+  },
+
+  async getUserServices(): Promise<Service[]> {
+    const token = tokenService.getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/services/me`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return handleResponse(response);
+  },
+
+  async getDiscordProfile(): Promise<DiscordUser> {
+    const token = tokenService.getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/services/discord/profile`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return handleResponse(response);
+  },
+
+  async getGitHubProfile(): Promise<{
+    id: string;
+    login: string;
+    avatar_url: string | null;
+    email?: string;
+  }> {
+    const token = tokenService.getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/services/github/profile`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return handleResponse(response);
+  },
+
+  async getTwitchProfile(): Promise<{
+    id: string;
+    login: string;
+    display_name: string;
+    profile_image_url: string | null;
+    email?: string;
+  }> {
+    const token = tokenService.getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/services/twitch/profile`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return handleResponse(response);
+  },
+
+  async disconnectService(serviceName: string): Promise<void> {
+    const token = tokenService.getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}/services/${serviceName}/disconnect`,
+      {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+
+    if (!response.ok) {
       let errorMessage = `HTTP ${response.status}`;
       try {
         const errorData = await response.json();
-        errorMessage = JSON.stringify(errorData);
+        errorMessage = errorData.message || errorMessage;
       } catch {
-        errorMessage = await response.text();
+        errorMessage = 'Network error or invalid response';
       }
-      throw new Error(`Failed to exchange code for tokens: ${errorMessage}`);
+      throw new Error(errorMessage);
     }
+
+    if (response.status === 204) {
+      return;
+    }
+    return response.json();
   },
 };
 
@@ -446,14 +594,12 @@ export const variablesApi = {
   },
 
   async getInputVariablesByComponent(componentId: number): Promise<Variable[]> {
-    console.log('API: Getting input variables for component ID:', componentId);
     const token = tokenService.getToken();
     if (!token) {
       throw new Error('No authentication token found');
     }
 
     const url = `${API_BASE_URL}/variables/component/${componentId}/inputs`;
-    console.log('API: Fetching from URL:', url);
     const response = await fetch(url, {
       method: 'GET',
       headers: {
@@ -463,7 +609,6 @@ export const variablesApi = {
     });
 
     const result = await handleResponse(response);
-    console.log('API: Variables result:', result);
     return result;
   },
 };
@@ -510,36 +655,43 @@ export const areaParametersApi = {
 
     return handleResponse(response);
   },
+
+  async bulkCreateOrUpdate(
+    areaId: number,
+    parameters: { variable_id: number; value: string }[],
+  ): Promise<AreaParameter[]> {
+    const token = tokenService.getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}/area-parameters/area/${areaId}/bulk`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ parameters }),
+      },
+    );
+
+    return handleResponse(response);
+  },
 };
 
 export const authApi = {
   async register(userData: RegisterRequest): Promise<AuthResponse> {
-    try {
-      console.log('Attempting registration with:', {
-        email: userData.email,
-        username: userData.username,
-        password: '[HIDDEN]',
-      });
-      console.log('API URL:', `${API_BASE_URL}/auth/register`);
-      const response = await fetch(`${API_BASE_URL}/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userData),
-      });
+    const response = await fetch(`${API_BASE_URL}/auth/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(userData),
+    });
 
-      console.log('Response status:', response.status);
-      console.log(
-        'Response headers:',
-        Object.fromEntries(response.headers.entries()),
-      );
-
-      return handleResponse(response);
-    } catch (error) {
-      console.error('Registration error:', error);
-      throw error;
-    }
+    return handleResponse(response);
   },
 
   async login(credentials: LoginRequest): Promise<AuthResponse> {
@@ -586,23 +738,43 @@ export const authApi = {
       throw new Error('No authentication token found');
     }
 
-    try {
-      console.log('Fetching user profile...');
-      console.log('API URL:', `${API_BASE_URL}/auth/me`);
-      const response = await fetch(`${API_BASE_URL}/auth/me`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      });
+    const response = await fetch(`${API_BASE_URL}/auth/me`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
-      console.log('Profile response status:', response.status);
-      return handleResponse(response);
-    } catch (error) {
-      console.error('Profile fetch error:', error);
-      throw error;
-    }
+    return handleResponse(response);
+  },
+
+  async verifyEmail(
+    verifyData: VerifyEmailRequest,
+  ): Promise<VerificationResponse> {
+    const response = await fetch(`${API_BASE_URL}/auth/verify-email`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(verifyData),
+    });
+
+    return handleResponse(response);
+  },
+
+  async resendVerification(
+    resendData: ResendVerificationRequest,
+  ): Promise<VerificationResponse> {
+    const response = await fetch(`${API_BASE_URL}/auth/resend-verification`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(resendData),
+    });
+
+    return handleResponse(response);
   },
 };
 
@@ -617,8 +789,7 @@ export const tokenService = {
   getToken(): string | null {
     try {
       return localStorage.getItem(TOKEN_KEY);
-    } catch (error) {
-      console.warn('Failed to access localStorage:', error);
+    } catch {
       return null;
     }
   },
@@ -626,8 +797,8 @@ export const tokenService = {
   removeToken() {
     try {
       localStorage.removeItem(TOKEN_KEY);
-    } catch (error) {
-      console.warn('Failed to remove token from localStorage:', error);
+    } catch {
+      // Silently fail if localStorage is not accessible
     }
   },
 

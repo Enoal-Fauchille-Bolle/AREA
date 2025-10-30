@@ -152,4 +152,59 @@ export class ServicesController {
     }
     await this.servicesService.unlinkService(req.user.id, parsedIntId);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/refresh-token')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async refreshToken(
+    @Request() req: { user: { id: number } },
+    @Param('id') id: string,
+  ): Promise<void> {
+    const parsedIntId = parseIdParam(id);
+    if (isNaN(parsedIntId)) {
+      throw new BadRequestException('Invalid ID format');
+    }
+    await this.servicesService.refreshServiceToken(req.user.id, parsedIntId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('discord/profile')
+  async getDiscordProfile(
+    @Request() req: { user: { id: number } },
+  ): Promise<{ username: string; avatar: string | null; id: string }> {
+    return this.servicesService.getDiscordProfile(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('github/profile')
+  async getGitHubProfile(@Request() req: { user: { id: number } }): Promise<{
+    id: string;
+    login: string;
+    avatar_url: string | null;
+    email?: string;
+  }> {
+    return this.servicesService.getGitHubProfile(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('twitch/profile')
+  async getTwitchProfile(@Request() req: { user: { id: number } }): Promise<{
+    id: string;
+    login: string;
+    display_name: string;
+    profile_image_url: string | null;
+    email?: string;
+  }> {
+    return this.servicesService.getTwitchProfile(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete(':serviceName/disconnect')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async disconnectService(
+    @Request() req: { user: { id: number } },
+    @Param('serviceName') serviceName: string,
+  ): Promise<void> {
+    await this.servicesService.disconnectService(req.user.id, serviceName);
+  }
 }

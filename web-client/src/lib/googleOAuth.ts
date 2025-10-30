@@ -1,7 +1,4 @@
-// Google OAuth2 Configuration
-const GOOGLE_CLIENT_ID =
-  import.meta.env.VITE_GOOGLE_CLIENT_ID ||
-  '1076037701323-knvel0vbrhlmtam76q6apr753enaiooj.apps.googleusercontent.com';
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
 const REDIRECT_URI =
   import.meta.env.VITE_GOOGLE_REDIRECT_URI ||
@@ -18,9 +15,6 @@ export interface GoogleOAuthConfig {
   prompt: string;
 }
 
-/**
- * Generate the Google OAuth2 authorization URL
- */
 export function getGoogleAuthUrl(
   intent: 'login' | 'register' = 'login',
 ): string {
@@ -40,15 +34,12 @@ export function getGoogleAuthUrl(
     scope: config.scope,
     access_type: config.accessType,
     prompt: config.prompt,
-    state: intent,
+    state: `google:${intent}`,
   });
 
   return `${GOOGLE_AUTH_URL}?${params.toString()}`;
 }
 
-/**
- * Extract the authorization code from the URL query parameters
- */
 export function extractCodeFromUrl(
   url: string = window.location.href,
 ): string | null {
@@ -56,9 +47,6 @@ export function extractCodeFromUrl(
   return urlObj.searchParams.get('code');
 }
 
-/**
- * Extract error from the URL query parameters (if OAuth failed)
- */
 export function extractErrorFromUrl(
   url: string = window.location.href,
 ): string | null {
@@ -66,20 +54,19 @@ export function extractErrorFromUrl(
   return urlObj.searchParams.get('error');
 }
 
-/**
- * Extract the intent (login or register) from the URL state parameter
- */
 export function extractIntentFromUrl(
   url: string = window.location.href,
 ): 'login' | 'register' {
   const urlObj = new URL(url);
   const state = urlObj.searchParams.get('state');
-  return state === 'register' ? 'register' : 'login';
+  if (!state) return 'login';
+  const parts = state.split(':');
+  if (parts.length === 2 && parts[0] === 'google') {
+    return parts[1] === 'register' ? 'register' : 'login';
+  }
+  return 'login';
 }
 
-/**
- * Initiate Google OAuth2 flow by redirecting to Google's authorization page
- */
 export function initiateGoogleOAuth(
   intent: 'login' | 'register' = 'login',
 ): void {

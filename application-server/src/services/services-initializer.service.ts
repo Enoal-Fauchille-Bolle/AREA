@@ -1,4 +1,4 @@
-import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
+import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { ServicesService } from './services.service';
 import { ComponentsService } from '../components/components.service';
 import { ComponentType } from '../components/entities/component.entity';
@@ -10,6 +10,8 @@ import {
 
 @Injectable()
 export class ServicesInitializerService implements OnApplicationBootstrap {
+  private readonly logger = new Logger(ServicesInitializerService.name);
+
   constructor(
     private readonly servicesService: ServicesService,
     private readonly componentsService: ComponentsService,
@@ -29,15 +31,17 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
     await this.createGmailService();
     await this.createTwitchService();
     await this.createYoutubeService();
+    await this.createRedditService();
+    await this.createSpotifyService();
   }
 
   private async createClockService(): Promise<void> {
     try {
       await this.servicesService.findByName('Clock');
-      console.log('Clock service already exists, skipping creation');
+      this.logger.log('Clock service already exists, skipping creation');
       return;
     } catch {
-      console.log('Creating Clock service...');
+      this.logger.log('Creating Clock service...');
     }
 
     const clockService = await this.servicesService.create({
@@ -167,16 +171,18 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       display_order: 2,
     });
 
-    console.log('Clock service with all timer components created successfully');
+    this.logger.log(
+      'Clock service with all timer components created successfully',
+    );
   }
 
   private async createEmailService(): Promise<void> {
     try {
       await this.servicesService.findByName('Email');
-      console.log('Email service already exists, skipping creation');
+      this.logger.log('Email service already exists, skipping creation');
       return;
     } catch {
-      console.log('Creating Email service...');
+      this.logger.log('Creating Email service...');
     }
 
     const emailService = await this.servicesService.create({
@@ -231,32 +237,31 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       }),
     ]);
 
-    console.log('Email service and send_email component created successfully');
+    this.logger.log(
+      'Email service and send_email component created successfully',
+    );
   }
 
   private async createDiscordService(): Promise<void> {
     try {
-      // Check if Discord service already exists
       await this.servicesService.findByName('Discord');
-      console.log('Discord service already exists, skipping creation');
+      this.logger.log('Discord service already exists, skipping creation');
       return;
     } catch {
       // Service doesn't exist, create it
-      console.log('Creating Discord service...');
+      this.logger.log('Creating Discord service...');
     }
 
-    // Create Discord service
     const discordService = await this.servicesService.create({
       name: 'Discord',
       description:
         'Send messages to Discord channels using the AREA Discord Bot. The bot must be added to your server with appropriate permissions.',
       icon_path:
         'https://static.vecteezy.com/system/resources/previews/023/741/147/non_2x/discord-logo-icon-social-media-icon-free-png.png',
-      requires_auth: false, // Discord bot doesn't require user OAuth
+      requires_auth: true,
       is_active: true,
     });
 
-    // Create send_message reaction component
     const sendMessageComponent = await this.componentsService.create({
       service_id: discordService.id,
       type: ComponentType.REACTION,
@@ -277,7 +282,6 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
 
     // Create component parameters for send_message
     await Promise.all([
-      // Channel ID parameter - required
       this.variablesService.create({
         component_id: sendMessageComponent.id,
         name: 'channel_id',
@@ -287,11 +291,10 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
         type: VariableType.STRING,
         nullable: false,
         placeholder: '123456789012345678',
-        validation_regex: '^[0-9]{17,19}$', // Discord snowflake ID pattern
+        validation_regex: '^[0-9]{17,19}$',
         display_order: 1,
       }),
 
-      // Message content parameter - required
       this.variablesService.create({
         component_id: sendMessageComponent.id,
         name: 'content',
@@ -603,16 +606,16 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       }),
     ]);
 
-    console.log('Discord service with all components created successfully');
+    this.logger.log('Discord service with all components created successfully');
   }
 
   private async createGoogleService(): Promise<void> {
     try {
       await this.servicesService.findByName('Google');
-      console.log('Google service already exists, skipping creation');
+      this.logger.log('Google service already exists, skipping creation');
       return;
     } catch {
-      console.log('Creating Google service...');
+      this.logger.log('Creating Google service...');
     }
 
     await this.servicesService.create({
@@ -624,16 +627,16 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       is_active: true,
     });
 
-    console.log('Google service created successfully');
+    this.logger.log('Google service created successfully');
   }
 
   private async createGithubService(): Promise<void> {
     try {
       await this.servicesService.findByName('GitHub');
-      console.log('GitHub service already exists, skipping creation');
+      this.logger.log('GitHub service already exists, skipping creation');
       return;
     } catch {
-      console.log('Creating GitHub service...');
+      this.logger.log('Creating GitHub service...');
     }
 
     // Create GitHub service
@@ -972,7 +975,7 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       }),
     ]);
 
-    console.log(
+    this.logger.log(
       'GitHub service and webhook action components created successfully',
     );
   }
@@ -980,13 +983,13 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
   private async createGmailService(): Promise<void> {
     try {
       await this.servicesService.findByName('Gmail');
-      console.log('Gmail service already exists, skipping creation');
+      this.logger.log('Gmail service already exists, skipping creation');
       return;
     } catch {
-      console.log('Creating Gmail service...');
+      this.logger.log('Creating Gmail service...');
     }
 
-    await this.servicesService.create({
+    const gmailService = await this.servicesService.create({
       name: 'Gmail',
       description: 'Email management and automation with Gmail',
       icon_path: 'https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico',
@@ -994,16 +997,171 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       is_active: true,
     });
 
-    console.log('Gmail service created successfully');
+    this.logger.log('Gmail service created successfully');
+    // Create new_email_received action component
+    const newEmailReceivedAction = await this.componentsService.create({
+      service_id: gmailService.id,
+      type: ComponentType.ACTION,
+      name: 'new_email_received',
+      description: 'Triggers when a new email is received in Gmail inbox',
+      is_active: true,
+      polling_interval: 60000, // Check every minute
+    });
+
+    await Promise.all([
+      // Return values for the action
+      this.variablesService.create({
+        component_id: newEmailReceivedAction.id,
+        name: 'email_id',
+        description: 'Gmail message ID',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 1,
+      }),
+
+      this.variablesService.create({
+        component_id: newEmailReceivedAction.id,
+        name: 'subject',
+        description: 'Email subject',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 2,
+      }),
+
+      this.variablesService.create({
+        component_id: newEmailReceivedAction.id,
+        name: 'from',
+        description: 'Sender email address',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.EMAIL,
+        nullable: false,
+        display_order: 3,
+      }),
+
+      this.variablesService.create({
+        component_id: newEmailReceivedAction.id,
+        name: 'snippet',
+        description: 'Email preview snippet',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 4,
+      }),
+
+      this.variablesService.create({
+        component_id: newEmailReceivedAction.id,
+        name: 'received_at',
+        description: 'Timestamp when email was received',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.DATE,
+        nullable: false,
+        display_order: 5,
+      }),
+    ]);
+
+    // Create send_gmail reaction component
+    const sendGmailReaction = await this.componentsService.create({
+      service_id: gmailService.id,
+      type: ComponentType.REACTION,
+      name: 'send_gmail',
+      description: 'Send an email via Gmail',
+      is_active: true,
+    });
+
+    await Promise.all([
+      // Parameters for send_gmail reaction
+      this.variablesService.create({
+        component_id: sendGmailReaction.id,
+        name: 'to',
+        description: 'Recipient email address',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.EMAIL,
+        nullable: false,
+        placeholder: 'recipient@example.com',
+        validation_regex: '^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$',
+        display_order: 1,
+      }),
+
+      this.variablesService.create({
+        component_id: sendGmailReaction.id,
+        name: 'subject',
+        description: 'Email subject line',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: false,
+        placeholder: 'AREA Notification',
+        display_order: 2,
+      }),
+
+      this.variablesService.create({
+        component_id: sendGmailReaction.id,
+        name: 'body',
+        description: 'Email message body',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: false,
+        placeholder: 'Your AREA was triggered successfully.',
+        display_order: 3,
+      }),
+
+      this.variablesService.create({
+        component_id: sendGmailReaction.id,
+        name: 'cc',
+        description: 'CC email addresses (comma-separated, optional)',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: true,
+        placeholder: 'cc@example.com',
+        display_order: 4,
+      }),
+
+      this.variablesService.create({
+        component_id: sendGmailReaction.id,
+        name: 'bcc',
+        description: 'BCC email addresses (comma-separated, optional)',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: true,
+        placeholder: 'bcc@example.com',
+        display_order: 5,
+      }),
+
+      // Return values
+      this.variablesService.create({
+        component_id: sendGmailReaction.id,
+        name: 'message_id',
+        description: 'Gmail message ID of sent email',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 1,
+      }),
+
+      this.variablesService.create({
+        component_id: sendGmailReaction.id,
+        name: 'sent_at',
+        description: 'Timestamp when email was sent',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.DATE,
+        nullable: false,
+        display_order: 2,
+      }),
+    ]);
+
+    console.log(
+      'Gmail service with new_email_received action and send_gmail reaction created successfully',
+    );
   }
 
   private async createTwitchService(): Promise<void> {
     try {
       await this.servicesService.findByName('Twitch');
-      console.log('Twitch service already exists, skipping creation');
+      this.logger.log('Twitch service already exists, skipping creation');
       return;
     } catch {
-      console.log('Creating Twitch service...');
+      this.logger.log('Creating Twitch service...');
     }
 
     const twitchService = await this.servicesService.create({
@@ -1039,7 +1197,6 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
         display_order: 1,
       }),
 
-      // Return value: streamer ID
       this.variablesService.create({
         component_id: streamerGoesLiveAction.id,
         name: 'streamer_id',
@@ -1050,18 +1207,16 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
         display_order: 1,
       }),
 
-      // Return value: streamer username
       this.variablesService.create({
         component_id: streamerGoesLiveAction.id,
-        name: 'streamer_username',
-        description: 'Twitch username of the streamer',
+        name: 'streamer_login',
+        description: 'Twitch login of the streamer',
         kind: VariableKind.RETURN_VALUE,
         type: VariableType.STRING,
         nullable: false,
         display_order: 2,
       }),
 
-      // Return value: stream title
       this.variablesService.create({
         component_id: streamerGoesLiveAction.id,
         name: 'stream_title',
@@ -1072,7 +1227,6 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
         display_order: 3,
       }),
 
-      // Return value: game name
       this.variablesService.create({
         component_id: streamerGoesLiveAction.id,
         name: 'game_name',
@@ -1083,7 +1237,6 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
         display_order: 4,
       }),
 
-      // Return value: viewer count
       this.variablesService.create({
         component_id: streamerGoesLiveAction.id,
         name: 'viewer_count',
@@ -1094,7 +1247,6 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
         display_order: 5,
       }),
 
-      // Return value: started at
       this.variablesService.create({
         component_id: streamerGoesLiveAction.id,
         name: 'started_at',
@@ -1106,7 +1258,6 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       }),
     ]);
 
-    // Create send_chat_message reaction component
     const sendChatMessageReaction = await this.componentsService.create({
       service_id: twitchService.id,
       type: ComponentType.REACTION,
@@ -1116,7 +1267,6 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
     });
 
     await Promise.all([
-      // Broadcaster username - required
       this.variablesService.create({
         component_id: sendChatMessageReaction.id,
         name: 'broadcaster_username',
@@ -1128,7 +1278,6 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
         display_order: 1,
       }),
 
-      // Message - required
       this.variablesService.create({
         component_id: sendChatMessageReaction.id,
         name: 'message',
@@ -1140,7 +1289,6 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
         display_order: 2,
       }),
 
-      // Return value: broadcaster ID
       this.variablesService.create({
         component_id: sendChatMessageReaction.id,
         name: 'broadcaster_id',
@@ -1151,7 +1299,6 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
         display_order: 1,
       }),
 
-      // Return value: broadcaster username
       this.variablesService.create({
         component_id: sendChatMessageReaction.id,
         name: 'broadcaster_username',
@@ -1162,7 +1309,6 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
         display_order: 2,
       }),
 
-      // Return value: sent at
       this.variablesService.create({
         component_id: sendChatMessageReaction.id,
         name: 'sent_at',
@@ -1174,7 +1320,7 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       }),
     ]);
 
-    console.log(
+    this.logger.log(
       'Twitch service with streamer_goes_live action and send_chat_message reaction created successfully',
     );
   }
@@ -1182,10 +1328,10 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
   private async createYoutubeService(): Promise<void> {
     try {
       await this.servicesService.findByName('YouTube');
-      console.log('YouTube service already exists, skipping creation');
+      this.logger.log('YouTube service already exists, skipping creation');
       return;
     } catch {
-      console.log('Creating YouTube service...');
+      this.logger.log('Creating YouTube service...');
     }
 
     await this.servicesService.create({
@@ -1198,8 +1344,271 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       is_active: true,
     });
 
-    console.log(
+    this.logger.log(
       'YouTube service created successfully (no actions/reactions yet)',
+    );
+  }
+
+  private async createRedditService(): Promise<void> {
+    try {
+      await this.servicesService.findByName('Reddit');
+      console.log('Reddit service already exists, skipping creation');
+      return;
+    } catch {
+      console.log('Creating Reddit service...');
+    }
+
+    const redditService = await this.servicesService.create({
+      name: 'Reddit',
+      description: 'Monitor Reddit posts and create posts in subreddits',
+      icon_path:
+        'https://www.redditstatic.com/desktop2x/img/favicon/favicon-32x32.png',
+      requires_auth: false,
+      is_active: true,
+    });
+
+    // Create hot_post_in_subreddit action component
+    const hotPostAction = await this.componentsService.create({
+      service_id: redditService.id,
+      type: ComponentType.ACTION,
+      name: 'hot_post_in_subreddit',
+      description: 'Triggers when a new hot post appears in a subreddit',
+      is_active: true,
+      polling_interval: 60000, // Check every minute
+    });
+
+    await Promise.all([
+      // Parameter: subreddit name
+      this.variablesService.create({
+        component_id: hotPostAction.id,
+        name: 'subreddit',
+        description: 'Subreddit name to monitor (without r/)',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: false,
+        placeholder: 'programming',
+        display_order: 1,
+      }),
+
+      // Return values
+      this.variablesService.create({
+        component_id: hotPostAction.id,
+        name: 'post_id',
+        description: 'Reddit post ID',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 1,
+      }),
+
+      this.variablesService.create({
+        component_id: hotPostAction.id,
+        name: 'post_title',
+        description: 'Post title',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 2,
+      }),
+
+      this.variablesService.create({
+        component_id: hotPostAction.id,
+        name: 'post_author',
+        description: 'Post author username',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 3,
+      }),
+
+      this.variablesService.create({
+        component_id: hotPostAction.id,
+        name: 'subreddit',
+        description: 'Subreddit name',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 4,
+      }),
+
+      this.variablesService.create({
+        component_id: hotPostAction.id,
+        name: 'post_url',
+        description: 'Full URL to the Reddit post',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.URL,
+        nullable: false,
+        display_order: 5,
+      }),
+
+      this.variablesService.create({
+        component_id: hotPostAction.id,
+        name: 'score',
+        description: 'Post score (upvotes)',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.NUMBER,
+        nullable: false,
+        display_order: 6,
+      }),
+
+      this.variablesService.create({
+        component_id: hotPostAction.id,
+        name: 'created_at',
+        description: 'When the post was created',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.DATE,
+        nullable: false,
+        display_order: 7,
+      }),
+    ]);
+
+    // Create create_reddit_post reaction component
+    const createPostReaction = await this.componentsService.create({
+      service_id: redditService.id,
+      type: ComponentType.REACTION,
+      name: 'create_reddit_post',
+      description: 'Create a post in a specified subreddit',
+      is_active: true,
+    });
+
+    await Promise.all([
+      // Parameters
+      this.variablesService.create({
+        component_id: createPostReaction.id,
+        name: 'subreddit',
+        description: 'Subreddit name to post in (without r/)',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: false,
+        placeholder: 'test',
+        display_order: 1,
+      }),
+
+      this.variablesService.create({
+        component_id: createPostReaction.id,
+        name: 'title',
+        description: 'Post title',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: false,
+        placeholder: 'My automated post from AREA',
+        display_order: 2,
+      }),
+
+      this.variablesService.create({
+        component_id: createPostReaction.id,
+        name: 'text',
+        description: 'Post text content (optional for link posts)',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: true,
+        placeholder: 'This post was created automatically',
+        display_order: 3,
+      }),
+
+      // Return values
+      this.variablesService.create({
+        component_id: createPostReaction.id,
+        name: 'post_id',
+        description: 'Reddit post ID of created post',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 1,
+      }),
+
+      this.variablesService.create({
+        component_id: createPostReaction.id,
+        name: 'post_url',
+        description: 'URL of the created post',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.URL,
+        nullable: false,
+        display_order: 2,
+      }),
+    ]);
+
+    console.log(
+      'Reddit service with hot_post_in_subreddit action and create_reddit_post reaction created successfully',
+    );
+  }
+
+  private async createSpotifyService(): Promise<void> {
+    try {
+      await this.servicesService.findByName('Spotify');
+      this.logger.log('Spotify service already exists, skipping creation');
+      return;
+    } catch {
+      this.logger.log('Creating Spotify service...');
+    }
+
+    await this.servicesService.create({
+      name: 'Spotify',
+      description: 'Interact with Spotify - manage playlists and music tracks',
+      icon_path: 'https://www.spotify.com/favicon.ico',
+      requires_auth: true,
+      is_active: true,
+    });
+
+    // Create add_to_playlist reaction component
+    const addToPlaylistReaction = await this.componentsService.create({
+      service_id: (await this.servicesService.findByName('Spotify')).id,
+      type: ComponentType.REACTION,
+      name: 'add_to_playlist',
+      description: 'Add a track to a Spotify playlist',
+      is_active: true,
+    });
+
+    await Promise.all([
+      // Playlist ID parameter - required
+      this.variablesService.create({
+        component_id: addToPlaylistReaction.id,
+        name: 'playlist_id',
+        description: 'Spotify ID of the playlist to add the track to',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: false,
+        placeholder: '37i9dQZF1DXcBWIGoYBM5M',
+        display_order: 1,
+      }),
+
+      // Track URI parameter - required
+      this.variablesService.create({
+        component_id: addToPlaylistReaction.id,
+        name: 'track_uri',
+        description:
+          'Spotify URI of the track to add (e.g., spotify:track:...)',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: false,
+        placeholder: 'spotify:track:6rqhFgbbKwnb9MLmUQDhG6',
+        display_order: 2,
+      }),
+    ]);
+
+    // Create add_to_queue reaction component
+    const addToQueueReaction = await this.componentsService.create({
+      service_id: (await this.servicesService.findByName('Spotify')).id,
+      type: ComponentType.REACTION,
+      name: 'add_to_queue',
+      description: "Add a track to the user's Spotify playback queue",
+      is_active: true,
+    });
+
+    await this.variablesService.create({
+      component_id: addToQueueReaction.id,
+      name: 'track_uri',
+      description:
+        'Spotify URI of the track to add to the queue (e.g., spotify:track:...)',
+      kind: VariableKind.PARAMETER,
+      type: VariableType.STRING,
+      nullable: false,
+      placeholder: 'spotify:track:6rqhFgbbKwnb9MLmUQDhG6',
+      display_order: 1,
+    });
+
+    this.logger.log(
+      'Spotify service with add_to_playlist and add_to_queue reactions created successfully',
     );
   }
 }

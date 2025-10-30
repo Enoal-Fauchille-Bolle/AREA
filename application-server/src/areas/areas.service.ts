@@ -400,6 +400,151 @@ export class AreasService {
           },
         ],
       },
+      {
+        componentName: 'hot_post_in_subreddit',
+        parameters: [
+          {
+            name: 'subreddit',
+            description: 'Subreddit name to monitor (without r/)',
+            type: 'string',
+            required: true,
+            placeholder: 'programming',
+          },
+        ],
+      },
+      {
+        componentName: 'create_reddit_post',
+        parameters: [
+          {
+            name: 'subreddit',
+            description: 'Subreddit name to post in (without r/)',
+            type: 'string',
+            required: true,
+            placeholder: 'test',
+          },
+          {
+            name: 'title',
+            description: 'Post title',
+            type: 'string',
+            required: true,
+            placeholder: 'My automated post from AREA',
+          },
+          {
+            name: 'text',
+            description: 'Post text content (optional for link posts)',
+            type: 'string',
+            required: false,
+            placeholder: 'This post was created automatically',
+          },
+        ],
+      },
+      {
+        componentName: 'add_to_playlist',
+        parameters: [
+          {
+            name: 'playlist_id',
+            description: 'Spotify Playlist ID where the track will be added',
+            type: 'string',
+            required: true,
+            placeholder: '37i9dQZF1DXcBWIGoYBM5M',
+          },
+          {
+            name: 'track_uri',
+            description: 'Spotify Track URI to add to the playlist',
+            type: 'string',
+            required: true,
+            placeholder: 'spotify:track:6rqhFgbbKwnb9MLmUQDhG6',
+          },
+        ],
+      },
+      {
+        componentName: 'add_to_queue',
+        parameters: [
+          {
+            name: 'track_uri',
+            description: 'Spotify Track URI to add to the playback queue',
+            type: 'string',
+            required: true,
+            placeholder: 'spotify:track:6rqhFgbbKwnb9MLmUQDhG6',
+          },
+        ],
+      },
+      {
+        componentName: 'streamer_goes_live',
+        parameters: [
+          {
+            name: 'streamer_username',
+            description: 'Twitch username of the streamer to monitor',
+            type: 'string',
+            required: true,
+            placeholder: 'name',
+          },
+        ],
+      },
+      {
+        componentName: 'send_chat_message',
+        parameters: [
+          {
+            name: 'broadcaster_username',
+            description: 'Twitch username of the channel to send message to',
+            type: 'string',
+            required: true,
+            placeholder: 'name',
+          },
+          {
+            name: 'message',
+            description: 'Message content to send in chat',
+            type: 'string',
+            required: true,
+            placeholder: 'Hello from AREA! 👋',
+          },
+        ],
+      },
+      {
+        componentName: 'new_email_received',
+        parameters: [],
+      },
+      {
+        componentName: 'send_gmail',
+        parameters: [
+          {
+            name: 'to',
+            description: 'Recipient email address',
+            type: 'email',
+            required: true,
+            placeholder: 'recipient@example.com',
+            validation: '^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$',
+          },
+          {
+            name: 'subject',
+            description: 'Email subject line',
+            type: 'string',
+            required: true,
+            placeholder: 'AREA Notification',
+          },
+          {
+            name: 'body',
+            description: 'Email message body',
+            type: 'string',
+            required: true,
+            placeholder: 'Your AREA was triggered successfully.',
+          },
+          {
+            name: 'cc',
+            description: 'CC email addresses (comma-separated, optional)',
+            type: 'string',
+            required: false,
+            placeholder: 'cc@example.com',
+          },
+          {
+            name: 'bcc',
+            description: 'BCC email addresses (comma-separated, optional)',
+            type: 'string',
+            required: false,
+            placeholder: 'bcc@example.com',
+          },
+        ],
+      },
     ];
   }
 
@@ -424,6 +569,12 @@ export class AreasService {
   async findAll(userId: number): Promise<Area[]> {
     return this.areasRepository.find({
       where: { user_id: userId },
+      relations: [
+        'componentAction',
+        'componentAction.service',
+        'componentReaction',
+        'componentReaction.service',
+      ],
       order: { created_at: 'DESC' },
     });
   }

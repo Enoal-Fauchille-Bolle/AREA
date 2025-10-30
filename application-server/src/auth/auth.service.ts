@@ -4,12 +4,14 @@ import {
   UnauthorizedException,
   NotFoundException,
   InternalServerErrorException,
+  BadRequestException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import { ServicesService } from '../services/services.service';
 import { UserOAuth2AccountsService } from './user-oauth2-account/user-oauth2-account.service';
 import { OAuth2Service } from '../oauth2/oauth2.service';
+import { EmailVerificationService } from './email-verification.service';
 import {
   RegisterDto,
   OAuthRegisterDto,
@@ -17,6 +19,8 @@ import {
   OAuthLoginDto,
   UpdateProfileDto,
   AuthResponseDto,
+  VerifyEmailDto,
+  ResendVerificationDto,
 } from './dto';
 import { UserResponseDto } from '../users/dto/user-response.dto';
 import {
@@ -33,6 +37,7 @@ export class AuthService {
     private userOAuth2AccountsService: UserOAuth2AccountsService,
     private oauth2Service: OAuth2Service,
     private jwtService: JwtService,
+    private emailVerificationService: EmailVerificationService,
   ) {}
 
   async validateUser(
@@ -92,6 +97,27 @@ export class AuthService {
       username: registerDto.username,
       password: registerDto.password,
     });
+
+    // Generate and send verification code
+    const verificationCode =
+      this.emailVerificationService.generateVerificationCode();
+    const expiresAt = this.emailVerificationService.getExpirationDate();
+
+    await this.usersService.setVerificationCode(
+      user.email,
+      verificationCode,
+      expiresAt,
+    );
+
+    try {
+      await this.emailVerificationService.sendVerificationEmail(
+        user.email,
+        verificationCode,
+      );
+    } catch (error) {
+      // Log error but don't fail registration
+      console.error('Failed to send verification email:', error);
+    }
 
     const payload = {
       email: user.email,
@@ -307,5 +333,56 @@ export class AuthService {
         username: newUser.username,
       }),
     );
+  }
+
+  async verifyEmail(
+    verifyEmailDto: VerifyEmailDto,
+  ): Promise<{ message: string }> {
+    const isVerified = await this.usersService.verifyEmail(
+      verifyEmailDto.email,
+      verifyEmailDto.code,
+    );
+
+    if (!isVerified) {
+      throw new BadRequestException('Invalid or expired verification code');
+    }
+
+    return { message: 'Email verified successfully' };
+  }
+
+  async resendVerificationCode(
+    resendVerificationDto: ResendVerificationDto,
+  ): Promise<{ message: string }> {
+    const user = await this.usersService.findByEmail(
+      resendVerificationDto.email,
+    );
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Check if already verified
+    const isVerified = await this.usersService.isEmailVerified(user.email);
+    if (isVerified) {
+      throw new BadRequestException('Email is already verified');
+    }
+
+    // Generate and send new verification code
+    const verificationCode =
+      this.emailVerificationService.generateVerificationCode();
+    const expiresAt = this.emailVerificationService.getExpirationDate();
+
+    await this.usersService.setVerificationCode(
+      user.email,
+      verificationCode,
+      expiresAt,
+    );
+
+    await this.emailVerificationService.sendVerificationEmail(
+      user.email,
+      verificationCode,
+    );
+
+    return { message: 'Verification code sent successfully' };
   }
 }

@@ -24,6 +24,8 @@ import {
   OAuthLoginDto,
   AuthResponseDto,
   OAuthRegisterDto,
+  VerifyEmailDto,
+  ResendVerificationDto,
 } from './dto';
 import { UserResponseDto } from '../users/dto/user-response.dto';
 import {
@@ -126,5 +128,21 @@ export class AuthController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteProfile(@Request() req: { user: { id: number } }): Promise<void> {
     return this.authService.deleteProfile(req.user.id);
+  }
+
+  @Post('verify-email')
+  @HttpCode(HttpStatus.OK)
+  async verifyEmail(
+    @Body() verifyEmailDto: VerifyEmailDto,
+  ): Promise<{ message: string }> {
+    return this.authService.verifyEmail(verifyEmailDto);
+  }
+
+  @Post('resend-verification')
+  @HttpCode(HttpStatus.OK)
+  async resendVerification(
+    @Body() resendVerificationDto: ResendVerificationDto,
+  ): Promise<{ message: string }> {
+    return this.authService.resendVerificationCode(resendVerificationDto);
   }
 }
