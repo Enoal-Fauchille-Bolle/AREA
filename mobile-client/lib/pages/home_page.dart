@@ -5,6 +5,7 @@ import '../widgets/info_card.dart';
 import 'login_page.dart';
 import 'actions_reactions_page.dart';
 import 'services_page.dart';
+import 'settings_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -24,7 +25,6 @@ class HomePage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('AREA - Home'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -66,16 +66,20 @@ class HomePage extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.home, size: 80, color: Colors.blue),
+                  Icon(
+                    Icons.home,
+                    size: 80,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
                   const SizedBox(height: 24),
-                  const Text(
+                  Text(
                     'Welcome to AREA!',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.headlineMedium,
                   ),
                   const SizedBox(height: 16),
-                  const Text(
+                  Text(
                     'Automate your tasks with Actions & Reactions',
-                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                    style: Theme.of(context).textTheme.bodyLarge,
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 32),
@@ -108,11 +112,26 @@ class HomePage extends StatelessWidget {
                       );
                     },
                   ),
+                  const SizedBox(height: 16),
+
+                  // Settings button
+                  CustomButton(
+                    text: 'Settings',
+                    icon: Icons.settings,
+                    width: 250,
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const SettingsPage(),
+                        ),
+                      );
+                    },
+                  ),
                   const SizedBox(height: 32),
 
-                  const InfoCard(
+                  InfoCard(
                     icon: Icons.info_outline,
-                    iconColor: Colors.blue,
+                    iconColor: Theme.of(context).colorScheme.primary,
                     title: 'How it works',
                     description:
                         'Link your services, create AREAs by selecting actions and reactions, and automate your workflows!',
