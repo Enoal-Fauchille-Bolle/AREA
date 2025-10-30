@@ -447,6 +447,28 @@ export const servicesApi = {
     return handleResponse(response);
   },
 
+  async getRedditProfile(): Promise<{
+    id: string;
+    name: string;
+    icon_img?: string;
+    created?: number;
+  }> {
+    const token = tokenService.getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/services/reddit/profile`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return handleResponse(response);
+  },
+
   async getGmailProfile(): Promise<{
     id: string;
     email: string;

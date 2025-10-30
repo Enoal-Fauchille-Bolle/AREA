@@ -38,6 +38,8 @@ function ServiceCallback() {
           service = 'TWITCH';
         } else if (state?.includes('gmail')) {
           service = 'GMAIL';
+        } else if (state?.includes('reddit')) {
+          service = 'REDDIT';
         } else if (state?.includes('google')) {
           service = 'GOOGLE';
         } else {

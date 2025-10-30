@@ -4,6 +4,7 @@ import {
   DiscordTokenResponse,
   GoogleTokenResponse,
   GithubTokenResponse,
+  RedditTokenResponse,
   SpotifyTokenResponse,
   TwitchTokenResponse,
   ProviderTokenResponse,
@@ -11,6 +12,7 @@ import {
   type GoogleUserInfo,
   type GitHubUserInfo,
   type GitHubEmailInfo,
+  type RedditUserInfo,
   type SpotifyUserInfo,
   type TwitchUserInfo,
   type ProviderUserInfo,
@@ -118,6 +120,7 @@ export class OAuth2ResponseDto {
       { $ref: '#/components/schemas/DiscordUserInfo' },
       { $ref: '#/components/schemas/GoogleUserInfo' },
       { $ref: '#/components/schemas/GitHubUserInfo' },
+      { $ref: '#/components/schemas/RedditUserInfo' },
       { $ref: '#/components/schemas/SpotifyUserInfo' },
       { $ref: '#/components/schemas/TwitchUserInfo' },
     ],
@@ -126,6 +129,7 @@ export class OAuth2ResponseDto {
     | DiscordUserInfo
     | GoogleUserInfo
     | GitHubUserInfo
+    | RedditUserInfo
     | SpotifyUserInfo
     | TwitchUserInfo;
 
@@ -158,6 +162,11 @@ export class OAuth2ResponseDto {
           raw as GitHubUserInfo,
           tokenData as GithubTokenResponse,
           additionalData?.githubEmails,
+        );
+      case OAuthProvider.REDDIT:
+        return mapRedditUserInfo(
+          raw as RedditUserInfo,
+          tokenData as RedditTokenResponse,
         );
       case OAuthProvider.SPOTIFY:
         return mapSpotifyUserInfo(
@@ -286,6 +295,33 @@ export function mapGitHubUserInfo(
     username: raw.login,
     avatar_url: raw.avatar_url ?? null,
     provider: OAuthProvider.GITHUB,
+    rawData: raw,
+  });
+}
+
+export function mapRedditUserInfo(
+  raw: RedditUserInfo,
+  tokenData: RedditTokenResponse,
+): OAuth2ResponseDto {
+  const expiresAt = tokenData.expires_in
+    ? new Date(Date.now() + tokenData.expires_in * 1000)
+    : null;
+  const scopes = tokenData.scope?.split(' ') ?? [];
+
+  return new OAuth2ResponseDto({
+    access_token: tokenData.access_token,
+    refresh_token: tokenData.refresh_token ?? null,
+    token_type: tokenData.token_type,
+    expires_in: tokenData.expires_in ?? null,
+    expired_at: expiresAt,
+    scopes: scopes,
+    id: raw.id,
+    email: null, // Reddit doesn't provide email through OAuth2
+    email_verified: raw.has_verified_email ?? false,
+    name: raw.name,
+    username: raw.name,
+    avatar_url: raw.icon_img || null,
+    provider: OAuthProvider.REDDIT,
     rawData: raw,
   });
 }

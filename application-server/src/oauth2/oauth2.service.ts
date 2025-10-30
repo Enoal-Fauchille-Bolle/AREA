@@ -18,6 +18,7 @@ import {
   GoogleUserInfo,
   GitHubUserInfo,
   GitHubEmailInfo,
+  RedditUserInfo,
   SpotifyUserInfo,
   TwitchUserInfo,
   ProviderUserInfo,
@@ -30,6 +31,7 @@ export class OAuth2Service {
     [OAuthProvider.GOOGLE]: 'https://oauth2.googleapis.com/token',
     [OAuthProvider.GMAIL]: 'https://oauth2.googleapis.com/token',
     [OAuthProvider.GITHUB]: 'https://github.com/login/oauth/access_token',
+    [OAuthProvider.REDDIT]: 'https://www.reddit.com/api/v1/access_token',
     [OAuthProvider.SPOTIFY]: 'https://accounts.spotify.com/api/token',
     [OAuthProvider.TWITCH]: 'https://id.twitch.tv/oauth2/token',
   };
@@ -47,6 +49,7 @@ export class OAuth2Service {
       [OAuthProvider.GOOGLE]: appConfig.oauth2.google.clientId,
       [OAuthProvider.GMAIL]: appConfig.oauth2.gmail.clientId,
       [OAuthProvider.GITHUB]: appConfig.oauth2.github.clientId,
+      [OAuthProvider.REDDIT]: appConfig.oauth2.reddit.clientId,
       [OAuthProvider.SPOTIFY]: appConfig.oauth2.spotify.clientId,
       [OAuthProvider.TWITCH]: appConfig.oauth2.twitch.clientId,
     };
@@ -56,6 +59,7 @@ export class OAuth2Service {
       [OAuthProvider.GOOGLE]: appConfig.oauth2.google.clientSecret,
       [OAuthProvider.GMAIL]: appConfig.oauth2.gmail.clientSecret,
       [OAuthProvider.GITHUB]: appConfig.oauth2.github.clientSecret,
+      [OAuthProvider.REDDIT]: appConfig.oauth2.reddit.clientSecret,
       [OAuthProvider.SPOTIFY]: appConfig.oauth2.spotify.clientSecret,
       [OAuthProvider.TWITCH]: appConfig.oauth2.twitch.clientSecret,
     };
@@ -74,20 +78,38 @@ export class OAuth2Service {
     }
 
     try {
+      // Reddit requires Basic Auth instead of client_id/client_secret in body
+      const isReddit = dto.provider === OAuthProvider.REDDIT;
+
       const params = new URLSearchParams({
-        client_id: clientId,
-        client_secret: clientSecret,
         grant_type: 'authorization_code',
         code: dto.code,
         redirect_uri: dto.redirect_uri,
       });
 
+      // For non-Reddit providers, include client_id and client_secret in body
+      if (!isReddit) {
+        params.append('client_id', clientId);
+        params.append('client_secret', clientSecret);
+      }
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Accept: 'application/json',
+      };
+
+      // Reddit requires Basic Auth header and User-Agent
+      if (isReddit) {
+        const auth = Buffer.from(`${clientId}:${clientSecret}`).toString(
+          'base64',
+        );
+        headers['Authorization'] = `Basic ${auth}`;
+        headers['User-Agent'] = 'AREA:v1.0.0 (by /u/area_app)';
+      }
+
       const response = await firstValueFrom(
         this.httpService.post(tokenUrl, params, {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            Accept: 'application/json',
-          },
+          headers,
         }),
       );
       return response.data as ProviderTokenResponse;
@@ -119,19 +141,37 @@ export class OAuth2Service {
     }
 
     try {
+      // Reddit requires Basic Auth instead of client_id/client_secret in body
+      const isReddit = dto.provider === OAuthProvider.REDDIT;
+
       const params = new URLSearchParams({
-        client_id: clientId,
-        client_secret: clientSecret,
         grant_type: 'refresh_token',
         refresh_token: dto.refresh_token,
       });
 
+      // For non-Reddit providers, include client_id and client_secret in body
+      if (!isReddit) {
+        params.append('client_id', clientId);
+        params.append('client_secret', clientSecret);
+      }
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Accept: 'application/json',
+      };
+
+      // Reddit requires Basic Auth header and User-Agent
+      if (isReddit) {
+        const auth = Buffer.from(`${clientId}:${clientSecret}`).toString(
+          'base64',
+        );
+        headers['Authorization'] = `Basic ${auth}`;
+        headers['User-Agent'] = 'AREA:v1.0.0 (by /u/area_app)';
+      }
+
       const response = await firstValueFrom(
         this.httpService.post(tokenUrl, params, {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            Accept: 'application/json',
-          },
+          headers,
         }),
       );
       return response.data as ProviderTokenResponse;
@@ -162,6 +202,8 @@ export class OAuth2Service {
         return this.getGoogleUserInfo(accessToken);
       case OAuthProvider.GITHUB:
         return this.getGithubUserInfo(accessToken);
+      case OAuthProvider.REDDIT:
+        return this.getRedditUserInfo(accessToken);
       case OAuthProvider.SPOTIFY:
         return this.getSpotifyUserInfo(accessToken);
       case OAuthProvider.TWITCH:
@@ -297,6 +339,27 @@ export class OAuth2Service {
       return response.data;
     } catch (error) {
       this.handleProviderError(error, 'GitHub');
+    }
+  }
+
+  private async getRedditUserInfo(
+    accessToken: string,
+  ): Promise<RedditUserInfo> {
+    try {
+      const response = await firstValueFrom(
+        this.httpService.get<RedditUserInfo>(
+          'https://oauth.reddit.com/api/v1/me',
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'User-Agent': 'AREA:v1.0.0 (by /u/area_app)',
+            },
+          },
+        ),
+      );
+      return response.data;
+    } catch (error) {
+      this.handleProviderError(error, 'Reddit');
     }
   }
 
