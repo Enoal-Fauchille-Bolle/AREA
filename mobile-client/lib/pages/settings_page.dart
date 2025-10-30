@@ -177,12 +177,12 @@ class _SettingsPageState extends State<SettingsPage> {
                   children: [
                     // Info card
                     Card(
-                      color: AppTheme.primaryColor.withOpacity(0.1),
+                      color: AppTheme.primaryColor.withValues(alpha: 0.1),
                       child: Padding(
                         padding: const EdgeInsets.all(16),
                         child: Row(
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.info_outline,
                               color: AppTheme.primaryColor,
                             ),
@@ -252,7 +252,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     // Default values info
                     if (_hasCustomConfig)
                       Card(
-                        color: Colors.orange.withOpacity(0.1),
+                        color: Colors.orange.withValues(alpha: 0.1),
                         child: Padding(
                           padding: const EdgeInsets.all(12),
                           child: Row(

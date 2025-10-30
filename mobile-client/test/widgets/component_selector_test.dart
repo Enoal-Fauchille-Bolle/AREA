@@ -207,7 +207,7 @@ void main() {
           home: Scaffold(
             body: ComponentSelector(
               label: 'Select Action',
-              components: [],
+              components: const [],
               onChanged: (_) {},
             ),
           ),

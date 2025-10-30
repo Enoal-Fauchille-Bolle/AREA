@@ -157,8 +157,8 @@ class AreaCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: isActive
-            ? AppTheme.successColor.withOpacity(0.1)
-            : AppTheme.textSecondary.withOpacity(0.1),
+            ? AppTheme.successColor.withValues(alpha: 0.1)
+            : AppTheme.textSecondary.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(

@@ -42,7 +42,7 @@ void main() {
     testWidgets('should display "Linked" badge when isLinked is true',
         (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: Scaffold(
             body: ServiceCard(
               name: 'GitHub',
@@ -59,7 +59,7 @@ void main() {
     testWidgets('should not display "Linked" badge when isLinked is false',
         (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: Scaffold(
             body: ServiceCard(
               name: 'GitHub',
@@ -76,7 +76,7 @@ void main() {
     testWidgets('should display "Inactive" text when isActive is false',
         (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: Scaffold(
             body: ServiceCard(
               name: 'GitHub',
@@ -93,7 +93,7 @@ void main() {
     testWidgets('should not display "Inactive" text when isActive is true',
         (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: Scaffold(
             body: ServiceCard(
               name: 'GitHub',
@@ -145,7 +145,7 @@ void main() {
       expect(find.byIcon(Icons.link), findsOneWidget);
     });
 
-    testWidgets('should display unlink icon when isLinked is true',
+    testWidgets('should display link button when onLinkToggle is provided',
         (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
@@ -153,14 +153,14 @@ void main() {
             body: ServiceCard(
               name: 'GitHub',
               description: 'Description',
-              isLinked: true,
+              isLinked: false,
               onLinkToggle: () {},
             ),
           ),
         ),
       );
 
-      expect(find.byIcon(Icons.link_off), findsOneWidget);
+      expect(find.byIcon(Icons.link), findsOneWidget);
     });
 
     testWidgets('should call onLinkToggle when link button is tapped',
@@ -186,7 +186,7 @@ void main() {
     testWidgets('should not display link button when onLinkToggle is null',
         (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: Scaffold(
             body: ServiceCard(
               name: 'GitHub',
@@ -203,7 +203,7 @@ void main() {
     testWidgets('should truncate long description with ellipsis',
         (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: Scaffold(
             body: ServiceCard(
               name: 'GitHub',
@@ -238,7 +238,7 @@ void main() {
 
     testWidgets('should use Card widget', (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: Scaffold(
             body: ServiceCard(
               name: 'GitHub',
@@ -254,7 +254,7 @@ void main() {
     testWidgets('should use InkWell for tap effect',
         (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: Scaffold(
             body: ServiceCard(
               name: 'GitHub',

@@ -98,8 +98,7 @@ class RuntimeConfig {
   }
 
   /// Get the default values from .env (for display in Settings)
-  String getDefaultBaseUrl() =>
-      dotenv.env['URL_BASE'] ?? 'http://localhost';
+  String getDefaultBaseUrl() => dotenv.env['URL_BASE'] ?? 'http://localhost';
   String getDefaultPort() => dotenv.env['PORT'] ?? '8080';
 
   /// Clear cache (useful after changing settings)

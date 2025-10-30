@@ -38,6 +38,7 @@ class DiscordOAuthService {
       'state': state,
     }).toString();
 
+    if (!context.mounted) return null;
     return Navigator.of(context).push<String>(
       MaterialPageRoute(
         fullscreenDialog: true,

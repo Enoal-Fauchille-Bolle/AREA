@@ -197,25 +197,23 @@ void main() {
     testWidgets('should show snackbar when Forgot Password is tapped',
         (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SingleChildScrollView(
-              child: SizedBox(
-                height: 2000,
-                child: const LoginPage(),
-              ),
-            ),
-          ),
+        const MaterialApp(
+          home: LoginPage(),
         ),
       );
 
-      // Scroll to make the button visible
-      await tester.scrollUntilVisible(
-        find.text('Forgot Password?'),
-        100,
-      );
+      // Find and tap the Forgot Password button
+      final forgotPasswordButton = find
+          .ancestor(
+            of: find.text('Forgot Password?'),
+            matching: find.byType(TextButton),
+          )
+          .first;
 
-      await tester.tap(find.text('Forgot Password?'));
+      await tester.ensureVisible(forgotPasswordButton);
+      await tester.pumpAndSettle();
+
+      await tester.tap(forgotPasswordButton);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
 

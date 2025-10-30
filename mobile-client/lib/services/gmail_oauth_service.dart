@@ -30,6 +30,7 @@ class GmailOAuthService {
   static Future<String?> authorize(BuildContext context,
       {bool forService = false}) async {
     final authUrl = await _buildAuthUrl(forService: forService);
+    if (!context.mounted) return null;
     return Navigator.of(context).push<String>(
       MaterialPageRoute(
         fullscreenDialog: true,

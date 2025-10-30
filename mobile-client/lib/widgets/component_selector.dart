@@ -84,8 +84,8 @@ class _ComponentSelectorState extends State<ComponentSelector> {
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: (component['type'] ?? component['kind']) == 'action'
-                      ? AppTheme.accentColor.withOpacity(0.1)
-                      : AppTheme.successColor.withOpacity(0.1),
+                      ? AppTheme.accentColor.withValues(alpha: 0.1)
+                      : AppTheme.successColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
