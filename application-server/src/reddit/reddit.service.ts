@@ -80,6 +80,9 @@ export class RedditService {
     try {
       const userId = area.user_id;
 
+      // Get user's Reddit OAuth token
+      const accessToken = await this.getUserRedditToken(userId);
+
       // Get subreddit parameter
       const subreddit = await this.getSubredditParameter(area.id);
       if (!subreddit) {
@@ -100,8 +103,8 @@ export class RedditService {
         hookStateKey,
       );
 
-      // Fetch hot posts from subreddit
-      const posts = await this.fetchHotPosts(subreddit);
+      // Fetch hot posts from subreddit using OAuth
+      const posts = await this.fetchHotPosts(subreddit, accessToken);
 
       if (posts.length === 0) {
         this.logger.debug(`No posts found in r/${subreddit}`);
@@ -179,15 +182,20 @@ export class RedditService {
     }
   }
 
-  private async fetchHotPosts(subreddit: string): Promise<RedditPost[]> {
+  private async fetchHotPosts(
+    subreddit: string,
+    accessToken: string,
+  ): Promise<RedditPost[]> {
     try {
-      const url = `${this.redditApiUrl}/r/${subreddit}/hot.json?limit=1`;
+      // Use OAuth API endpoint instead of public JSON
+      const url = `https://oauth.reddit.com/r/${subreddit}/hot?limit=1`;
 
       this.logger.debug(`Fetching hot posts from: ${url}`);
 
       const response = await fetch(url, {
         headers: {
           'User-Agent': 'AREA-Application/1.0',
+          Authorization: `Bearer ${accessToken}`,
         },
       });
 
@@ -206,6 +214,68 @@ export class RedditService {
       this.logger.error(
         `Failed to fetch hot posts from r/${subreddit}: ${errorMessage}`,
       );
+      throw error;
+    }
+  }
+
+  /**
+   * Get user's Reddit OAuth access token
+   */
+  private async getUserRedditToken(userId: number): Promise<string> {
+    try {
+      // Find Reddit service
+      const services = await this.servicesService.findAll();
+      const redditService = services.find(
+        (s) => s.name.toLowerCase() === 'reddit',
+      );
+
+      if (!redditService) {
+        throw new Error('Reddit service not found');
+      }
+
+      // Get user's Reddit service connection
+      const userService = await this.userServicesService.findOne(
+        userId,
+        redditService.id,
+      );
+
+      if (!userService || !userService.oauth_token) {
+        throw new Error(
+          'User has not connected their Reddit account or token is missing',
+        );
+      }
+
+      // Check if token is expired and refresh if needed
+      if (
+        userService.token_expires_at &&
+        new Date(userService.token_expires_at) <= new Date()
+      ) {
+        this.logger.log(
+          `Reddit token expired for user ${userId}, refreshing...`,
+        );
+        await this.servicesService.refreshServiceToken(
+          userId,
+          redditService.id,
+        );
+
+        // Fetch the updated token
+        const updatedUserService = await this.userServicesService.findOne(
+          userId,
+          redditService.id,
+        );
+
+        if (!updatedUserService || !updatedUserService.oauth_token) {
+          throw new Error('Failed to refresh Reddit token');
+        }
+
+        return updatedUserService.oauth_token;
+      }
+
+      return userService.oauth_token;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.error(`Failed to get Reddit access token: ${errorMessage}`);
       throw error;
     }
   }
