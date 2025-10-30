@@ -91,6 +91,10 @@ jobs:
         with:
           flutter-version: "3.35.5"
 
+      - name: Create .env file
+        run: cp .env.example .env
+        working-directory: mobile-client
+
       - name: Install Dependencies
         run: flutter pub get
         working-directory: mobile-client
@@ -157,6 +161,10 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.35.5"
+
+      - name: Create .env file
+        run: cp .env.example .env
+        working-directory: mobile-client
 
       - name: Install Dependencies
         run: flutter pub get
@@ -332,6 +340,10 @@ jobs:
         with:
           flutter-version: "3.35.5"
 
+      - name: Create .env file
+        run: cp .env.example .env
+        working-directory: mobile-client
+
       - name: Installing Dependencies
         run: flutter pub get
         working-directory: mobile-client
@@ -448,6 +460,10 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.35.5"
+
+      - name: Create .env file
+        run: cp .env.example .env
+        working-directory: mobile-client
 
       - name: Installing Dependencies
         run: flutter pub get
