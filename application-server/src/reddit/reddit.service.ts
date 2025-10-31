@@ -99,7 +99,7 @@ export class RedditService {
       // Get last checked post ID from hook state
       const hookStateKey = `reddit_hot_post_${area.id}_${subreddit}`;
       const lastPostId = await this.hookStatesService.getState(
-        userId,
+        area.id,
         hookStateKey,
       );
 
@@ -144,7 +144,7 @@ export class RedditService {
 
       // Update hook state with the latest post ID
       await this.hookStatesService.setState(
-        userId,
+        area.id,
         hookStateKey,
         latestPost.id,
       );
@@ -200,6 +200,10 @@ export class RedditService {
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        this.logger.error(
+          `Reddit API error: ${response.status} ${response.statusText}. Response: ${errorText}`,
+        );
         throw new Error(
           `Reddit API error: ${response.status} ${response.statusText}`,
         );
@@ -211,9 +215,18 @@ export class RedditService {
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      this.logger.error(
-        `Failed to fetch hot posts from r/${subreddit}: ${errorMessage}`,
-      );
+      
+      // Log more details about the error
+      if (error instanceof Error) {
+        this.logger.error(
+          `Failed to fetch hot posts from r/${subreddit}: ${errorMessage}`,
+        );
+        this.logger.debug(`Error details: ${JSON.stringify(error)}`);
+        if ('cause' in error) {
+          this.logger.debug(`Error cause: ${JSON.stringify(error.cause)}`);
+        }
+      }
+      
       throw error;
     }
   }
@@ -245,6 +258,15 @@ export class RedditService {
         );
       }
 
+      // Log token info (without exposing the full token)
+      const tokenPreview = userService.oauth_token.substring(0, 10) + '...';
+      this.logger.debug(
+        `Retrieved Reddit token for user ${userId}: ${tokenPreview}`,
+      );
+      this.logger.debug(
+        `Token expires at: ${userService.token_expires_at || 'unknown'}`,
+      );
+
       // Check if token is expired and refresh if needed
       if (
         userService.token_expires_at &&
@@ -253,22 +275,31 @@ export class RedditService {
         this.logger.log(
           `Reddit token expired for user ${userId}, refreshing...`,
         );
-        await this.servicesService.refreshServiceToken(
-          userId,
-          redditService.id,
-        );
+        
+        try {
+          await this.servicesService.refreshServiceToken(
+            userId,
+            redditService.id,
+          );
 
-        // Fetch the updated token
-        const updatedUserService = await this.userServicesService.findOne(
-          userId,
-          redditService.id,
-        );
+          // Fetch the updated token
+          const updatedUserService = await this.userServicesService.findOne(
+            userId,
+            redditService.id,
+          );
 
-        if (!updatedUserService || !updatedUserService.oauth_token) {
-          throw new Error('Failed to refresh Reddit token');
+          if (!updatedUserService || !updatedUserService.oauth_token) {
+            throw new Error('Failed to refresh Reddit token');
+          }
+
+          this.logger.log(`Reddit token refreshed successfully for user ${userId}`);
+          return updatedUserService.oauth_token;
+        } catch (refreshError) {
+          this.logger.error(
+            `Failed to refresh Reddit token: ${refreshError instanceof Error ? refreshError.message : String(refreshError)}`,
+          );
+          throw refreshError;
         }
-
-        return updatedUserService.oauth_token;
       }
 
       return userService.oauth_token;
