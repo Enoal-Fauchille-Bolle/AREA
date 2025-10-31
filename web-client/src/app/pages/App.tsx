@@ -52,12 +52,6 @@ function App() {
         <div className="flex justify-between items-center">
           <div className="text-6xl font-black text-white select-none">AREA</div>
           <div className="flex items-center space-x-8">
-            <button className="text-white hover:text-gray-300 text-lg transition-all duration-300 hover:scale-110 transform">
-              Explore
-            </button>
-            <button className="text-white hover:text-gray-300 text-lg transition-all duration-300 hover:scale-110 transform">
-              Plans
-            </button>
             <button
               onClick={handleLogin}
               className="text-white hover:text-gray-300 text-lg transition-all duration-300 hover:scale-110 transform"

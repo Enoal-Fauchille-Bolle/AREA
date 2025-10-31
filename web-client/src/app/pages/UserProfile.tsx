@@ -50,10 +50,6 @@ function UserProfile() {
     navigate(`/edit/${id}`);
   };
 
-  const handleExplore = () => {
-    navigate('/');
-  };
-
   const handleLogout = () => {
     logout();
     navigate('/');
@@ -121,13 +117,6 @@ function UserProfile() {
           </div>
 
           <div className="flex items-center space-x-6">
-            <button
-              onClick={handleExplore}
-              className="text-xl font-semibold text-gray-300 hover:text-white hover:scale-105 transform transition-all duration-300"
-              aria-label="Explore services"
-            >
-              Explore
-            </button>
             <span className="text-xl font-semibold text-gray-300 hover:text-white hover:scale-105 transform transition-all duration-300 cursor-pointer">
               My Areas
             </span>

@@ -195,7 +195,6 @@ export class ServicesService {
       }
       if (userService.refresh_token) {
         const provider = getOAuthProviderFromString(userService.service.name);
-        // Unreachable code check
         if (!provider) {
           throw new InternalServerErrorException(
             `OAuth provider for service "${userService.service.name}" should exist`,
@@ -245,7 +244,6 @@ export class ServicesService {
         : this.mobileRedirectUri;
 
     if (service.name === 'Spotify') {
-      // Spotify n'accepte pas localhost, seulement 127.0.0.1
       redirectUri = redirectUri.replace('localhost', '127.0.0.1');
     }
 
@@ -299,7 +297,6 @@ export class ServicesService {
   async getDiscordProfile(
     userId: number,
   ): Promise<{ username: string; avatar: string | null; id: string }> {
-    // Find Discord service
     const discordService = await this.serviceRepository.findOne({
       where: { name: 'Discord' },
     });
@@ -307,7 +304,6 @@ export class ServicesService {
       throw new NotFoundException('Discord service not found');
     }
 
-    // Find user's Discord connection
     const userService = await this.userServiceService.findOne(
       userId,
       discordService.id,
@@ -490,7 +486,6 @@ export class ServicesService {
       throw new NotFoundException('Gmail account not connected');
     }
 
-    // Check if token is expired and refresh if needed
     if (
       userService.token_expires_at &&
       new Date(userService.token_expires_at) <= new Date()
@@ -498,7 +493,6 @@ export class ServicesService {
       console.log(`Gmail token expired for user ${userId}, refreshing...`);
       try {
         await this.refreshServiceToken(userId, gmailService.id);
-        // Fetch the updated token
         userService = await this.userServiceService.findOne(
           userId,
           gmailService.id,
@@ -516,7 +510,7 @@ export class ServicesService {
 
     try {
       const response = await fetch(
-        'https://www.googleapis.com/oauth2/v3/userinfo',
+        'https://www.googleapis.com/oauth2/v2/userinfo',
         {
           headers: {
             Authorization: `Bearer ${userService.oauth_token}`,
@@ -537,14 +531,14 @@ export class ServicesService {
       }
 
       const profile = (await response.json()) as {
-        sub: string;
+        id: string;
         email: string;
         name?: string;
         picture?: string;
       };
 
       return {
-        id: profile.sub,
+        id: profile.id,
         email: profile.email,
         name: profile.name,
         picture: profile.picture,
@@ -642,7 +636,6 @@ export class ServicesService {
       throw new NotFoundException('Spotify account not connected');
     }
 
-    // Check if token is expired and refresh if needed
     if (
       userService.token_expires_at &&
       new Date(userService.token_expires_at) <= new Date()
@@ -650,7 +643,6 @@ export class ServicesService {
       console.log(`Spotify token expired for user ${userId}, refreshing...`);
       try {
         await this.refreshServiceToken(userId, spotifyService.id);
-        // Fetch the updated token
         userService = await this.userServiceService.findOne(
           userId,
           spotifyService.id,
