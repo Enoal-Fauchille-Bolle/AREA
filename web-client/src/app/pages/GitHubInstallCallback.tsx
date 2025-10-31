@@ -57,7 +57,7 @@ const GitHubInstallCallback = () => {
         <p className="text-sm text-gray-400">
           {window.opener
             ? 'Cette fenêtre va se fermer automatiquement...'
-            : 'Vous allez être redirigé vers la page d\'accueil...'}
+            : "Vous allez être redirigé vers la page d'accueil..."}
         </p>
       </div>
     </div>

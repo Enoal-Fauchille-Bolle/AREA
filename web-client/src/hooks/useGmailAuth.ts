@@ -67,7 +67,7 @@ export const useGmailAuth = () => {
       const gmailAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodedRedirectUri}&response_type=code&scope=${scope}&access_type=offline&prompt=consent&state=${state}`;
 
       let popup: Window | null = null;
-      let timeoutId: NodeJS.Timeout;
+      let timeoutId: NodeJS.Timeout | null = null;
 
       const messageListener = async (event: MessageEvent) => {
         if (event.origin !== window.location.origin) {
@@ -96,8 +96,11 @@ export const useGmailAuth = () => {
                 popup.close();
               }
             } catch {
+              // Popup already closed
             }
-            clearTimeout(timeoutId);
+            if (timeoutId) {
+              clearTimeout(timeoutId);
+            }
             window.removeEventListener('message', messageListener);
             setIsConnecting(false);
           } catch (error) {
@@ -106,8 +109,11 @@ export const useGmailAuth = () => {
                 popup.close();
               }
             } catch {
+              // Popup already closed
             }
-            clearTimeout(timeoutId);
+            if (timeoutId) {
+              clearTimeout(timeoutId);
+            }
             window.removeEventListener('message', messageListener);
             setIsConnecting(false);
             throw error;
@@ -120,7 +126,9 @@ export const useGmailAuth = () => {
           } catch {
             // Cross-Origin-Opener-Policy blocks access to popup.closed
           }
-          clearTimeout(timeoutId);
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+          }
           window.removeEventListener('message', messageListener);
           setIsConnecting(false);
           throw new Error(event.data.error || 'Gmail OAuth2 failed');

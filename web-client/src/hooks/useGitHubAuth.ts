@@ -90,22 +90,25 @@ export const useGitHubAuth = () => {
             );
 
             if (githubAppInstalled === 'true') {
-              console.log('GitHub App already installed, skipping installation popup');
+              console.log(
+                'GitHub App already installed, skipping installation popup',
+              );
               return;
             }
 
             let installAppUrl =
               'https://github.com/apps/area-app-epitech/installations/new';
-            
+
             const setupCallbackUrl = `${window.location.origin}/auth/callback`;
             installAppUrl += `?setup_url=${encodeURIComponent(setupCallbackUrl)}`;
-            
+
             try {
               const profile = await servicesApi.getGitHubProfile();
               if (profile && profile.id) {
                 installAppUrl += `&suggested_target_id=${profile.id}`;
               }
             } catch {
+              // Failed to get profile, continue without suggested_target_id
             }
 
             setTimeout(() => {
@@ -147,7 +150,8 @@ export const useGitHubAuth = () => {
                       );
                       console.log('GitHub App installation popup closed');
                     }
-                  } catch (e) {
+                  } catch {
+                    // Popup closed or access denied
                   }
                 }, 1000);
 

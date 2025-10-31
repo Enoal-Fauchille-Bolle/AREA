@@ -215,7 +215,7 @@ export class RedditService {
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      
+
       // Log more details about the error
       if (error instanceof Error) {
         this.logger.error(
@@ -226,7 +226,7 @@ export class RedditService {
           this.logger.debug(`Error cause: ${JSON.stringify(error.cause)}`);
         }
       }
-      
+
       throw error;
     }
   }
@@ -263,9 +263,10 @@ export class RedditService {
       this.logger.debug(
         `Retrieved Reddit token for user ${userId}: ${tokenPreview}`,
       );
-      this.logger.debug(
-        `Token expires at: ${userService.token_expires_at || 'unknown'}`,
-      );
+      const tokenExpiry = userService.token_expires_at
+        ? userService.token_expires_at.toISOString()
+        : 'unknown';
+      this.logger.debug(`Token expires at: ${tokenExpiry}`);
 
       // Check if token is expired and refresh if needed
       if (
@@ -275,7 +276,7 @@ export class RedditService {
         this.logger.log(
           `Reddit token expired for user ${userId}, refreshing...`,
         );
-        
+
         try {
           await this.servicesService.refreshServiceToken(
             userId,
@@ -292,7 +293,9 @@ export class RedditService {
             throw new Error('Failed to refresh Reddit token');
           }
 
-          this.logger.log(`Reddit token refreshed successfully for user ${userId}`);
+          this.logger.log(
+            `Reddit token refreshed successfully for user ${userId}`,
+          );
           return updatedUserService.oauth_token;
         } catch (refreshError) {
           this.logger.error(

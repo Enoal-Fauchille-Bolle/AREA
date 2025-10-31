@@ -481,13 +481,37 @@ export class ServicesService {
       throw new NotFoundException('Gmail service not found');
     }
 
-    const userService = await this.userServiceService.findOne(
+    let userService = await this.userServiceService.findOne(
       userId,
       gmailService.id,
     );
 
     if (!userService || !userService.oauth_token) {
       throw new NotFoundException('Gmail account not connected');
+    }
+
+    // Check if token is expired and refresh if needed
+    if (
+      userService.token_expires_at &&
+      new Date(userService.token_expires_at) <= new Date()
+    ) {
+      console.log(`Gmail token expired for user ${userId}, refreshing...`);
+      try {
+        await this.refreshServiceToken(userId, gmailService.id);
+        // Fetch the updated token
+        userService = await this.userServiceService.findOne(
+          userId,
+          gmailService.id,
+        );
+        if (!userService || !userService.oauth_token) {
+          throw new Error('Failed to refresh Gmail token');
+        }
+      } catch (error) {
+        console.error('Failed to refresh Gmail token:', error);
+        throw new NotFoundException(
+          'Gmail token expired and refresh failed. Please reconnect your account.',
+        );
+      }
     }
 
     try {
@@ -609,13 +633,37 @@ export class ServicesService {
       throw new NotFoundException('Spotify service not found');
     }
 
-    const userService = await this.userServiceService.findOne(
+    let userService = await this.userServiceService.findOne(
       userId,
       spotifyService.id,
     );
 
     if (!userService || !userService.oauth_token) {
       throw new NotFoundException('Spotify account not connected');
+    }
+
+    // Check if token is expired and refresh if needed
+    if (
+      userService.token_expires_at &&
+      new Date(userService.token_expires_at) <= new Date()
+    ) {
+      console.log(`Spotify token expired for user ${userId}, refreshing...`);
+      try {
+        await this.refreshServiceToken(userId, spotifyService.id);
+        // Fetch the updated token
+        userService = await this.userServiceService.findOne(
+          userId,
+          spotifyService.id,
+        );
+        if (!userService || !userService.oauth_token) {
+          throw new Error('Failed to refresh Spotify token');
+        }
+      } catch (error) {
+        console.error('Failed to refresh Spotify token:', error);
+        throw new NotFoundException(
+          'Spotify token expired and refresh failed. Please reconnect your account.',
+        );
+      }
     }
 
     try {
