@@ -192,7 +192,7 @@ export class ServicesService {
     );
 
     if (userService) {
-      if (!userService.service.require_auth) {
+      if (!userService.service.requires_auth) {
         return;
       }
       if (userService.refresh_token) {
@@ -247,8 +247,11 @@ export class ServicesService {
         : this.mobileRedirectUri;
 
     if (service.name === 'Reddit') {
-      // Reddit requires different redirect URIs for dev and prod
       redirectUri = this.redditRedirectUri;
+    }
+
+    if (service.name === 'Spotify') {
+      redirectUri = redirectUri.replace('localhost', '127.0.0.1');
     }
 
     const provider = getOAuthProviderFromString(service.name);
@@ -530,6 +533,135 @@ export class ServicesService {
     } catch (error) {
       console.error('Failed to retrieve Gmail profile:', error);
       throw new BadRequestException('Failed to retrieve Gmail profile');
+    }
+  }
+
+  async getRedditProfile(userId: number): Promise<{
+    id: string;
+    name: string;
+    icon_img?: string;
+    created?: number;
+  }> {
+    const redditService = await this.serviceRepository.findOne({
+      where: { name: 'Reddit' },
+    });
+    if (!redditService) {
+      throw new NotFoundException('Reddit service not found');
+    }
+
+    const userService = await this.userServiceService.findOne(
+      userId,
+      redditService.id,
+    );
+
+    if (!userService || !userService.oauth_token) {
+      throw new NotFoundException('Reddit account not connected');
+    }
+
+    try {
+      const response = await fetch('https://oauth.reddit.com/api/v1/me', {
+        headers: {
+          Authorization: `Bearer ${userService.oauth_token}`,
+          'User-Agent': 'AREA:v1.0.0 (by /u/area_app)',
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Reddit profile fetch failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText,
+        });
+        throw new Error(
+          `Failed to fetch Reddit profile: ${response.status} ${response.statusText}`,
+        );
+      }
+
+      const profile = (await response.json()) as {
+        id: string;
+        name: string;
+        icon_img?: string;
+        created?: number;
+      };
+
+      return {
+        id: profile.id,
+        name: profile.name,
+        icon_img: profile.icon_img,
+        created: profile.created,
+      };
+    } catch (error) {
+      console.error('Failed to retrieve Reddit profile:', error);
+      throw new BadRequestException('Failed to retrieve Reddit profile');
+    }
+  }
+
+  async getSpotifyProfile(userId: number): Promise<{
+    id: string;
+    display_name?: string | null;
+    email?: string | null;
+    images?: Array<{
+      url: string;
+      height: number | null;
+      width: number | null;
+    }>;
+  }> {
+    const spotifyService = await this.serviceRepository.findOne({
+      where: { name: 'Spotify' },
+    });
+    if (!spotifyService) {
+      throw new NotFoundException('Spotify service not found');
+    }
+
+    const userService = await this.userServiceService.findOne(
+      userId,
+      spotifyService.id,
+    );
+
+    if (!userService || !userService.oauth_token) {
+      throw new NotFoundException('Spotify account not connected');
+    }
+
+    try {
+      const response = await fetch('https://api.spotify.com/v1/me', {
+        headers: {
+          Authorization: `Bearer ${userService.oauth_token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Spotify profile fetch failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText,
+        });
+        throw new Error(
+          `Failed to fetch Spotify profile: ${response.status} ${response.statusText}`,
+        );
+      }
+
+      const profile = (await response.json()) as {
+        id: string;
+        display_name?: string | null;
+        email?: string | null;
+        images?: Array<{
+          url: string;
+          height: number | null;
+          width: number | null;
+        }>;
+      };
+
+      return {
+        id: profile.id,
+        display_name: profile.display_name,
+        email: profile.email,
+        images: profile.images,
+      };
+    } catch (error) {
+      console.error('Failed to retrieve Spotify profile:', error);
+      throw new BadRequestException('Failed to retrieve Spotify profile');
     }
   }
 

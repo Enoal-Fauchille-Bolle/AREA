@@ -425,6 +425,41 @@ export const redditComponentsConfig: ComponentConfig[] = [
   },
 ];
 
+export const spotifyComponentsConfig: ComponentConfig[] = [
+  {
+    componentName: 'add_to_playlist',
+    parameters: [
+      {
+        name: 'playlist_id',
+        description: 'Spotify ID of the playlist to add the track to',
+        type: 'string',
+        required: true,
+        placeholder: '37i9dQZF1DXcBWIGoYBM5M',
+      },
+      {
+        name: 'track_uri',
+        description: 'Spotify URI of the track to add (e.g., spotify:track:...)',
+        type: 'string',
+        required: true,
+        placeholder: 'spotify:track:6rqhFgbbKwnb9MLmUQDhG6',
+      },
+    ],
+  },
+  {
+    componentName: 'add_to_queue',
+    parameters: [
+      {
+        name: 'track_uri',
+        description:
+          'Spotify URI of the track to add to the queue (e.g., spotify:track:...)',
+        type: 'string',
+        required: true,
+        placeholder: 'spotify:track:6rqhFgbbKwnb9MLmUQDhG6',
+      },
+    ],
+  },
+];
+
 export function getComponentParameters(
   componentName: string,
 ): ComponentParameter[] {
@@ -436,6 +471,7 @@ export function getComponentParameters(
     ...twitchComponentsConfig,
     ...gmailComponentsConfig,
     ...redditComponentsConfig,
+    ...spotifyComponentsConfig,
   ];
   const config = allConfigs.find((c) => c.componentName === componentName);
   return config ? config.parameters : [];

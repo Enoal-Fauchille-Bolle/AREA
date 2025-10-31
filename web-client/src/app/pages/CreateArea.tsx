@@ -6,6 +6,7 @@ import { useGitHubAuth } from '../../hooks/useGitHubAuth';
 import { useTwitchAuth } from '../../hooks/useTwitchAuth';
 import { useGmailAuth } from '../../hooks/useGmailAuth';
 import { useRedditAuth } from '../../hooks/useRedditAuth';
+import { useSpotifyAuth } from '../../hooks/useSpotifyAuth';
 import { servicesApi, componentsApi, areasApi } from '../../services/api';
 import type { Service, Component, ComponentType } from '../../services/api';
 import {
@@ -55,6 +56,12 @@ const CreateArea: React.FC = () => {
     redditUser,
     connectToReddit,
   } = useRedditAuth();
+  const {
+    isConnecting: isConnectingSpotify,
+    isConnected: isConnectedSpotify,
+    spotifyUser,
+    connectToSpotify,
+  } = useSpotifyAuth();
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] =
     useState<CreateAreaStep['step']>('action');
@@ -276,6 +283,10 @@ const CreateArea: React.FC = () => {
     return service?.name.toLowerCase() === 'reddit';
   };
 
+  const isSpotifyService = (service?: Service) => {
+    return service?.name.toLowerCase() === 'spotify';
+  };
+
   const requiresAuth = (service?: Service) => {
     return service?.requires_auth === true;
   };
@@ -358,6 +369,21 @@ const CreateArea: React.FC = () => {
     const reactionIsReddit =
       reactionNeedsAuth && isRedditService(formData.reactionService);
     return actionIsReddit || reactionIsReddit;
+  };
+
+  const needsSpotifyAuth = () => {
+    if (isConnectedSpotify) return false;
+    const actionNeedsAuth =
+      requiresAuth(formData.actionService) &&
+      !isServiceConnected(formData.actionService);
+    const reactionNeedsAuth =
+      requiresAuth(formData.reactionService) &&
+      !isServiceConnected(formData.reactionService);
+    const actionIsSpotify =
+      actionNeedsAuth && isSpotifyService(formData.actionService);
+    const reactionIsSpotify =
+      reactionNeedsAuth && isSpotifyService(formData.reactionService);
+    return actionIsSpotify || reactionIsSpotify;
   };
 
   const handleConnectDiscord = async () => {
@@ -456,6 +482,26 @@ const CreateArea: React.FC = () => {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to connect to Reddit';
+      setError(errorMessage);
+    }
+  };
+
+  const handleConnectSpotify = async () => {
+    try {
+      setError(null);
+      const spotifyService = isSpotifyService(formData.actionService)
+        ? formData.actionService
+        : formData.reactionService;
+
+      if (!spotifyService) return;
+
+      await connectToSpotify(spotifyService.id);
+
+      const userServicesData = await servicesApi.getUserServices();
+      setUserServices(userServicesData);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to connect to Spotify';
       setError(errorMessage);
     }
   };
@@ -1366,6 +1412,134 @@ const CreateArea: React.FC = () => {
                         <div className="text-green-400">
                           <svg
                             className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+            {needsSpotifyAuth() && !isConnectedSpotify ? (
+              <div className="bg-green-950 bg-opacity-60 border border-green-800 rounded-lg p-6 mb-6">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                    <svg
+                      className="w-5 h-5 text-white"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-white font-semibold">
+                      Spotify Authentication Required
+                    </h3>
+                    <p className="text-green-200 text-sm">
+                      Connect your Spotify account to use Spotify actions or
+                      reactions
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleConnectSpotify}
+                  disabled={isConnectingSpotify}
+                  className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                >
+                  {isConnectingSpotify ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Connecting to Spotify...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg
+                        className="w-5 h-5"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
+                      </svg>
+                      <span>Connect to Spotify</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            ) : null}
+
+            {isConnectedSpotify &&
+              (isSpotifyService(formData.actionService) ||
+                isSpotifyService(formData.reactionService)) && (
+                <div className="bg-green-900 bg-opacity-50 border border-green-500 rounded-lg p-6 mb-6">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                      <svg
+                        className="w-5 h-5 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-white font-semibold">
+                        Spotify Connected Successfully
+                      </h3>
+                      <p className="text-green-200 text-sm">
+                        Your Spotify account is connected and ready to use
+                      </p>
+                    </div>
+                  </div>
+                  {spotifyUser && (
+                    <div className="bg-green-800 bg-opacity-30 rounded-lg p-4 mb-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center overflow-hidden">
+                          {spotifyUser.images && spotifyUser.images.length > 0 ? (
+                            <img
+                              src={spotifyUser.images[0].url}
+                              alt={spotifyUser.display_name || 'Spotify User'}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <svg
+                              className="w-6 h-6 text-white"
+                              fill="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
+                            </svg>
+                          )}
+                        </div>
+                        <div className="text-left">
+                          <p className="text-white font-medium text-sm">
+                            {spotifyUser.display_name || 'Spotify User'}
+                          </p>
+                          {spotifyUser.email && (
+                            <p className="text-green-300 text-xs">
+                              {spotifyUser.email}
+                            </p>
+                          )}
+                        </div>
+                        <div className="ml-auto">
+                          <svg
+                            className="w-5 h-5 text-green-400"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"

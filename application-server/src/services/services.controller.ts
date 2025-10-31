@@ -210,6 +210,32 @@ export class ServicesController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('reddit/profile')
+  async getRedditProfile(@Request() req: { user: { id: number } }): Promise<{
+    id: string;
+    name: string;
+    icon_img?: string;
+    created?: number;
+  }> {
+    return this.servicesService.getRedditProfile(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('spotify/profile')
+  async getSpotifyProfile(@Request() req: { user: { id: number } }): Promise<{
+    id: string;
+    display_name?: string | null;
+    email?: string | null;
+    images?: Array<{
+      url: string;
+      height: number | null;
+      width: number | null;
+    }>;
+  }> {
+    return this.servicesService.getSpotifyProfile(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Delete(':serviceName/disconnect')
   @HttpCode(HttpStatus.NO_CONTENT)
   async disconnectService(
