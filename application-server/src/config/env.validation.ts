@@ -30,6 +30,8 @@ export const envValidationSchema = z.object({
   SPOTIFY_CLIENT_SECRET: z.string().optional(),
   TWITCH_CLIENT_ID: z.string().optional(),
   TWITCH_CLIENT_SECRET: z.string().optional(),
+  TRELLO_API_KEY: z.string().optional(),
+  TRELLO_API_SECRET: z.string().optional(),
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
   ANDROID_PACKAGE_NAME: z.string().optional(),
@@ -106,6 +108,11 @@ export function validateEnv(config: Record<string, unknown>) {
         'Twitch OAuth2 must be set in production.',
       );
     }
+    if (!env.TRELLO_API_KEY || !env.TRELLO_API_SECRET) {
+      throw new ConfigurationException(
+        'Trello API credentials must be set in production.',
+      );
+    }
     if (!env.SMTP_USER || !env.SMTP_PASS) {
       throw new ConfigurationException(
         'SMTP credentials must be set in production.',
@@ -152,6 +159,11 @@ export function validateEnv(config: Record<string, unknown>) {
     }
     if (!env.TWITCH_CLIENT_ID || !env.TWITCH_CLIENT_SECRET) {
       console.warn('WARNING: Twitch OAuth2 not set; server may crash.');
+    }
+    if (!env.TRELLO_API_KEY || !env.TRELLO_API_SECRET) {
+      console.warn(
+        'WARNING: Trello API credentials not set; Trello integration will not work.',
+      );
     }
     if (!env.SMTP_USER || !env.SMTP_PASS) {
       console.warn('WARNING: SMTP credentials not set; email may not work.');

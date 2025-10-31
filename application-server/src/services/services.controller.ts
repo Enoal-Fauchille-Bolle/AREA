@@ -199,6 +199,24 @@ export class ServicesController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('trello/profile')
+  async getTrelloProfile(@Request() req: { user: { id: number } }): Promise<{
+    id: string;
+    username: string;
+    fullName: string;
+    avatarUrl: string | null;
+    email?: string;
+  }> {
+    return this.servicesService.getTrelloProfile(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('trello/auth-url')
+  getTrelloAuthUrl(): { authUrl: string } {
+    return this.servicesService.getTrelloAuthUrl();
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Delete(':serviceName/disconnect')
   @HttpCode(HttpStatus.NO_CONTENT)
   async disconnectService(

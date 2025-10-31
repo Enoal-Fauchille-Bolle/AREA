@@ -463,6 +463,85 @@ export class ServicesService {
     }
   }
 
+  async getTrelloProfile(userId: number): Promise<{
+    id: string;
+    username: string;
+    fullName: string;
+    avatarUrl: string | null;
+    email?: string;
+  }> {
+    const trelloService = await this.serviceRepository.findOne({
+      where: { name: 'Trello' },
+    });
+    if (!trelloService) {
+      throw new NotFoundException('Trello service not found');
+    }
+
+    const userService = await this.userServiceService.findOne(
+      userId,
+      trelloService.id,
+    );
+
+    if (!userService || !userService.oauth_token) {
+      throw new NotFoundException('Trello account not connected');
+    }
+
+    try {
+      const appConfig = this.configService.get('app');
+      const apiKey = appConfig.oauth2.trello?.apiKey;
+
+      if (!apiKey) {
+        throw new Error('Trello API key not configured');
+      }
+
+      const response = await fetch(
+        `https://api.trello.com/1/members/me?key=${apiKey}&token=${userService.oauth_token}`,
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch Trello profile');
+      }
+
+      const profile = (await response.json()) as {
+        id: string;
+        username: string;
+        fullName: string;
+        avatarUrl: string | null;
+        email?: string;
+      };
+
+      return {
+        id: profile.id,
+        username: profile.username,
+        fullName: profile.fullName,
+        avatarUrl: profile.avatarUrl,
+        email: profile.email,
+      };
+    } catch (error) {
+      console.error('Failed to retrieve Trello profile:', error);
+      throw new BadRequestException('Failed to retrieve Trello profile');
+    }
+  }
+
+  getTrelloAuthUrl(): { authUrl: string } {
+    const appConfig = this.configService.get('app');
+    const apiKey = appConfig.oauth2.trello?.apiKey;
+
+    if (!apiKey) {
+      throw new InternalServerErrorException('Trello API key not configured');
+    }
+
+    const appName = 'AREA';
+    const scope = 'read,write';
+    const expiration = 'never';
+    const returnUrl = `${appConfig.serverUrl}/services/trello/callback`;
+
+    // Trello OAuth 1.0a authorization URL
+    const authUrl = `https://trello.com/1/authorize?expiration=${expiration}&name=${encodeURIComponent(appName)}&scope=${scope}&response_type=token&key=${apiKey}&return_url=${encodeURIComponent(returnUrl)}`;
+
+    return { authUrl };
+  }
+
   async disconnectService(userId: number, serviceName: string): Promise<void> {
     let normalizedName = serviceName;
     if (serviceName.toLowerCase() === 'github') {

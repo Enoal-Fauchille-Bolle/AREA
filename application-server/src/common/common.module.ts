@@ -10,6 +10,8 @@ import { TwitchModule } from '../twitch/twitch.module';
 import { RedditReactionsModule } from '../reddit/reactions/reddit-reactions.module';
 import { RedditModule } from '../reddit/reddit.module';
 import { SpotifyModule } from '../spotify/spotify.module';
+import { TrelloReactionsModule } from '../trello/reactions/trello-reactions.module';
+import { TrelloModule } from '../trello/trello.module';
 
 @Module({
   imports: [
@@ -23,6 +25,8 @@ import { SpotifyModule } from '../spotify/spotify.module';
     RedditReactionsModule,
     forwardRef(() => RedditModule),
     SpotifyModule,
+    TrelloReactionsModule,
+    forwardRef(() => TrelloModule),
   ],
   providers: [ReactionProcessorService],
   exports: [ReactionProcessorService],

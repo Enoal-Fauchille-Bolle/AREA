@@ -90,6 +90,10 @@ export const appConfig = registerAs('app', () => {
         clientId: process.env.SPOTIFY_CLIENT_ID,
         clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
       },
+      trello: {
+        apiKey: process.env.TRELLO_API_KEY,
+        apiSecret: process.env.TRELLO_API_SECRET,
+      },
     },
 
     // Email Configuration
