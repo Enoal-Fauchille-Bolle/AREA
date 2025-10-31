@@ -117,7 +117,7 @@ export class TrelloService {
       // Get last checked card ID from hook state
       const hookStateKey = `trello_new_card_${area.id}_${listId}`;
       const lastCardId = await this.hookStatesService.getState(
-        userId,
+        area.id,
         hookStateKey,
       );
 
@@ -129,8 +129,12 @@ export class TrelloService {
         return;
       }
 
-      // Get the latest card
-      const latestCard = cards[0];
+      // Get the most recently created/updated card by dateLastActivity
+      const latestCard = cards.reduce((latest, card) => {
+        const latestDate = new Date(latest.dateLastActivity);
+        const cardDate = new Date(card.dateLastActivity);
+        return cardDate > latestDate ? card : latest;
+      }, cards[0]);
 
       // Check if this is a new card
       if (lastCardId && lastCardId === latestCard.id) {
@@ -160,7 +164,7 @@ export class TrelloService {
 
       // Update hook state with the latest card ID
       await this.hookStatesService.setState(
-        userId,
+        area.id,
         hookStateKey,
         latestCard.id,
       );
@@ -215,7 +219,7 @@ export class TrelloService {
       // Get last checked timestamp
       const hookStateKey = `trello_card_moved_${area.id}_${targetListId}`;
       const lastCheck = await this.hookStatesService.getState(
-        userId,
+        area.id,
         hookStateKey,
       );
       const lastCheckTime = lastCheck
@@ -234,7 +238,7 @@ export class TrelloService {
       if (recentlyMovedCards.length === 0) {
         this.logger.debug(`No recently moved cards in list ${targetListId}`);
         await this.hookStatesService.setState(
-          userId,
+          area.id,
           hookStateKey,
           new Date().toISOString(),
         );
@@ -264,7 +268,7 @@ export class TrelloService {
 
       // Update hook state
       await this.hookStatesService.setState(
-        userId,
+        area.id,
         hookStateKey,
         new Date().toISOString(),
       );

@@ -125,6 +125,19 @@ export class ServicesController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Post('trello/link')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async linkTrello(
+    @Request() req: { user: { id: number } },
+    @Body() body: { token?: string },
+  ): Promise<void> {
+    if (!body.token || typeof body.token !== 'string') {
+      throw new BadRequestException('Valid Trello token is required');
+    }
+    await this.servicesService.linkTrello(req.user.id, body.token);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Post(':id/link')
   @HttpCode(HttpStatus.NO_CONTENT)
   async linkService(

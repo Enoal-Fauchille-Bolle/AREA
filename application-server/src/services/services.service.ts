@@ -542,6 +542,67 @@ export class ServicesService {
     return { authUrl };
   }
 
+  async linkTrello(userId: number, token: string): Promise<void> {
+    // Find Trello service
+    const trelloService = await this.serviceRepository.findOne({
+      where: { name: 'Trello' },
+    });
+
+    if (!trelloService) {
+      throw new NotFoundException('Trello service not found');
+    }
+
+    // Verify the token is valid by making a test API call
+    try {
+      const appConfig = this.configService.get('app');
+      const apiKey = appConfig.oauth2.trello?.apiKey;
+
+      if (!apiKey) {
+        throw new InternalServerErrorException('Trello API key not configured');
+      }
+
+      const response = await fetch(
+        `https://api.trello.com/1/members/me?key=${apiKey}&token=${token}`,
+      );
+
+      if (!response.ok) {
+        throw new BadRequestException('Invalid Trello token');
+      }
+
+      // Token is valid, save it
+      const existingUserService = await this.userServiceService.findOne(
+        userId,
+        trelloService.id,
+      );
+
+      if (existingUserService) {
+        // Update existing connection
+        await this.userServiceService.update({
+          user_id: userId,
+          service_id: trelloService.id,
+          oauth_token: token,
+          refresh_token: undefined,
+          token_expires_at: undefined, // Trello tokens don't expire
+        });
+      } else {
+        // Create new connection
+        await this.userServiceService.create({
+          user_id: userId,
+          service_id: trelloService.id,
+          oauth_token: token,
+          refresh_token: undefined,
+          token_expires_at: undefined,
+        });
+      }
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      console.error('Failed to link Trello account:', error);
+      throw new BadRequestException('Failed to link Trello account');
+    }
+  }
+
   async disconnectService(userId: number, serviceName: string): Promise<void> {
     let normalizedName = serviceName;
     if (serviceName.toLowerCase() === 'github') {
