@@ -236,6 +236,9 @@ jobs:
         run: flutter pub get
         working-directory: mobile-client
 
+      - name: Create .env file
+        run: cp .env.example .env
+        working-directory: mobile-client
       - name: Analyze
         run: flutter analyze
         working-directory: mobile-client
