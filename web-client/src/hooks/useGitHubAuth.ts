@@ -16,9 +16,19 @@ export const useGitHubAuth = () => {
   useEffect(() => {
     const checkConnection = async () => {
       try {
-        const profile = await servicesApi.getGitHubProfile();
-        setGitHubUser(profile);
-        setIsConnected(true);
+        const userServices = await servicesApi.getUserServices();
+        const githubService = userServices.find(
+          (s) => s.name.toLowerCase() === 'github',
+        );
+
+        if (githubService) {
+          const profile = await servicesApi.getGitHubProfile();
+          setGitHubUser(profile);
+          setIsConnected(true);
+        } else {
+          setIsConnected(false);
+          setGitHubUser(null);
+        }
       } catch {
         setIsConnected(false);
         setGitHubUser(null);

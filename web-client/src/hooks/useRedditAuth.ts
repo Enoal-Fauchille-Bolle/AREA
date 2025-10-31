@@ -16,9 +16,19 @@ export const useRedditAuth = () => {
   useEffect(() => {
     const checkConnection = async () => {
       try {
-        const profile = await servicesApi.getRedditProfile();
-        setRedditUser(profile);
-        setIsConnected(true);
+        const userServices = await servicesApi.getUserServices();
+        const redditService = userServices.find(
+          (s) => s.name.toLowerCase() === 'reddit',
+        );
+
+        if (redditService) {
+          const profile = await servicesApi.getRedditProfile();
+          setRedditUser(profile);
+          setIsConnected(true);
+        } else {
+          setIsConnected(false);
+          setRedditUser(null);
+        }
       } catch {
         setIsConnected(false);
         setRedditUser(null);

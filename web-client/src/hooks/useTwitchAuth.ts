@@ -17,9 +17,19 @@ export const useTwitchAuth = () => {
   useEffect(() => {
     const checkConnection = async () => {
       try {
-        const profile = await servicesApi.getTwitchProfile();
-        setTwitchUser(profile);
-        setIsConnected(true);
+        const userServices = await servicesApi.getUserServices();
+        const twitchService = userServices.find(
+          (s) => s.name.toLowerCase() === 'twitch',
+        );
+
+        if (twitchService) {
+          const profile = await servicesApi.getTwitchProfile();
+          setTwitchUser(profile);
+          setIsConnected(true);
+        } else {
+          setIsConnected(false);
+          setTwitchUser(null);
+        }
       } catch {
         setIsConnected(false);
         setTwitchUser(null);

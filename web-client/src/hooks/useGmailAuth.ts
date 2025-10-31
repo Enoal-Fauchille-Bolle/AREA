@@ -67,6 +67,7 @@ export const useGmailAuth = () => {
       const gmailAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodedRedirectUri}&response_type=code&scope=${scope}&access_type=offline&prompt=consent&state=${state}`;
 
       let popup: Window | null = null;
+      let timeoutId: NodeJS.Timeout;
 
       const messageListener = async (event: MessageEvent) => {
         if (event.origin !== window.location.origin) {
@@ -90,26 +91,36 @@ export const useGmailAuth = () => {
                 picture: undefined,
               });
             }
-            if (popup && !popup.closed) {
-              popup.close();
+            try {
+              if (popup && !popup.closed) {
+                popup.close();
+              }
+            } catch {
             }
-            clearInterval(checkClosed);
+            clearTimeout(timeoutId);
             window.removeEventListener('message', messageListener);
             setIsConnecting(false);
           } catch (error) {
-            if (popup && !popup.closed) {
-              popup.close();
+            try {
+              if (popup && !popup.closed) {
+                popup.close();
+              }
+            } catch {
             }
-            clearInterval(checkClosed);
+            clearTimeout(timeoutId);
             window.removeEventListener('message', messageListener);
             setIsConnecting(false);
             throw error;
           }
         } else if (event.data.type === 'GMAIL_OAUTH_ERROR') {
-          if (popup && !popup.closed) {
-            popup.close();
+          try {
+            if (popup && !popup.closed) {
+              popup.close();
+            }
+          } catch {
+            // Cross-Origin-Opener-Policy blocks access to popup.closed
           }
-          clearInterval(checkClosed);
+          clearTimeout(timeoutId);
           window.removeEventListener('message', messageListener);
           setIsConnecting(false);
           throw new Error(event.data.error || 'Gmail OAuth2 failed');
@@ -130,19 +141,15 @@ export const useGmailAuth = () => {
         throw new Error('Failed to open Gmail OAuth2 popup');
       }
 
-      const checkClosed = setInterval(() => {
-        if (popup && popup.closed) {
-          clearInterval(checkClosed);
-          window.removeEventListener('message', messageListener);
-          setIsConnecting(false);
+      // Set a timeout to clean up if OAuth takes too long
+      timeoutId = setTimeout(() => {
+        try {
+          if (popup && !popup.closed) {
+            popup.close();
+          }
+        } catch {
+          // Cross-Origin-Opener-Policy blocks access to popup.closed
         }
-      }, 1000);
-
-      setTimeout(() => {
-        if (popup && !popup.closed) {
-          popup.close();
-        }
-        clearInterval(checkClosed);
         window.removeEventListener('message', messageListener);
         setIsConnecting(false);
       }, 300000);
