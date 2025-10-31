@@ -220,8 +220,6 @@ export class OAuth2Service {
         return this.getSpotifyUserInfo(accessToken);
       case OAuthProvider.TWITCH:
         return this.getTwitchUserInfo(accessToken);
-      case OAuthProvider.REDDIT:
-        return this.getRedditUserInfo(accessToken);
       default:
         throw new BadRequestException(
           `Unsupported OAuth provider: ${provider as string}`,

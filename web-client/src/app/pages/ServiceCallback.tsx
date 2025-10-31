@@ -18,9 +18,6 @@ function ServiceCallback() {
 
   useEffect(() => {
     const handleCallback = async () => {
-      console.log('[ServiceCallback] Starting handleCallback');
-      console.log('[ServiceCallback] hasHandledRef.current:', hasHandledRef.current);
-      
       if (hasHandledRef.current) {
         return;
       }
@@ -30,11 +27,6 @@ function ServiceCallback() {
       const code = urlParams.get('code');
       const error = urlParams.get('error');
       const state = urlParams.get('state');
-
-      console.log('[ServiceCallback] Code:', code);
-      console.log('[ServiceCallback] Error:', error);
-      console.log('[ServiceCallback] State:', state);
-      console.log('[ServiceCallback] window.opener:', window.opener);
 
       if (window.opener) {
         let service = 'UNKNOWN';
@@ -74,7 +66,6 @@ function ServiceCallback() {
           };
         }
 
-        console.log('Sending message to opener:', message);
         window.opener.postMessage(message, '*');
         setTimeout(() => {
           window.close();

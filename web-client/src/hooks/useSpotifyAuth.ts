@@ -22,15 +22,16 @@ export const useSpotifyAuth = () => {
       try {
         const userServices = await servicesApi.getUserServices();
         const spotifyService = userServices.find(
-          (service) => service.name.toLowerCase() === 'spotify'
+          (service) => service.name.toLowerCase() === 'spotify',
         );
+
         if (spotifyService) {
           setIsConnected(true);
+
           try {
             const profile = await servicesApi.getSpotifyProfile();
             setSpotifyUser(profile);
-          } catch (profileError) {
-            console.warn('⚠️ Spotify is connected but profile cannot be fetched (may be in Development Mode):', profileError);
+          } catch {
             setSpotifyUser({
               id: 'connected',
               display_name: 'Spotify User (Connected)',
@@ -42,8 +43,7 @@ export const useSpotifyAuth = () => {
           setIsConnected(false);
           setSpotifyUser(null);
         }
-      } catch (error) {
-        console.error('Failed to check Spotify connection:', error);
+      } catch {
         setIsConnected(false);
         setSpotifyUser(null);
       }
@@ -74,32 +74,21 @@ export const useSpotifyAuth = () => {
       let popup: Window | null = null;
 
       const messageListener = async (event: MessageEvent) => {
-        console.log('Received message:', event.data, 'from origin:', event.origin);
-        
-        const validOrigins = [
-          'http://localhost:8081',
-          'http://127.0.0.1:8081',
-        ];
-        
+        const validOrigins = ['http://localhost:8081', 'http://127.0.0.1:8081'];
+
         if (!validOrigins.includes(event.origin)) {
-          console.log('Ignored message from invalid origin:', event.origin);
           return;
         }
 
         if (event.data.type === 'SPOTIFY_OAUTH_SUCCESS' && event.data.code) {
-          console.log('Spotify OAuth success, linking service...');
-          
           try {
             await servicesApi.linkService(serviceId, event.data.code);
-            console.log('✅ Service linked successfully');
             setIsConnected(true);
 
             try {
               const profile = await servicesApi.getSpotifyProfile();
-              console.log('✅ Spotify profile fetched:', profile);
               setSpotifyUser(profile);
-            } catch (profileError) {
-              console.warn('⚠️ Spotify connected but profile fetch failed (may be in Development Mode):', profileError);
+            } catch {
               setSpotifyUser({
                 id: 'connected',
                 display_name: 'Spotify User (Connected)',
@@ -108,7 +97,6 @@ export const useSpotifyAuth = () => {
               });
             }
           } catch (linkError) {
-            console.error('❌ Failed to link Spotify service:', linkError);
             setIsConnected(false);
             throw linkError;
           }
@@ -120,7 +108,6 @@ export const useSpotifyAuth = () => {
           window.removeEventListener('message', messageListener);
           setIsConnecting(false);
         } else if (event.data.type === 'SPOTIFY_OAUTH_ERROR') {
-          console.error('❌ Spotify OAuth error:', event.data.error);
           if (popup && !popup.closed) {
             popup.close();
           }

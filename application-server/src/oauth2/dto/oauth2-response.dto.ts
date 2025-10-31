@@ -173,11 +173,6 @@ export class OAuth2ResponseDto {
           raw as TwitchUserInfo,
           tokenData as TwitchTokenResponse,
         );
-      case OAuthProvider.REDDIT:
-        return mapRedditUserInfo(
-          raw as RedditUserInfo,
-          tokenData as RedditTokenResponse,
-        );
       default:
         throw new Error(`Unsupported provider: ${provider as string}`);
     }

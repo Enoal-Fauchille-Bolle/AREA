@@ -159,4 +159,3 @@ export const useGmailAuth = () => {
     connectToGmail,
   };
 };
-

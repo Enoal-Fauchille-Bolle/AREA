@@ -438,7 +438,8 @@ export const spotifyComponentsConfig: ComponentConfig[] = [
       },
       {
         name: 'track_uri',
-        description: 'Spotify URI of the track to add (e.g., spotify:track:...)',
+        description:
+          'Spotify URI of the track to add (e.g., spotify:track:...)',
         type: 'string',
         required: true,
         placeholder: 'spotify:track:6rqhFgbbKwnb9MLmUQDhG6',

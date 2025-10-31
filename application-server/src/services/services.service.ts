@@ -27,7 +27,6 @@ import { getOAuthProviderFromString } from '../oauth2/dto';
 export class ServicesService {
   private readonly webRedirectUri: string;
   private readonly mobileRedirectUri: string;
-  private readonly redditRedirectUri: string;
 
   constructor(
     @InjectRepository(Service)
@@ -41,7 +40,6 @@ export class ServicesService {
     const appConfig = this.configService.get('app');
     this.webRedirectUri = appConfig.oauth2.service.web_redirect_uri;
     this.mobileRedirectUri = appConfig.oauth2.service.mobile_redirect_uri;
-    this.redditRedirectUri = `${appConfig.serverUrl}/reddit/callback`;
   }
 
   async findAll(): Promise<ServiceResponseDto[]> {
@@ -246,11 +244,8 @@ export class ServicesService {
         ? this.webRedirectUri
         : this.mobileRedirectUri;
 
-    if (service.name === 'Reddit') {
-      redirectUri = this.redditRedirectUri;
-    }
-
     if (service.name === 'Spotify') {
+      // Spotify n'accepte pas localhost, seulement 127.0.0.1
       redirectUri = redirectUri.replace('localhost', '127.0.0.1');
     }
 
