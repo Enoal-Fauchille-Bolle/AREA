@@ -382,24 +382,24 @@ const Profile: React.FC = () => {
             {services.map((service) => (
               <div
                 key={service.id}
-                className={`bg-gray-600 rounded-lg p-6 border transition-all ${
+                className={`bg-gray-600 rounded-lg p-4 sm:p-6 border transition-all ${
                   service.isConnected
                     ? 'border-green-500 hover:border-green-400'
                     : 'border-gray-500 hover:border-gray-400'
                 }`}
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center space-x-4 flex-1">
-                    <div className="flex items-center justify-center w-12 h-12 bg-gray-700 rounded-lg flex-shrink-0">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
+                    <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-gray-700 rounded-lg flex-shrink-0">
                       {service.icon}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-2">
-                        <h3 className="text-lg font-semibold text-white">
+                        <h3 className="text-base sm:text-lg font-semibold text-white truncate">
                           {service.displayName}
                         </h3>
                         {service.isConnected && (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-900 bg-opacity-50 text-green-300 border border-green-500">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-900 bg-opacity-50 text-green-300 border border-green-500 flex-shrink-0">
                             <svg
                               className="w-3 h-3 mr-1"
                               fill="currentColor"
@@ -444,22 +444,22 @@ const Profile: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="ml-4 flex-shrink-0">
+                  <div className="flex-shrink-0">
                     {service.isConnected ? (
                       <button
                         onClick={() => handleDisconnect(service.name)}
                         disabled={disconnectingService === service.name}
-                        className="bg-red-600 hover:bg-red-700 disabled:bg-red-800 disabled:cursor-not-allowed text-white transition-colors text-sm font-medium py-2 px-4 rounded-lg"
+                        className="w-24 sm:w-28 bg-red-600 hover:bg-red-700 disabled:bg-red-800 disabled:cursor-not-allowed text-white transition-colors text-xs sm:text-sm font-medium py-2 px-2 rounded-lg whitespace-nowrap overflow-hidden text-ellipsis"
                       >
                         {disconnectingService === service.name
-                          ? 'Disconnecting...'
+                          ? 'Disc...'
                           : 'Disconnect'}
                       </button>
                     ) : (
                       <button
                         onClick={service.onConnect}
                         disabled={service.isConnecting}
-                        className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white transition-colors text-sm font-medium py-2 px-4 rounded-lg"
+                        className="w-24 sm:w-28 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white transition-colors text-xs sm:text-sm font-medium py-2 px-2 rounded-lg whitespace-nowrap"
                       >
                         {service.isConnecting ? 'Connecting...' : 'Connect'}
                       </button>

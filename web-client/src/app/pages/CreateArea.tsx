@@ -87,10 +87,6 @@ const CreateArea: React.FC = () => {
 
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
-  const handleExplore = () => {
-    navigate('/explore');
-  };
-
   const handleMyAreas = () => {
     navigate('/profile');
   };
@@ -1706,16 +1702,6 @@ const CreateArea: React.FC = () => {
                   placeholder="Describe what your AREA does"
                 />
               </div>
-
-              <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center">
-                <p className="text-gray-400">
-                  Advanced configuration coming soon...
-                  <br />
-                  <span className="text-sm">
-                    (Specific parameters for the selected action/reaction)
-                  </span>
-                </p>
-              </div>
             </div>
 
             <div className="flex justify-between">
@@ -1791,12 +1777,6 @@ const CreateArea: React.FC = () => {
           </div>
 
           <div className="flex items-center space-x-6">
-            <button
-              onClick={handleExplore}
-              className="text-xl font-semibold text-gray-300 hover:text-white hover:scale-105 transform transition-all duration-300"
-            >
-              Explore
-            </button>
             <button
               onClick={handleMyAreas}
               className="text-xl font-semibold text-gray-300 hover:text-white hover:scale-105 transform transition-all duration-300"
