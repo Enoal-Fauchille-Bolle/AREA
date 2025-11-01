@@ -1,59 +1,58 @@
 import { useState, useEffect } from 'react';
 import { servicesApi } from '../services/api';
 
-interface TwitchUser {
+interface RedditUser {
   id: string;
-  login: string;
-  display_name: string;
-  profile_image_url: string | null;
-  email?: string;
+  name: string;
+  icon_img?: string;
+  created?: number;
 }
 
-export const useTwitchAuth = () => {
+export const useRedditAuth = () => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
-  const [twitchUser, setTwitchUser] = useState<TwitchUser | null>(null);
+  const [redditUser, setRedditUser] = useState<RedditUser | null>(null);
 
   useEffect(() => {
     const checkConnection = async () => {
       try {
         const userServices = await servicesApi.getUserServices();
-        const twitchService = userServices.find(
-          (s) => s.name.toLowerCase() === 'twitch',
+        const redditService = userServices.find(
+          (s) => s.name.toLowerCase() === 'reddit',
         );
 
-        if (twitchService) {
-          const profile = await servicesApi.getTwitchProfile();
-          setTwitchUser(profile);
+        if (redditService) {
+          const profile = await servicesApi.getRedditProfile();
+          setRedditUser(profile);
           setIsConnected(true);
         } else {
           setIsConnected(false);
-          setTwitchUser(null);
+          setRedditUser(null);
         }
       } catch {
         setIsConnected(false);
-        setTwitchUser(null);
+        setRedditUser(null);
       }
     };
 
     checkConnection();
   }, []);
 
-  const connectToTwitch = async (serviceId: number) => {
+  const connectToReddit = async (serviceId: number) => {
     try {
       setIsConnecting(true);
 
-      const clientId = import.meta.env.VITE_TWITCH_CLIENT_ID;
+      const clientId = import.meta.env.VITE_REDDIT_CLIENT_ID;
       const redirectUri = `${window.location.origin}/service/callback`;
       const encodedRedirectUri = encodeURIComponent(redirectUri);
-      const scope = encodeURIComponent('user:read:email user:write:chat');
-      const state = encodeURIComponent('twitch:service_link');
+      const scope = encodeURIComponent('identity submit read');
+      const state = encodeURIComponent('reddit:service_link');
 
       if (!clientId) {
-        throw new Error('Twitch OAuth2 not configured');
+        throw new Error('Reddit OAuth2 not configured');
       }
 
-      const twitchAuthUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodedRedirectUri}&response_type=code&scope=${scope}&state=${state}`;
+      const redditAuthUrl = `https://www.reddit.com/api/v1/authorize?client_id=${clientId}&response_type=code&state=${state}&redirect_uri=${encodedRedirectUri}&duration=permanent&scope=${scope}`;
 
       let popup: Window | null = null;
 
@@ -62,20 +61,17 @@ export const useTwitchAuth = () => {
           return;
         }
 
-        if (event.data.type === 'TWITCH_OAUTH_SUCCESS' && event.data.code) {
+        if (event.data.type === 'REDDIT_OAUTH_SUCCESS' && event.data.code) {
           await servicesApi.linkService(serviceId, event.data.code);
           setIsConnected(true);
 
           try {
-            const profile = await servicesApi.getTwitchProfile();
-            setTwitchUser(profile);
+            const profile = await servicesApi.getRedditProfile();
+            setRedditUser(profile);
           } catch {
-            setTwitchUser({
+            setRedditUser({
               id: 'connected',
-              login: 'Twitch User',
-              display_name: 'Twitch User',
-              profile_image_url: null,
-              email: undefined,
+              name: 'Reddit User',
             });
           }
 
@@ -85,14 +81,14 @@ export const useTwitchAuth = () => {
           clearInterval(checkClosed);
           window.removeEventListener('message', messageListener);
           setIsConnecting(false);
-        } else if (event.data.type === 'TWITCH_OAUTH_ERROR') {
+        } else if (event.data.type === 'REDDIT_OAUTH_ERROR') {
           if (popup && !popup.closed) {
             popup.close();
           }
           clearInterval(checkClosed);
           window.removeEventListener('message', messageListener);
           setIsConnecting(false);
-          throw new Error(event.data.error || 'Failed to connect Twitch');
+          throw new Error(event.data.error || 'Failed to connect Reddit');
         }
       };
 
@@ -104,39 +100,38 @@ export const useTwitchAuth = () => {
       const top = window.screen.height / 2 - height / 2;
 
       popup = window.open(
-        twitchAuthUrl,
-        'TwitchAuth',
+        redditAuthUrl,
+        'RedditAuth',
         `width=${width},height=${height},left=${left},top=${top}`,
       );
 
       if (!popup) {
-        throw new Error('Failed to open OAuth popup');
+        throw new Error('Failed to open popup window');
       }
 
       const checkClosed = setInterval(() => {
-        if (!popup || popup.closed) {
+        if (popup && popup.closed) {
           clearInterval(checkClosed);
           window.removeEventListener('message', messageListener);
           setIsConnecting(false);
         }
-      }, 1000);
+      }, 500);
     } catch (error) {
       setIsConnecting(false);
       throw error;
     }
   };
 
-  const disconnectTwitch = async () => {
-    await servicesApi.disconnectService('twitch');
+  const disconnectFromReddit = () => {
     setIsConnected(false);
-    setTwitchUser(null);
+    setRedditUser(null);
   };
 
   return {
     isConnecting,
     isConnected,
-    twitchUser,
-    connectToTwitch,
-    disconnectTwitch,
+    redditUser,
+    connectToReddit,
+    disconnectFromReddit,
   };
 };

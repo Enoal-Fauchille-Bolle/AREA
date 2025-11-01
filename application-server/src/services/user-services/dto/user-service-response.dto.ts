@@ -69,7 +69,7 @@ class ServiceDto {
     description: 'Indicates if the service requires authentication',
     example: true,
   })
-  require_auth: boolean;
+  requires_auth: boolean;
 
   constructor(data: ServiceDto) {
     Object.assign(this, data);
@@ -80,7 +80,7 @@ class ServiceDto {
       id: service.id,
       name: service.name,
       description: service.description,
-      require_auth: service.requires_auth,
+      requires_auth: service.requires_auth,
     });
   }
 
@@ -89,7 +89,7 @@ class ServiceDto {
       id: service.id,
       name: service.name,
       description: service.description,
-      require_auth: service.requires_auth,
+      requires_auth: service.requires_auth,
     });
   }
 }

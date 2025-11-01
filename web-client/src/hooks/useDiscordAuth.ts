@@ -17,9 +17,19 @@ export const useDiscordAuth = () => {
   useEffect(() => {
     const checkConnection = async () => {
       try {
-        const profile = await servicesApi.getDiscordProfile();
-        setDiscordUser(profile);
-        setIsConnected(true);
+        const userServices = await servicesApi.getUserServices();
+        const discordService = userServices.find(
+          (s) => s.name.toLowerCase() === 'discord',
+        );
+
+        if (discordService) {
+          const profile = await servicesApi.getDiscordProfile();
+          setDiscordUser(profile);
+          setIsConnected(true);
+        } else {
+          setIsConnected(false);
+          setDiscordUser(null);
+        }
       } catch {
         setIsConnected(false);
         setDiscordUser(null);

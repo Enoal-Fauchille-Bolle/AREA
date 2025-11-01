@@ -6,7 +6,7 @@ function VerifyEmail() {
   const navigate = useNavigate();
   const location = useLocation();
   const email = location.state?.email || '';
-  
+
   const [code, setCode] = useState(['', '', '', '', '', '']);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -46,7 +46,7 @@ function VerifyEmail() {
   const handlePaste = (e: React.ClipboardEvent) => {
     e.preventDefault();
     const pastedData = e.clipboardData.getData('text').replace(/\D/g, '');
-    
+
     if (pastedData.length === 6) {
       const newCode = pastedData.split('');
       setCode(newCode);
@@ -61,7 +61,7 @@ function VerifyEmail() {
 
     try {
       const verificationCode = code.join('');
-      
+
       if (verificationCode.length !== 6) {
         throw new Error('Please enter the complete 6-digit code');
       }
@@ -81,7 +81,9 @@ function VerifyEmail() {
       }, 2000);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : 'Verification failed. Please try again.',
+        err instanceof Error
+          ? err.message
+          : 'Verification failed. Please try again.',
       );
     } finally {
       setIsLoading(false);
@@ -104,7 +106,9 @@ function VerifyEmail() {
       document.getElementById('code-0')?.focus();
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : 'Failed to resend code. Please try again.',
+        err instanceof Error
+          ? err.message
+          : 'Failed to resend code. Please try again.',
       );
     } finally {
       setIsResending(false);

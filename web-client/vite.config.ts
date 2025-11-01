@@ -12,5 +12,6 @@ export default defineConfig({
   },
   server: {
     port: 8081,
+    host: true, // Écoute sur toutes les interfaces (localhost, 127.0.0.1, etc.)
   },
 });
