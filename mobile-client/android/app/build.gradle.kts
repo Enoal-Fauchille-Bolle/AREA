@@ -43,27 +43,50 @@ android {
         create("release") {
             // CI/CD configuration (GitHub Actions)
             if (System.getenv("CI") != null) {
-                storeFile = file(System.getenv("KEYSTORE_FILE") ?: "")
-                storePassword = System.getenv("KEYSTORE_PASSWORD")
-                keyAlias = System.getenv("KEY_ALIAS")
-                keyPassword = System.getenv("KEY_PASSWORD")
+                val keystoreFilePath = System.getenv("KEYSTORE_FILE")
+                val keystorePassword = System.getenv("KEYSTORE_PASSWORD")
+                val keyAlias = System.getenv("KEY_ALIAS")
+                val keyPassword = System.getenv("KEY_PASSWORD")
+                
+                if (!keystoreFilePath.isNullOrEmpty() && 
+                    !keystorePassword.isNullOrEmpty() && 
+                    !keyAlias.isNullOrEmpty() && 
+                    !keyPassword.isNullOrEmpty()) {
+                    storeFile = file(keystoreFilePath)
+                    storePassword = keystorePassword
+                    this.keyAlias = keyAlias
+                    this.keyPassword = keyPassword
+                }
             }
-            // Local developement configuration
+            // Local development configuration
             else if (keystorePropertiesFile.exists()) {
-                keyAlias = keystoreProperties.getProperty("keyAlias")
-                keyPassword = keystoreProperties.getProperty("keyPassword")
-                storePassword = keystoreProperties.getProperty("storePassword")
+                val keyAlias = keystoreProperties.getProperty("keyAlias")
+                val keyPassword = keystoreProperties.getProperty("keyPassword")
+                val storePassword = keystoreProperties.getProperty("storePassword")
                 val storeFilePath = keystoreProperties.getProperty("storeFile")
-                storeFile = if (storeFilePath != null) file(storeFilePath) else null
+                
+                if (!keyAlias.isNullOrEmpty() && 
+                    !keyPassword.isNullOrEmpty() && 
+                    !storePassword.isNullOrEmpty() && 
+                    !storeFilePath.isNullOrEmpty()) {
+                    this.keyAlias = keyAlias
+                    this.keyPassword = keyPassword
+                    this.storePassword = storePassword
+                    storeFile = file(storeFilePath)
+                }
             }
         }
     }
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("release")
+            // Use release signing config if available, otherwise fall back to debug
+            val releaseConfig = signingConfigs.getByName("release")
+            signingConfig = if (releaseConfig.storeFile != null) {
+                releaseConfig
+            } else {
+                signingConfigs.getByName("debug")
+            }
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
