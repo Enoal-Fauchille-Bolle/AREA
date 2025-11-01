@@ -1,12 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'auth_service.dart';
 import '../utils/app_logger.dart';
+import 'runtime_config.dart';
 
 class AreaApiService {
-  final String baseUrl = dotenv.env['URL_BASE'] ?? 'http://10.84.107.120';
-  final String port = dotenv.env['PORT'] ?? '8080';
+  final _config = RuntimeConfig();
   final AuthService _authService = AuthService();
 
   // Fetch all areas
@@ -15,8 +14,9 @@ class AreaApiService {
       final headers = await _authService.getAuthHeaders();
       AppLogger.log('Fetching areas with headers: $headers');
 
+      final serverUrl = await _config.getServerUrl();
       final response = await http.get(
-        Uri.parse('$baseUrl:$port/areas'),
+        Uri.parse('$serverUrl/areas'),
         headers: headers,
       );
 
@@ -48,8 +48,9 @@ class AreaApiService {
 
   Future<Map<String, dynamic>> createSimpleArea(
       String action, String reaction) async {
+    final serverUrl = await _config.getServerUrl();
     final response = await http.post(
-      Uri.parse('$baseUrl:$port/areas'),
+      Uri.parse('$serverUrl/areas'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'action': action, 'reaction': reaction}),
     );
@@ -85,8 +86,9 @@ class AreaApiService {
       };
       AppLogger.log('Creating area with body: ${jsonEncode(body)}');
 
+      final serverUrl = await _config.getServerUrl();
       final response = await http.post(
-        Uri.parse('$baseUrl:$port/areas/create-with-parameters'),
+        Uri.parse('$serverUrl/areas/create-with-parameters'),
         headers: headers,
         body: jsonEncode(body),
       );
@@ -125,8 +127,9 @@ class AreaApiService {
       };
       AppLogger.log('Creating area with body: ${jsonEncode(body)}');
 
+      final serverUrl = await _config.getServerUrl();
       final response = await http.post(
-        Uri.parse('$baseUrl:$port/areas'),
+        Uri.parse('$serverUrl/areas'),
         headers: headers,
         body: jsonEncode(body),
       );
@@ -146,8 +149,9 @@ class AreaApiService {
 
   Future<Map<String, dynamic>> editArea(
       int id, String action, String reaction) async {
+    final serverUrl = await _config.getServerUrl();
     final response = await http.put(
-      Uri.parse('$baseUrl:$port/areas/$id'),
+      Uri.parse('$serverUrl/areas/$id'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'action': action, 'reaction': reaction}),
     );
@@ -174,8 +178,9 @@ class AreaApiService {
       if (components != null) body['components'] = components;
       if (isActive != null) body['is_active'] = isActive;
 
+      final serverUrl = await _config.getServerUrl();
       final response = await http.put(
-        Uri.parse('$baseUrl:$port/areas/$id'),
+        Uri.parse('$serverUrl/areas/$id'),
         headers: headers,
         body: jsonEncode(body),
       );
@@ -191,9 +196,26 @@ class AreaApiService {
 
   // Delete an area
   Future<void> deleteArea(String id) async {
-    final response = await http.delete(Uri.parse('$baseUrl:$port/areas/$id'));
-    if (response.statusCode != 204) {
-      throw Exception('Failed to delete area: ${response.statusCode}');
+    try {
+      final headers = await _authService.getAuthHeaders();
+      AppLogger.log('Deleting area $id');
+
+      final serverUrl = await _config.getServerUrl();
+      final response = await http.delete(
+        Uri.parse('$serverUrl/areas/$id'),
+        headers: headers,
+      );
+      AppLogger.log('Delete area response status: ${response.statusCode}');
+      if (response.body.isNotEmpty) {
+        AppLogger.log('Delete area response body: ${response.body}');
+      }
+
+      if (response.statusCode != 200 && response.statusCode != 204) {
+        throw Exception('Failed to delete area: ${response.statusCode}');
+      }
+    } catch (e) {
+      AppLogger.error('Delete area error: $e');
+      rethrow;
     }
   }
 }

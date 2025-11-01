@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/area_api_service.dart';
+import '../widgets/area_card.dart';
 import 'create_action_reaction_page.dart';
 import 'edit_action_reaction_page.dart';
 
@@ -100,51 +101,34 @@ class _ActionsReactionsPageState extends State<ActionsReactionsPage> {
             itemCount: areas.length,
             itemBuilder: (context, index) {
               final area = areas[index];
-              return Card(
-                child: ListTile(
-                  title: Text(area['name'] ?? 'Unnamed Area'),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                          'Description: ${area['description'] ?? 'No description'}'),
-                      Text(
-                          'Active: ${area['is_active'] ?? false ? "Yes" : "No"}'),
-                      Text(
-                          'Last Triggered: ${area['last_triggered_at'] ?? "Never"}'),
-                      Text('Triggered Count: ${area['triggered_count'] ?? 0}'),
-                    ],
-                  ),
-                  trailing: widget.guestMode
-                      ? null
-                      : Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.edit),
-                              onPressed: () {
-                                Navigator.of(context)
-                                    .push(
-                                      MaterialPageRoute(
-                                        builder: (_) => EditActionReactionPage(
-                                          areaId: area['id'].toString(),
-                                          initialAction: area['name'] ?? '',
-                                          initialReaction:
-                                              '', // Adjust if needed
-                                        ),
-                                      ),
-                                    )
-                                    .then((_) => _refreshAreas());
-                              },
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.delete),
-                              onPressed: () =>
-                                  _handleDelete(area['id'].toString()),
-                            ),
-                          ],
-                        ),
-                ),
+              return AreaCard(
+                id: area['id'].toString(),
+                name: area['name'] ?? 'Unnamed Area',
+                description: area['description'],
+                isActive: area['is_active'] ?? false,
+                lastTriggeredAt: area['last_triggered_at'],
+                triggeredCount: area['triggered_count'] ?? 0,
+                action: area['action'],
+                reaction: area['reaction'],
+                showActions: !widget.guestMode,
+                onEdit: widget.guestMode
+                    ? null
+                    : () {
+                        Navigator.of(context)
+                            .push(
+                              MaterialPageRoute(
+                                builder: (_) => EditActionReactionPage(
+                                  areaId: area['id'].toString(),
+                                  initialAction: area['name'] ?? '',
+                                  initialReaction: '', // Adjust if needed
+                                ),
+                              ),
+                            )
+                            .then((_) => _refreshAreas());
+                      },
+                onDelete: widget.guestMode
+                    ? null
+                    : () => _handleDelete(area['id'].toString()),
               );
             },
           );

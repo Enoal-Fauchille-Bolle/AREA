@@ -46,9 +46,6 @@ class _PasswordFieldState extends State<PasswordField> {
             });
           },
         ),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        filled: true,
-        fillColor: Colors.white,
       ),
     );
   }

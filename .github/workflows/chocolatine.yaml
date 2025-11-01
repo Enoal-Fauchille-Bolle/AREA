@@ -91,6 +91,10 @@ jobs:
         with:
           flutter-version: "3.35.5"
 
+      - name: Create .env file
+        run: cp .env.example .env
+        working-directory: mobile-client
+
       - name: Install Dependencies
         run: flutter pub get
         working-directory: mobile-client
@@ -157,6 +161,10 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.35.5"
+
+      - name: Create .env file
+        run: cp .env.example .env
+        working-directory: mobile-client
 
       - name: Install Dependencies
         run: flutter pub get
@@ -228,6 +236,9 @@ jobs:
         run: flutter pub get
         working-directory: mobile-client
 
+      - name: Create .env file
+        run: cp .env.example .env
+        working-directory: mobile-client
       - name: Analyze
         run: flutter analyze
         working-directory: mobile-client
@@ -331,6 +342,25 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.35.5"
+
+      - name: Create .env file
+        run: cp .env.example .env
+        working-directory: mobile-client
+
+      - name: Decode and setup keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > ${{ github.workspace }}/keystore.jks
+            echo "KEYSTORE_FILE=${{ github.workspace }}/keystore.jks" >> $GITHUB_ENV
+            echo "KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD" >> $GITHUB_ENV
+            echo "KEY_ALIAS=$KEY_ALIAS" >> $GITHUB_ENV
+            echo "KEY_PASSWORD=$KEY_PASSWORD" >> $GITHUB_ENV
+          fi
 
       - name: Installing Dependencies
         run: flutter pub get
@@ -448,6 +478,10 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.35.5"
+
+      - name: Create .env file
+        run: cp .env.example .env
+        working-directory: mobile-client
 
       - name: Installing Dependencies
         run: flutter pub get

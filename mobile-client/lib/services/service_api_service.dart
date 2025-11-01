@@ -1,12 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'auth_service.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../utils/app_logger.dart';
+import 'runtime_config.dart';
 
 class ServiceApiService {
-  final String baseUrl = dotenv.env['URL_BASE'] ?? 'http://10.84.107.120';
-  final String port = dotenv.env['PORT'] ?? '8080';
+  final _config = RuntimeConfig();
   final AuthService _authService = AuthService();
 
   // helper to normalize list responses
@@ -25,8 +24,9 @@ class ServiceApiService {
   Future<List<Map<String, dynamic>>> fetchServices() async {
     try {
       final headers = await _authService.getAuthHeaders();
+      final serverUrl = await _config.getServerUrl();
       final response = await http.get(
-        Uri.parse('$baseUrl:$port/services'),
+        Uri.parse('$serverUrl/services'),
         headers: headers,
       );
 
@@ -45,8 +45,9 @@ class ServiceApiService {
   Future<Map<String, dynamic>> fetchServiceById(String id) async {
     try {
       final headers = await _authService.getAuthHeaders();
+      final serverUrl = await _config.getServerUrl();
       final response = await http.get(
-        Uri.parse('$baseUrl:$port/services/$id'),
+        Uri.parse('$serverUrl/services/$id'),
         headers: headers,
       );
 
@@ -66,8 +67,9 @@ class ServiceApiService {
       String serviceId) async {
     try {
       final headers = await _authService.getAuthHeaders();
+      final serverUrl = await _config.getServerUrl();
       final response = await http.get(
-        Uri.parse('$baseUrl:$port/components/service/$serviceId/actions'),
+        Uri.parse('$serverUrl/components/service/$serviceId/actions'),
         headers: headers,
       );
 
@@ -87,8 +89,9 @@ class ServiceApiService {
       String serviceId) async {
     try {
       final headers = await _authService.getAuthHeaders();
+      final serverUrl = await _config.getServerUrl();
       final response = await http.get(
-        Uri.parse('$baseUrl:$port/components/service/$serviceId/reactions'),
+        Uri.parse('$serverUrl/components/service/$serviceId/reactions'),
         headers: headers,
       );
 
@@ -109,7 +112,8 @@ class ServiceApiService {
     try {
       AppLogger.log('Fetching components for service ID: $serviceId');
       final headers = await _authService.getAuthHeaders();
-      final url = '$baseUrl:$port/components/service/$serviceId';
+      final serverUrl = await _config.getServerUrl();
+      final url = '$serverUrl/components/service/$serviceId';
       AppLogger.log('Request URL: $url');
 
       final response = await http.get(
@@ -144,7 +148,8 @@ class ServiceApiService {
     try {
       AppLogger.log('Fetching variables for component ID: $componentId');
       final headers = await _authService.getAuthHeaders();
-      final url = '$baseUrl:$port/variables/component/$componentId';
+      final serverUrl = await _config.getServerUrl();
+      final url = '$serverUrl/variables/component/$componentId';
       AppLogger.log('Request URL: $url');
 
       final response = await http.get(
@@ -159,6 +164,13 @@ class ServiceApiService {
         final body = jsonDecode(response.body);
         final variables = _extractList(body);
         AppLogger.log('Extracted ${variables.length} variables');
+
+        // Log each variable to check for duplicates
+        for (var i = 0; i < variables.length; i++) {
+          AppLogger.log(
+              'Variable $i: id=${variables[i]['id']}, name=${variables[i]['name']}, kind=${variables[i]['kind']}');
+        }
+
         return variables;
       }
       throw Exception('Failed to load variables: ${response.statusCode}');
@@ -171,21 +183,11 @@ class ServiceApiService {
   // Get services linked to the authenticated user
   Future<List<Map<String, dynamic>>> fetchUserServices() async {
     try {
-      // Get the current user's data to extract the user ID
-      final userData = await _authService.getUserData();
-      if (userData == null) {
-        throw Exception('User not authenticated');
-      }
-
-      final userId = userData['id'];
-      if (userId == null) {
-        throw Exception('User ID not found');
-      }
-
-      AppLogger.log('Fetching user services for user ID: $userId');
+      AppLogger.log('Fetching user services');
       final headers = await _authService.getAuthHeaders();
+      final serverUrl = await _config.getServerUrl();
       final response = await http.get(
-        Uri.parse('$baseUrl:$port/user-services/user/$userId'),
+        Uri.parse('$serverUrl/services/me'),
         headers: headers,
       );
 
@@ -195,8 +197,8 @@ class ServiceApiService {
 
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
-        // The endpoint returns an array directly, not wrapped in an object
-        final userServices = _extractList(body);
+        // The endpoint returns services array, possibly wrapped
+        final userServices = _extractList(body, key: 'services');
         AppLogger.log('Fetched ${userServices.length} user services');
 
         // Print each user service for debugging
@@ -216,43 +218,38 @@ class ServiceApiService {
   // Link a service to the authenticated user
   Future<bool> linkService(String serviceId, {String? code}) async {
     try {
-      // Get the current user's data to extract the user ID
-      final userData = await _authService.getUserData();
-      if (userData == null) {
-        throw Exception('User not authenticated');
-      }
-
-      final userId = userData['id'];
-      if (userId == null) {
-        throw Exception('User ID not found');
-      }
-
-      AppLogger.log('Linking service $serviceId for user $userId');
+      AppLogger.log('Linking service $serviceId');
       final headers = await _authService.getAuthHeaders();
+      headers['Content-Type'] = 'application/json'; // Add Content-Type header
 
-      // Create the user-service link
-      final body = {
-        'user_id': userId,
-        'service_id': int.parse(serviceId),
-        'oauth_token': code ?? '', // Use empty string if no code provided
-      };
+      // Prepare request body
+      final Map<String, dynamic> body = {};
+      if (code != null) {
+        body['code'] = code;
+        body['platform'] = 'mobile';
+      }
 
       AppLogger.log('Link service request body: ${jsonEncode(body)}');
+      final serverUrl = await _config.getServerUrl();
       final response = await http.post(
-        Uri.parse('$baseUrl:$port/user-services'),
+        Uri.parse('$serverUrl/services/$serviceId/link'),
         headers: headers,
-        body: jsonEncode(body),
+        body: jsonEncode(body), // Always send JSON body, even if empty
       );
 
       AppLogger.log('Link service response status: ${response.statusCode}');
-      AppLogger.log('Link service response body: ${response.body}');
+      if (response.body.isNotEmpty) {
+        AppLogger.log('Link service response body: ${response.body}');
+      }
 
-      if (response.statusCode == 201 || response.statusCode == 200) {
+      if (response.statusCode == 204 || response.statusCode == 200) {
         return true;
       }
 
       AppLogger.log('Link service failed with status: ${response.statusCode}');
-      AppLogger.log('Response body: ${response.body}');
+      if (response.body.isNotEmpty) {
+        AppLogger.log('Response body: ${response.body}');
+      }
       return false;
     } catch (e) {
       AppLogger.error('Link service error: $e');
@@ -263,22 +260,18 @@ class ServiceApiService {
   // Unlink a service from the authenticated user
   Future<bool> unlinkService(String serviceId) async {
     try {
-      // Get the current user's data to extract the user ID
-      final userData = await _authService.getUserData();
-      if (userData == null) {
-        throw Exception('User not authenticated');
-      }
-
-      final userId = userData['id'];
-      if (userId == null) {
-        throw Exception('User ID not found');
-      }
-
+      AppLogger.log('Unlinking service $serviceId');
       final headers = await _authService.getAuthHeaders();
+      final serverUrl = await _config.getServerUrl();
       final response = await http.delete(
-        Uri.parse('$baseUrl:$port/user-services/connection/$userId/$serviceId'),
+        Uri.parse('$serverUrl/services/$serviceId/unlink'),
         headers: headers,
       );
+
+      AppLogger.log('Unlink service response status: ${response.statusCode}');
+      if (response.body.isNotEmpty) {
+        AppLogger.log('Unlink service response body: ${response.body}');
+      }
 
       if (response.statusCode == 204 || response.statusCode == 200) {
         return true;
@@ -286,7 +279,9 @@ class ServiceApiService {
 
       AppLogger.log(
           'Unlink service failed with status: ${response.statusCode}');
-      AppLogger.log('Response body: ${response.body}');
+      if (response.body.isNotEmpty) {
+        AppLogger.log('Response body: ${response.body}');
+      }
       return false;
     } catch (e) {
       AppLogger.error('Unlink service error: $e');

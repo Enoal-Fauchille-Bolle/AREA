@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+import '../services/discord_oauth_service.dart';
+import '../services/github_oauth_service.dart';
+import '../services/google_oauth_service.dart';
+import '../services/runtime_config.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/password_field.dart';
 import '../widgets/custom_button.dart';
@@ -21,6 +25,7 @@ class _SignUpPageState extends State<SignUpPage> {
   final _authService = AuthService();
 
   bool _isLoading = false;
+  bool _isOAuthLoading = false;
 
   @override
   void dispose() {
@@ -79,6 +84,124 @@ class _SignUpPageState extends State<SignUpPage> {
         ],
       ),
     );
+  }
+
+  Future<void> _handleDiscordSignUp() async {
+    setState(() {
+      _isOAuthLoading = true;
+    });
+
+    try {
+      final code = await DiscordOAuthService.authorize(
+          context); // forService: false par défaut
+      if (code != null && mounted) {
+        // Use the same redirect URI that was used to get the code
+        final redirectUri =
+            await DiscordOAuthService.getRedirectUri(forService: false);
+
+        final success =
+            await _authService.registerOAuth2('discord', code, redirectUri);
+
+        if (success && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Account created successfully!')),
+          );
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const HomePage()),
+          );
+        } else if (mounted) {
+          _showErrorDialog('Discord sign up failed. Please try again.');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        _showErrorDialog('Discord authorization failed: $e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isOAuthLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _handleGithubSignUp() async {
+    setState(() {
+      _isOAuthLoading = true;
+    });
+
+    try {
+      final code = await GithubOAuthService.authorize(
+          context); // forService: false par défaut
+      if (code != null && mounted) {
+        // Use the same redirect URI that was used to get the code
+        final redirectUri =
+            await GithubOAuthService.getRedirectUri(forService: false);
+
+        final success =
+            await _authService.registerOAuth2('github', code, redirectUri);
+
+        if (success && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Account created successfully!')),
+          );
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const HomePage()),
+          );
+        } else if (mounted) {
+          _showErrorDialog('GitHub sign up failed. Please try again.');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        _showErrorDialog('GitHub authorization failed: $e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isOAuthLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _handleGoogleSignUp() async {
+    setState(() {
+      _isOAuthLoading = true;
+    });
+
+    try {
+      final code = await GoogleOAuthService.authorize(context);
+      if (code != null && mounted) {
+        final baseUrl = await RuntimeConfig().getServerUrl();
+        final redirectUri = '$baseUrl/auth/callback';
+
+        final success =
+            await _authService.registerOAuth2('google', code, redirectUri);
+
+        if (success && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Account created successfully!')),
+          );
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const HomePage()),
+          );
+        } else if (mounted) {
+          _showErrorDialog('Google sign up failed. Please try again.');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        _showErrorDialog('Google authorization failed: $e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isOAuthLoading = false;
+        });
+      }
+    }
   }
 
   String? _validateEmail(String? value) {
@@ -159,6 +282,66 @@ class _SignUpPageState extends State<SignUpPage> {
                   text: 'Sign Up',
                   isLoading: _isLoading,
                   onPressed: _handleSignUp,
+                ),
+                const SizedBox(height: 24),
+
+                // Divider
+                Row(
+                  children: [
+                    const Expanded(child: Divider()),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Text(
+                        'Or sign up with',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ),
+                    const Expanded(child: Divider()),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+                // OAuth Buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed:
+                            _isOAuthLoading ? null : _handleDiscordSignUp,
+                        icon:
+                            const Icon(Icons.discord, color: Color(0xFF5865F2)),
+                        label: const Text('Discord'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _isOAuthLoading ? null : _handleGithubSignUp,
+                        icon: const Icon(Icons.code),
+                        label: const Text('GitHub'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Google Button
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: _isOAuthLoading ? null : _handleGoogleSignUp,
+                    icon: const Icon(Icons.g_mobiledata, size: 32),
+                    label: const Text('Continue with Google'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
                 ),
               ],
             ),

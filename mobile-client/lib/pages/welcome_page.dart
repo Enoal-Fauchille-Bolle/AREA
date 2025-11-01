@@ -25,7 +25,7 @@ class WelcomePage extends StatelessWidget {
                   Icon(
                     Icons.flash_on,
                     size: 100,
-                    color: Theme.of(context).primaryColor,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                   const SizedBox(height: 24),
 
@@ -43,18 +43,14 @@ class WelcomePage extends StatelessWidget {
                   // App Subtitle
                   Text(
                     'Automation made simple',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.titleLarge?.copyWith(color: Colors.grey[600]),
+                    style: Theme.of(context).textTheme.titleLarge,
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
 
                   Text(
                     'Connect your actions and reactions',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyLarge?.copyWith(color: Colors.grey[500]),
+                    style: Theme.of(context).textTheme.bodyLarge,
                     textAlign: TextAlign.center,
                   ),
 
@@ -77,8 +73,8 @@ class WelcomePage extends StatelessWidget {
                   CustomButton(
                     text: 'Sign Up',
                     icon: Icons.person_add,
-                    backgroundColor: Colors.white,
-                    textColor: Theme.of(context).primaryColor,
+                    backgroundColor: Theme.of(context).colorScheme.secondary,
+                    textColor: Colors.white,
                     onPressed: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
@@ -99,10 +95,7 @@ class WelcomePage extends StatelessWidget {
                         ),
                       );
                     },
-                    child: Text(
-                      'Continue as Guest',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 14),
-                    ),
+                    child: const Text('Continue as Guest'),
                   ),
                 ],
               ),

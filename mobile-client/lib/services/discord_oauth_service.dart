@@ -1,37 +1,51 @@
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'runtime_config.dart';
 
 class DiscordOAuthService {
+  static final _config = RuntimeConfig();
   static String get clientId =>
       dotenv.env['DISCORD_CLIENT_ID'] ?? '1424743637777907742';
 
-  // Use the backend URL from environment variables
-  static String get redirectUri {
-    // Allow explicit override via DISCORD_REDIRECT_URI, otherwise construct from URL_BASE and PORT
-    final explicit = dotenv.env['DISCORD_REDIRECT_URI'];
-    if (explicit != null && explicit.isNotEmpty) return explicit;
+  // Get redirect URI based on the flow type (auth or service)
+  static Future<String> getRedirectUri({bool forService = false}) async {
+    final baseUrl = await _config.getServerUrl();
 
-    final baseUrl = dotenv.env['URL_BASE'] ?? 'http://10.84.107.120';
-    final port = dotenv.env['PORT'] ?? '8080';
-    return '$baseUrl:$port/auth/discord/callback';
+    if (forService) {
+      // For service linking (AREA connections)
+      return '$baseUrl/service/callback';
+    } else {
+      // For user authentication (login/signup)
+      return '$baseUrl/auth/callback';
+    }
   }
 
   static const String scope = 'identify email';
 
   /// Opens Discord OAuth in a WebView and returns the authorization code
-  static Future<String?> authorize(BuildContext context) async {
+  /// [forService] - true for service linking, false for user authentication
+  static Future<String?> authorize(BuildContext context,
+      {bool forService = false}) async {
+    final redirectUri = await getRedirectUri(forService: forService);
+    final state = forService ? 'service-discord' : 'discord';
+
     final authUrl = Uri.https('discord.com', '/oauth2/authorize', {
       'client_id': clientId,
       'redirect_uri': redirectUri,
       'response_type': 'code',
       'scope': scope,
+      'state': state,
     }).toString();
 
+    if (!context.mounted) return null;
     return Navigator.of(context).push<String>(
       MaterialPageRoute(
         fullscreenDialog: true,
-        builder: (context) => _DiscordOAuthWebView(authUrl: authUrl),
+        builder: (context) => _DiscordOAuthWebView(
+          authUrl: authUrl,
+          forService: forService,
+        ),
       ),
     );
   }
@@ -39,8 +53,12 @@ class DiscordOAuthService {
 
 class _DiscordOAuthWebView extends StatefulWidget {
   final String authUrl;
+  final bool forService;
 
-  const _DiscordOAuthWebView({required this.authUrl});
+  const _DiscordOAuthWebView({
+    required this.authUrl,
+    required this.forService,
+  });
 
   @override
   State<_DiscordOAuthWebView> createState() => _DiscordOAuthWebViewState();
@@ -49,6 +67,7 @@ class _DiscordOAuthWebView extends StatefulWidget {
 class _DiscordOAuthWebViewState extends State<_DiscordOAuthWebView> {
   late final WebViewController _controller;
   bool _isLoading = true;
+  bool _isDisposed = false;
 
   @override
   void initState() {
@@ -58,49 +77,116 @@ class _DiscordOAuthWebViewState extends State<_DiscordOAuthWebView> {
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (url) {
-            _checkForCode(url);
+            if (!_isDisposed) {
+              _checkForCode(url);
+            }
           },
           onPageFinished: (url) {
-            setState(() => _isLoading = false);
+            if (!_isDisposed) {
+              setState(() => _isLoading = false);
+            }
           },
-          onWebResourceError: (error) {},
+          onWebResourceError: (error) {
+            // Ignore cleartext errors silently (expected for local development)
+            if (error.description.contains('ERR_CLEARTEXT_NOT_PERMITTED')) {
+              return;
+            }
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Failed to load: ${error.description}'),
+                  backgroundColor: Colors.orange,
+                  duration: const Duration(seconds: 20),
+                ),
+              );
+            }
+          },
+          onNavigationRequest: (request) {
+            // Allow all navigation requests
+            return NavigationDecision.navigate;
+          },
         ),
       )
       ..loadRequest(Uri.parse(widget.authUrl));
   }
 
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
+  }
+
   void _checkForCode(String url) {
+    if (_isDisposed) return;
+
     final uri = Uri.parse(url);
 
-    // Extract host and port from the redirect URI
-    final redirectUriParsed = Uri.parse(DiscordOAuthService.redirectUri);
+    // Extract redirect URI based on flow type
+    // Note: This needs to be handled carefully since getRedirectUri is now async
+    // We'll check the path pattern directly
+    final expectedPath =
+        widget.forService ? '/service/callback' : '/auth/callback';
 
-    // Check if this is the callback URL with a code
-    if (uri.host == redirectUriParsed.host &&
-        uri.port == redirectUriParsed.port &&
-        uri.path == redirectUriParsed.path &&
-        uri.queryParameters.containsKey('code')) {
-      final code = uri.queryParameters['code'];
+    // Check for mobile callback (http://localhost:8080/service/callback?code=... or /auth/callback)
+    if (uri.host == 'localhost' && uri.port == 8080) {
+      if (uri.path == expectedPath) {
+        if (uri.queryParameters.containsKey('code')) {
+          final code = uri.queryParameters['code'];
+          if (mounted && code != null && !_isDisposed) {
+            // Stop loading to prevent crash
+            _controller.loadRequest(Uri.parse('about:blank'));
+            Navigator.of(context).pop(code);
+          }
+          return;
+        }
 
-      if (mounted && code != null) {
-        Navigator.of(context).pop(code);
+        if (uri.queryParameters.containsKey('error')) {
+          final error = uri.queryParameters['error'];
+          final errorDescription =
+              uri.queryParameters['error_description'] ?? error;
+          if (mounted && !_isDisposed) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Authorization failed: $errorDescription'),
+                backgroundColor: Colors.red,
+              ),
+            );
+            Navigator.of(context).pop();
+          }
+          return;
+        }
       }
     }
 
-    // Check for error
-    if (uri.queryParameters.containsKey('error')) {
-      final error = uri.queryParameters['error'];
-      final errorDescription =
-          uri.queryParameters['error_description'] ?? error;
+    // Check for backend HTTP callback (http://backend:8080/auth/discord/callback?code=...)
+    if (uri.scheme == 'http' || uri.scheme == 'https') {
+      // Check if this is the backend callback URL by checking the path
+      if (uri.path == expectedPath && uri.queryParameters.containsKey('code')) {
+        final code = uri.queryParameters['code'];
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Authorization failed: $errorDescription'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        Navigator.of(context).pop();
+        if (mounted && code != null && !_isDisposed) {
+          // Stop loading to prevent crash
+          _controller.loadRequest(Uri.parse('about:blank'));
+          Navigator.of(context).pop(code);
+        }
+        return;
+      }
+
+      // Check for error in HTTP callback
+      if (uri.queryParameters.containsKey('error')) {
+        final error = uri.queryParameters['error'];
+        final errorDescription =
+            uri.queryParameters['error_description'] ?? error;
+
+        if (mounted && !_isDisposed) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Authorization failed: $errorDescription'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          Navigator.of(context).pop();
+        }
       }
     }
   }
