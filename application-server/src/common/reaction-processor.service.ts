@@ -7,6 +7,7 @@ import { GmailReactionsService } from '../gmail/reactions/gmail-reactions.servic
 import { TwitchReactionsService } from '../twitch/reactions/twitch-reactions.service';
 import { RedditReactionsService } from '../reddit/reactions/reddit-reactions.service';
 import { SpotifyService } from '../spotify/spotify.service';
+import { TrelloReactionsService } from '../trello/reactions/trello-reactions.service';
 
 @Injectable()
 export class ReactionProcessorService {
@@ -22,6 +23,7 @@ export class ReactionProcessorService {
     private readonly twitchReactionsService: TwitchReactionsService,
     private readonly redditReactionsService: RedditReactionsService,
     private readonly spotifyService: SpotifyService,
+    private readonly trelloReactionsService: TrelloReactionsService,
   ) {}
 
   async processReaction(
@@ -77,6 +79,12 @@ export class ReactionProcessorService {
           break;
         case 'add_to_queue':
           await this.spotifyService.addToQueueReaction(executionId, areaId);
+          break;
+        case 'create_card':
+          await this.trelloReactionsService.createCard(executionId, areaId);
+          break;
+        case 'move_card':
+          await this.trelloReactionsService.moveCard(executionId, areaId);
           break;
         default:
           throw new Error(`Unknown reaction component: ${component.name}`);

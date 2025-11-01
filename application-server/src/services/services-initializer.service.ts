@@ -33,6 +33,7 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
     await this.createYoutubeService();
     await this.createRedditService();
     await this.createSpotifyService();
+    await this.createTrelloService();
   }
 
   private async createClockService(): Promise<void> {
@@ -1609,6 +1610,301 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
 
     this.logger.log(
       'Spotify service with add_to_playlist and add_to_queue reactions created successfully',
+    );
+  }
+
+  private async createTrelloService(): Promise<void> {
+    try {
+      await this.servicesService.findByName('Trello');
+      this.logger.log('Trello service already exists, skipping creation');
+      return;
+    } catch {
+      this.logger.log('Creating Trello service...');
+    }
+
+    const trelloService = await this.servicesService.create({
+      name: 'Trello',
+      description:
+        'Manage Trello boards, lists, and cards with automation workflows',
+      icon_path: 'https://trello.com/favicon.ico',
+      requires_auth: true, // Trello requires OAuth authentication
+      is_active: true,
+    });
+
+    // Create new_card_in_list action component
+    const newCardAction = await this.componentsService.create({
+      service_id: trelloService.id,
+      type: ComponentType.ACTION,
+      name: 'new_card_in_list',
+      description: 'Triggers when a new card is added to a Trello list',
+      is_active: true,
+      polling_interval: 60000, // Check every minute
+    });
+
+    await Promise.all([
+      // Parameter: list_id
+      this.variablesService.create({
+        component_id: newCardAction.id,
+        name: 'list_id',
+        description: 'Trello list ID to monitor for new cards',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: false,
+        placeholder: '5a9c012345678901234567890',
+        display_order: 1,
+      }),
+
+      // Return values
+      this.variablesService.create({
+        component_id: newCardAction.id,
+        name: 'card_id',
+        description: 'Trello card ID',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 1,
+      }),
+
+      this.variablesService.create({
+        component_id: newCardAction.id,
+        name: 'card_name',
+        description: 'Card name/title',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 2,
+      }),
+
+      this.variablesService.create({
+        component_id: newCardAction.id,
+        name: 'card_description',
+        description: 'Card description',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 3,
+      }),
+
+      this.variablesService.create({
+        component_id: newCardAction.id,
+        name: 'card_url',
+        description: 'URL to the Trello card',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.URL,
+        nullable: false,
+        display_order: 4,
+      }),
+
+      this.variablesService.create({
+        component_id: newCardAction.id,
+        name: 'list_id',
+        description: 'List ID where the card was created',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 5,
+      }),
+
+      this.variablesService.create({
+        component_id: newCardAction.id,
+        name: 'board_id',
+        description: 'Board ID containing the card',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 6,
+      }),
+    ]);
+
+    // Create card_moved_to_list action component
+    const cardMovedAction = await this.componentsService.create({
+      service_id: trelloService.id,
+      type: ComponentType.ACTION,
+      name: 'card_moved_to_list',
+      description: 'Triggers when a card is moved to a specific list',
+      is_active: true,
+      polling_interval: 60000, // Check every minute
+    });
+
+    await Promise.all([
+      // Parameters
+      this.variablesService.create({
+        component_id: cardMovedAction.id,
+        name: 'board_id',
+        description: 'Trello board ID to monitor',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: false,
+        placeholder: '5a9c012345678901234567890',
+        display_order: 1,
+      }),
+
+      this.variablesService.create({
+        component_id: cardMovedAction.id,
+        name: 'target_list_id',
+        description: 'Target list ID to watch for card movements',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: false,
+        placeholder: '5a9c012345678901234567890',
+        display_order: 2,
+      }),
+
+      // Return values
+      this.variablesService.create({
+        component_id: cardMovedAction.id,
+        name: 'card_id',
+        description: 'Trello card ID that was moved',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 1,
+      }),
+
+      this.variablesService.create({
+        component_id: cardMovedAction.id,
+        name: 'card_name',
+        description: 'Name of the moved card',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 2,
+      }),
+
+      this.variablesService.create({
+        component_id: cardMovedAction.id,
+        name: 'card_url',
+        description: 'URL to the moved card',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.URL,
+        nullable: false,
+        display_order: 3,
+      }),
+    ]);
+
+    // Create create_card reaction component
+    const createCardReaction = await this.componentsService.create({
+      service_id: trelloService.id,
+      type: ComponentType.REACTION,
+      name: 'create_card',
+      description: 'Create a new card in a Trello list',
+      is_active: true,
+    });
+
+    await Promise.all([
+      // Parameters
+      this.variablesService.create({
+        component_id: createCardReaction.id,
+        name: 'list_id',
+        description: 'Trello list ID where the card will be created',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: false,
+        placeholder: '5a9c012345678901234567890',
+        display_order: 1,
+      }),
+
+      this.variablesService.create({
+        component_id: createCardReaction.id,
+        name: 'card_name',
+        description: 'Name/title for the new card',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: false,
+        placeholder: 'New task from AREA',
+        display_order: 2,
+      }),
+
+      this.variablesService.create({
+        component_id: createCardReaction.id,
+        name: 'card_description',
+        description: 'Description for the new card (optional)',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: true,
+        placeholder: 'This card was created automatically',
+        display_order: 3,
+      }),
+
+      // Return values
+      this.variablesService.create({
+        component_id: createCardReaction.id,
+        name: 'card_id',
+        description: 'ID of the created card',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 1,
+      }),
+
+      this.variablesService.create({
+        component_id: createCardReaction.id,
+        name: 'card_url',
+        description: 'URL to the created card',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.URL,
+        nullable: false,
+        display_order: 2,
+      }),
+    ]);
+
+    // Create move_card reaction component
+    const moveCardReaction = await this.componentsService.create({
+      service_id: trelloService.id,
+      type: ComponentType.REACTION,
+      name: 'move_card',
+      description: 'Move a card to another list',
+      is_active: true,
+    });
+
+    await Promise.all([
+      // Parameters
+      this.variablesService.create({
+        component_id: moveCardReaction.id,
+        name: 'card_id',
+        description: 'ID of the card to move',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: false,
+        placeholder: '5a9c012345678901234567890',
+        display_order: 1,
+      }),
+
+      this.variablesService.create({
+        component_id: moveCardReaction.id,
+        name: 'target_list_id',
+        description: 'ID of the target list to move the card to',
+        kind: VariableKind.PARAMETER,
+        type: VariableType.STRING,
+        nullable: false,
+        placeholder: '5a9c012345678901234567890',
+        display_order: 2,
+      }),
+
+      // Return values
+      this.variablesService.create({
+        component_id: moveCardReaction.id,
+        name: 'card_id',
+        description: 'ID of the moved card',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.STRING,
+        nullable: false,
+        display_order: 1,
+      }),
+
+      this.variablesService.create({
+        component_id: moveCardReaction.id,
+        name: 'card_url',
+        description: 'URL to the moved card',
+        kind: VariableKind.RETURN_VALUE,
+        type: VariableType.URL,
+        nullable: false,
+        display_order: 2,
+      }),
+    ]);
+
+    this.logger.log(
+      'Trello service with 2 actions (new_card_in_list, card_moved_to_list) and 2 reactions (create_card, move_card) created successfully',
     );
   }
 }

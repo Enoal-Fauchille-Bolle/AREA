@@ -126,6 +126,19 @@ export class ServicesController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Post('trello/link')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async linkTrello(
+    @Request() req: { user: { id: number } },
+    @Body() body: { token?: string },
+  ): Promise<void> {
+    if (!body.token || typeof body.token !== 'string') {
+      throw new BadRequestException('Valid Trello token is required');
+    }
+    await this.servicesService.linkTrello(req.user.id, body.token);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Post(':id/link')
   @HttpCode(HttpStatus.NO_CONTENT)
   async linkService(
@@ -197,6 +210,24 @@ export class ServicesController {
     email?: string;
   }> {
     return this.servicesService.getTwitchProfile(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('trello/profile')
+  async getTrelloProfile(@Request() req: { user: { id: number } }): Promise<{
+    id: string;
+    username: string;
+    fullName: string;
+    avatarUrl: string | null;
+    email?: string;
+  }> {
+    return this.servicesService.getTrelloProfile(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('trello/auth-url')
+  getTrelloAuthUrl(): { authUrl: string } {
+    return this.servicesService.getTrelloAuthUrl();
   }
 
   @UseGuards(JwtAuthGuard)
