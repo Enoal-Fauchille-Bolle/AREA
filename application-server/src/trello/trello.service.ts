@@ -5,6 +5,7 @@ import {
   Inject,
   forwardRef,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -32,6 +33,7 @@ interface TrelloCard {
 export class TrelloService {
   private readonly logger = new Logger(TrelloService.name);
   private readonly trelloApiUrl = 'https://api.trello.com/1';
+  private readonly trelloApiKey: string | undefined;
 
   constructor(
     @InjectRepository(Area)
@@ -44,7 +46,11 @@ export class TrelloService {
     private readonly areasService: AreasService,
     @Inject(forwardRef(() => ReactionProcessorService))
     private readonly reactionProcessorService: ReactionProcessorService,
-  ) {}
+    private readonly configService: ConfigService,
+  ) {
+    const appConfig = this.configService.get('app');
+    this.trelloApiKey = appConfig.oauth2.trello.apiKey;
+  }
 
   /**
    * Cron job to check for new cards in lists every minute
@@ -114,12 +120,15 @@ export class TrelloService {
         `Checking new cards in list ${listId} for area ${area.id}`,
       );
 
-      // Get last checked card ID from hook state
+      // Get last checked timestamp from hook state
       const hookStateKey = `trello_new_card_${area.id}_${listId}`;
-      const lastCardId = await this.hookStatesService.getState(
+      const lastCheckTimestamp = await this.hookStatesService.getState(
         area.id,
         hookStateKey,
       );
+      const lastCheckTime = lastCheckTimestamp
+        ? new Date(parseInt(lastCheckTimestamp))
+        : new Date(Date.now() - 60000); // Default to 1 minute ago
 
       // Fetch cards from list
       const cards = await this.fetchCardsFromList(listId, apiKey, token);
@@ -129,22 +138,26 @@ export class TrelloService {
         return;
       }
 
-      // Get the most recently created/updated card by dateLastActivity
-      const latestCard = cards.reduce((latest, card) => {
-        const latestDate = new Date(latest.dateLastActivity);
-        const cardDate = new Date(card.dateLastActivity);
-        return cardDate > latestDate ? card : latest;
-      }, cards[0]);
+      // Extract creation timestamp from card ID and filter new cards
+      const newCards = cards
+        .map((card) => ({
+          ...card,
+          createdAt: this.getCardCreationTime(card.id),
+        }))
+        .filter((card) => card.createdAt > lastCheckTime)
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()); // Sort by newest first
 
-      // Check if this is a new card
-      if (lastCardId && lastCardId === latestCard.id) {
+      if (newCards.length === 0) {
         this.logger.debug(`No new cards in list ${listId} since last check`);
         return;
       }
 
+      // Process the newest card
+      const latestCard = newCards[0];
+
       // New card detected!
       this.logger.log(
-        `New card detected in list ${listId}: "${latestCard.name}"`,
+        `New card detected in list ${listId}: "${latestCard.name}" (created at ${latestCard.createdAt.toISOString()})`,
       );
 
       // Create execution
@@ -158,15 +171,15 @@ export class TrelloService {
           card_url: latestCard.url,
           list_id: latestCard.idList,
           board_id: latestCard.idBoard,
-          created_at: latestCard.dateLastActivity,
+          created_at: latestCard.createdAt.toISOString(),
         },
       });
 
-      // Update hook state with the latest card ID
+      // Update hook state with the current timestamp
       await this.hookStatesService.setState(
         area.id,
         hookStateKey,
-        latestCard.id,
+        Date.now().toString(),
       );
 
       // Increment trigger count
@@ -187,6 +200,16 @@ export class TrelloService {
         errorStack,
       );
     }
+  }
+
+  /**
+   * Extract creation timestamp from Trello card ID
+   * Trello IDs are 24-character hex strings where the first 8 characters represent
+   * the Unix timestamp in seconds when the card was created
+   */
+  private getCardCreationTime(cardId: string): Date {
+    const timestamp = parseInt(cardId.substring(0, 8), 16);
+    return new Date(timestamp * 1000);
   }
 
   private async checkCardMovesForArea(area: Area): Promise<void> {
@@ -365,7 +388,10 @@ export class TrelloService {
       }
 
       // Trello uses API Key + Token authentication
-      const apiKey = process.env.TRELLO_API_KEY || '';
+      const apiKey = this.trelloApiKey;
+      if (!apiKey) {
+        throw new Error('Trello API Key is not configured on the server');
+      }
       const token = userService.oauth_token;
 
       return { apiKey, token };

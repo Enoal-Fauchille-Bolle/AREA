@@ -1,4 +1,5 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AreaExecutionsService } from '../../area-executions/area-executions.service';
@@ -29,6 +30,7 @@ interface TrelloCardResponse {
 export class TrelloReactionsService {
   private readonly logger = new Logger(TrelloReactionsService.name);
   private readonly trelloApiUrl = 'https://api.trello.com/1';
+  private readonly trelloApiKey: string | undefined;
 
   constructor(
     @InjectRepository(Area)
@@ -37,7 +39,11 @@ export class TrelloReactionsService {
     private readonly areaParametersService: AreaParametersService,
     private readonly userServicesService: UserServicesService,
     private readonly servicesService: ServicesService,
-  ) {}
+    private readonly configService: ConfigService,
+  ) {
+    const appConfig = this.configService.get('app');
+    this.trelloApiKey = appConfig.oauth2.trello.apiKey;
+  }
 
   /**
    * Create a card in a Trello list (REACTION)
@@ -311,7 +317,10 @@ export class TrelloReactionsService {
       }
 
       // Trello uses API Key + Token
-      const apiKey = process.env.TRELLO_API_KEY || '';
+      const apiKey = this.trelloApiKey;
+      if (!apiKey) {
+        throw new Error('Trello API Key is not configured on the server');
+      }
       const token = userService.oauth_token;
 
       return { apiKey, token };
