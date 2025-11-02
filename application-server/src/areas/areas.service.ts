@@ -110,17 +110,27 @@ export class AreasService {
     userParameters: { [parameterName: string]: string },
   ): Promise<void> {
     for (const paramConfig of parameterConfigs) {
-      const variable = await this.variablesService.create({
-        component_id: componentId,
-        name: paramConfig.name,
-        description: paramConfig.description,
-        kind: VariableKind.PARAMETER,
-        type: this.mapStringToVariableType(paramConfig.type),
-        nullable: !paramConfig.required,
-        placeholder: paramConfig.placeholder,
-        validation_regex: paramConfig.validation,
-        display_order: 1,
-      });
+      // Try to find existing variable first
+      const existingVariables =
+        await this.variablesService.findByComponent(componentId);
+      let variable = existingVariables.find(
+        (v) => v.name === paramConfig.name && v.kind === VariableKind.PARAMETER,
+      );
+
+      // Only create if it doesn't exist
+      if (!variable) {
+        variable = await this.variablesService.create({
+          component_id: componentId,
+          name: paramConfig.name,
+          description: paramConfig.description,
+          kind: VariableKind.PARAMETER,
+          type: this.mapStringToVariableType(paramConfig.type),
+          nullable: !paramConfig.required,
+          placeholder: paramConfig.placeholder,
+          validation_regex: paramConfig.validation,
+          display_order: 1,
+        });
+      }
 
       const userValue = userParameters[paramConfig.name];
       if (userValue && userValue.trim()) {
@@ -542,6 +552,82 @@ export class AreasService {
             type: 'string',
             required: false,
             placeholder: 'bcc@example.com',
+          },
+        ],
+      },
+      {
+        componentName: 'new_card_in_list',
+        parameters: [
+          {
+            name: 'list_id',
+            description: 'Trello list ID to monitor for new cards',
+            type: 'string',
+            required: true,
+            placeholder: '5a9c012345678901234567890',
+          },
+        ],
+      },
+      {
+        componentName: 'card_moved_to_list',
+        parameters: [
+          {
+            name: 'board_id',
+            description: 'Trello board ID to monitor',
+            type: 'string',
+            required: true,
+            placeholder: '5a9c012345678901234567890',
+          },
+          {
+            name: 'target_list_id',
+            description: 'Target list ID to watch for card movements',
+            type: 'string',
+            required: true,
+            placeholder: '5a9c012345678901234567890',
+          },
+        ],
+      },
+      {
+        componentName: 'create_card',
+        parameters: [
+          {
+            name: 'list_id',
+            description: 'Trello list ID where the card will be created',
+            type: 'string',
+            required: true,
+            placeholder: '5a9c012345678901234567890',
+          },
+          {
+            name: 'card_name',
+            description: 'Name/title for the new card',
+            type: 'string',
+            required: true,
+            placeholder: 'New task from AREA',
+          },
+          {
+            name: 'card_description',
+            description: 'Description for the new card (optional)',
+            type: 'string',
+            required: false,
+            placeholder: 'This card was created automatically',
+          },
+        ],
+      },
+      {
+        componentName: 'move_card',
+        parameters: [
+          {
+            name: 'card_id',
+            description: 'ID of the card to move',
+            type: 'string',
+            required: true,
+            placeholder: '5a9c012345678901234567890',
+          },
+          {
+            name: 'target_list_id',
+            description: 'ID of the target list to move the card to',
+            type: 'string',
+            required: true,
+            placeholder: '5a9c012345678901234567890',
           },
         ],
       },

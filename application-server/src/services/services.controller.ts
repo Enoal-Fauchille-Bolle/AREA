@@ -26,6 +26,7 @@ import {
 } from './dto';
 import {
   handleMobileCallback,
+  handleNonMobileRequest,
   isMobileRequest,
   getOAuthProviderFromString,
 } from '../oauth2';
@@ -47,6 +48,9 @@ export class ServicesController {
     @Query('state') provider: string,
     @Res() res: Response,
   ) {
+    if (!isMobileRequest(userAgent)) {
+      return handleNonMobileRequest(res);
+    }
     if (!code) {
       throw new BadRequestException('Missing OAuth code');
     }
@@ -57,16 +61,13 @@ export class ServicesController {
     if (!oauthProvider) {
       throw new BadRequestException('Invalid OAuth provider');
     }
-    if (isMobileRequest(userAgent)) {
-      return handleMobileCallback(
-        res,
-        oauthProvider,
-        code,
-        'auth',
-        this.configService,
-      );
-    }
-    return 'Redirecting to mobile application...\n';
+    return handleMobileCallback(
+      res,
+      oauthProvider,
+      code,
+      'auth',
+      this.configService,
+    );
   }
 
   @Get()
@@ -122,6 +123,19 @@ export class ServicesController {
       throw new BadRequestException('Invalid ID format');
     }
     return this.servicesService.findAllComponents(parsedIntId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('trello/link')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async linkTrello(
+    @Request() req: { user: { id: number } },
+    @Body() body: { token?: string },
+  ): Promise<void> {
+    if (!body.token || typeof body.token !== 'string') {
+      throw new BadRequestException('Valid Trello token is required');
+    }
+    await this.servicesService.linkTrello(req.user.id, body.token);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -196,6 +210,24 @@ export class ServicesController {
     email?: string;
   }> {
     return this.servicesService.getTwitchProfile(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('trello/profile')
+  async getTrelloProfile(@Request() req: { user: { id: number } }): Promise<{
+    id: string;
+    username: string;
+    fullName: string;
+    avatarUrl: string | null;
+    email?: string;
+  }> {
+    return this.servicesService.getTrelloProfile(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('trello/auth-url')
+  getTrelloAuthUrl(): { authUrl: string } {
+    return this.servicesService.getTrelloAuthUrl();
   }
 
   @UseGuards(JwtAuthGuard)
