@@ -140,10 +140,17 @@ export const useDiscordAuth = () => {
     }
   };
 
+  const disconnectFromDiscord = async () => {
+    await servicesApi.disconnectService('discord');
+    setIsConnected(false);
+    setDiscordUser(null);
+  };
+
   return {
     isConnecting,
     isConnected,
     discordUser,
     connectToDiscord,
+    disconnectFromDiscord,
   };
 };

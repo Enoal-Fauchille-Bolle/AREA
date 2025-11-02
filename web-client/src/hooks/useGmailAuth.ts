@@ -167,10 +167,17 @@ export const useGmailAuth = () => {
     }
   };
 
+  const disconnectFromGmail = async () => {
+    await servicesApi.disconnectService('gmail');
+    setIsConnected(false);
+    setGmailUser(null);
+  };
+
   return {
     isConnecting,
     isConnected,
     gmailUser,
     connectToGmail,
+    disconnectFromGmail,
   };
 };

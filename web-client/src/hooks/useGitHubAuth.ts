@@ -220,10 +220,17 @@ export const useGitHubAuth = () => {
     }
   };
 
+  const disconnectFromGitHub = async () => {
+    await servicesApi.disconnectService('github');
+    setIsConnected(false);
+    setGitHubUser(null);
+  };
+
   return {
     isConnecting,
     isConnected,
     githubUser,
     connectToGitHub,
+    disconnectFromGitHub,
   };
 };
