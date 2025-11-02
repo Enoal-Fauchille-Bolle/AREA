@@ -30,6 +30,7 @@ import {
 import { UserResponseDto } from '../users/dto/user-response.dto';
 import {
   handleMobileCallback,
+  handleNonMobileRequest,
   isMobileRequest,
   getOAuthProviderFromString,
 } from '../oauth2';
@@ -51,6 +52,9 @@ export class AuthController {
     @Query('state') provider: string,
     @Res() res: Response,
   ) {
+    if (!isMobileRequest(userAgent)) {
+      return handleNonMobileRequest(res);
+    }
     if (!code) {
       throw new BadRequestException('Missing OAuth code');
     }
@@ -61,16 +65,13 @@ export class AuthController {
     if (!oauthProvider) {
       throw new BadRequestException('Invalid OAuth provider');
     }
-    if (isMobileRequest(userAgent)) {
-      return handleMobileCallback(
-        res,
-        oauthProvider,
-        code,
-        'auth',
-        this.configService,
-      );
-    }
-    return 'Redirecting to mobile application...\n';
+    return handleMobileCallback(
+      res,
+      oauthProvider,
+      code,
+      'auth',
+      this.configService,
+    );
   }
 
   @UseGuards(LocalAuthGuard)

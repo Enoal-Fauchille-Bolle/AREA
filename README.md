@@ -1,476 +1,344 @@
-# AREA
+# AREA (Action-REAction)
 
-An automation platform similar to IFTTT/Zapier that enables users to connect various services and create automated workflows through Actions and REActions.
+[![Chocolatine CI](https://github.com/Enoal-Fauchille-Bolle/AREA/actions/workflows/chocolatine.yaml/badge.svg)](https://github.com/Enoal-Fauchille-Bolle/AREA/actions/workflows/chocolatine.yaml) [![GitHub issues](https://img.shields.io/github/issues/Enoal-Fauchille-Bolle/AREA)](https://github.com/Enoal-Fauchille-Bolle/AREA/issues) [![GitHub pull requests](https://img.shields.io/github/issues-pr/Enoal-Fauchille-Bolle/AREA)](https://github.com/Enoal-Fauchille-Bolle/AREA/pulls) [![GitHub last commit](https://img.shields.io/github/last-commit/Enoal-Fauchille-Bolle/AREA)](https://github.com/Enoal-Fauchille-Bolle/AREA/commits/main) [![GitHub contributors](https://img.shields.io/github/contributors/Enoal-Fauchille-Bolle/AREA)](https://github.com/Enoal-Fauchille-Bolle/AREA/graphs/contributors) ![Repo Size](https://img.shields.io/github/repo-size/Enoal-Fauchille-Bolle/AREA) ![Lines of Code](https://tokei.rs/b1/github/Enoal-Fauchille-Bolle/AREA)
+[![Tech Stack: NestJS](https://img.shields.io/badge/Backend-NestJS-ea2845?logo=nestjs)](https://nestjs.com/) [![Tech Stack: React](https://img.shields.io/badge/Frontend-React-61DAFB?logo=react)](https://reactjs.org/) [![Tech Stack: Flutter](https://img.shields.io/badge/Mobile-Flutter-02569B?logo=flutter)](https://flutter.dev/) [![Tech Stack: TypeScript](https://img.shields.io/badge/Language-TypeScript-3178C6?logo=typescript)](https://www.typescriptlang.org/) [![Tech Stack: PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-4169E1?logo=postgresql)](https://www.postgresql.org/) [![Tech Stack: Docker](https://img.shields.io/badge/Container-Docker-2496ED?logo=docker)](https://www.docker.com/)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow.svg)](https://conventionalcommits.org) [![Code Style: Prettier](https://img.shields.io/badge/Code%20Style-Prettier-ff69b4.svg)](https://prettier.io/) [![Commitizen friendly](https://img.shields.io/badge/Commitizen-friendly-brightgreen.svg)](http://commitizen.github.io/cz-cli/)
+
+AREA is an automation platform developed as part of the Epitech Tek3 curriculum (G-DEV-500). Inspired by services like IFTTT and Zapier, it allows users to connect various online services and create automated workflows by linking triggers (Actions) from one service to tasks (REActions) in another.
 
 ## Table of Contents
 
 - [Overview](#overview)
 - [Architecture](#architecture)
-- [Features](#features)
+- [Implemented Features](#implemented-features)
+  - [Core](#core)
+  - [Services & Components](#services--components)
 - [Technology Stack](#technology-stack)
 - [Prerequisites](#prerequisites)
-- [Installation](#installation)
+- [Getting Started (Docker - Recommended)](#getting-started-docker---recommended)
+- [Local Development Setup (Alternative)](#local-development-setup-alternative)
+- [Usage Example](#usage-example)
 - [API Documentation](#api-documentation)
-- [Docker Deployment](#docker-deployment)
-- [Development](#development)
+- [Project Structure](#project-structure)
+- [Testing](#testing)
+- [Code Style & Conventions](#code-style--conventions)
 - [Accessibility](#accessibility)
 - [Security Considerations](#security-considerations)
 - [Troubleshooting](#troubleshooting)
-- [References](#references)
+- [Documentation & References](#documentation--references)
 - [Authors](#authors)
-- [Support](#support)
 - [Contributing](#contributing)
 - [License](#license)
 
 ## Overview
 
-ACTION-REACTION is a comprehensive automation platform consisting of three main components:
+This project consists of three main components working together:
 
-- **Application Server**: Core business logic and REST API
-- **Web Client**: Browser-based interface
-- **Mobile Client**: Android mobile application
+1. **Application Server (`application-server/`)**: A NestJS backend handling all business logic, user authentication (email/password & Google OAuth2), service integrations, database interactions (PostgreSQL via TypeORM), AREA creation/execution, and the REST API.
+2. **Web Client (`web-client/`)**: A React (Vite + TypeScript) single-page application providing a browser-based interface. It communicates exclusively with the Application Server via the REST API.
+3. **Mobile Client (`mobile-client/`)**: A Flutter application (targeting Android) providing a native mobile interface. It also communicates exclusively with the Application Server via the REST API.
 
-The platform allows users to create automated workflows (AREAs) by connecting Actions (triggers) from one service to REActions (responses) from another service.
+The primary goal, as defined by the [Epitech subject](./docs/G-DEV-500_AREA.pdf), is to integrate existing services and technologies, focusing on the "glue code" that connects them to create meaningful automations. Business logic resides *only* on the server-side.
 
 ## Architecture
 
 ```mermaid
 graph TD
-    A[Web Client<br/>Port 8081]
-    B[Mobile Client<br/>Android]
-    C[Application Server<br/>Port 8080]
-    D[Business Logic<br/>Authentication<br/>Services<br/>AREA Engine<br/>Hooks]
+    subgraph User Interfaces
+        A["Web Client (React)<br>Port 8081"]
+        B["Mobile Client (Flutter)<br>Android APK"]
+    end
 
-    A -->|REST API Calls| C
-    B -->|REST API Calls| C
-    C --> D
+    subgraph Backend
+        C["Application Server (NestJS)<br>Port 8080"] --- D["PostgreSQL DB<br>Port 5432"]
+        C --- E["Business Logic<br>- Auth (JWT, OAuth2)<br>- Service Management<br>- AREA Engine<br>- Hook Triggers (Cron, Webhook, Poll, Events)<br>- REST API (/docs)"]
+    end
+
+    A -- REST API Calls --> C
+    B -- REST API Calls --> C
 
     style A fill:#e1f5ff,stroke:#333,stroke-width:2px
     style B fill:#e1f5ff,stroke:#333,stroke-width:2px
     style C fill:#fff4e1,stroke:#333,stroke-width:2px
-    style D fill:#f0f0f0,stroke:#333,stroke-width:2px
+    style D fill:#d1eaff,stroke:#333,stroke-width:2px
+    style E fill:#f0f0f0,stroke:#333,stroke-width:2px
 ```
 
-### Component Responsibilities
+- Clients (Web & Mobile) interact with the Application Server via its REST API.
+- The Application Server contains all core logic and interacts with the PostgreSQL database.
+- Authentication uses JWT tokens issued by the server. OAuth2 flows are initiated by clients, but the code exchange and token handling occur on the server.
 
-- **Application Server**: Handles all business logic, user authentication, service integrations, AREA execution, and hook management
-- **Web Client**: Provides user interface for browser access, forwards all requests to the application server
-- **Mobile Client**: Provides native Android interface, forwards all requests to the application server
+## Implemented Features
 
-## Features
+### Core
 
-### User Management
+- **User Management**: Registration (Email/Username/Password), Login (Email/Password), Google OAuth2 Login/Registration, Profile fetching/updating (`/auth/me`).
+    *(Note: Email confirmation after registration is required by the subject but not yet implemented)*.
+    *(Note: Login uses Email, while the subject mentions Username)*.
+- **AREA Workflow Management**: Create, view, activate/deactivate, delete AREAs linking one Action to one REAction.
+- **Service Linking**: Connect/disconnect accounts for integrated services, including OAuth2 flow for required services (Google, Discord, GitHub, Gmail, Twitch).
+- **Parameter Configuration**: Define specific parameters for Actions and REActions when creating an AREA, including support for variable interpolation (using `{{variable_name}}` syntax).
+- **Execution History**: Basic tracking of AREA executions (status, trigger data, errors).
+- **Hook System**: Automatic triggering of AREAs via:
+  - Cron Jobs (`@nestjs/schedule`): For time-based actions.
+  - Webhooks: Receiving events from external services (e.g., GitHub).
+  - API Polling: Periodically checking external APIs (e.g., Gmail, Twitch).
+  - Event Listeners: Real-time events via SDKs (e.g., Discord Bot).
+- **State Management**: Prevents duplicate triggers for relevant actions.
+- **Server Metadata**: `/about.json` endpoint providing server time, client IP, and available services/actions/reactions as required.
 
-- User registration and account creation
-- Email confirmation workflow
-- OAuth2 authentication (Google, Facebook, Twitter/X)
-- Username/password authentication
-- User profile management
-- Administration dashboard
+### Services & Components
 
-### Service Integration
+Based on `application-server/src/services/services-initializer.service.ts`:
 
-- Connect multiple third-party services
-- OAuth2 service subscription
-- Service management from user profile
-- Dynamic service discovery
-
-### Actions and REActions
-
-| **Service**       | **Actions (Triggers)**                                                           | **Reactions (Tasks)**            |
-|-------------------|----------------------------------------------------------------------------------|----------------------------------|
-| **Timer**         | - At a specific moment                                                           |                                  |
-| **Gmail**         | - Receive email (with optional conditions)                                       | - Send email                     |
-| **YouTube**       | - New video from a channel<br>- Like on a video<br>- New subscriber on a channel | - Like a video                   |
-| **X (Twitter)**   | - New tweet with hashtag `#X`<br>- New user follows you                          | - Post a tweet<br>- Like a tweet |
-| **Discord (bot)** | - Message posted (with optional conditions)                                      | - Send message in a channel      |
-| **Deezer**        | - New album from artist `X` released                                             | - Add song to playlist           |
-
-### AREA Workflows
-
-- Create custom automation workflows
-- Connect any Action to any REAction
-- Configure Action parameters
-- Configure REAction parameters
-- Enable/disable workflows
-- View workflow execution history
-
-### Hook System
-
-- Automatic workflow execution
-- Event monitoring and detection
-- Condition verification
-- State management to prevent duplicate executions
-- Asynchronous task execution
+| Service           | Actions Implemented                                               | REActions Implemented              | Requires Auth            |
+|-------------------|-------------------------------------------------------------------|------------------------------------|--------------------------|
+| **Clock (Timer)** | `daily_timer`, `weekly_timer`, `monthly_timer`, `interval_timer`  |                                    | No                       |
+| **Email**         |                                                                   | `send_email`                       | No (uses env)            |
+| **Gmail**         | `new_email_received` *(via Polling)*                              | `send_gmail`                       | Yes (OAuth2)             |
+| **Google**        | *(Service exists for Auth)*                                       |                                    | Yes (OAuth2)             |
+| **Discord**       | `message_posted`, `reaction_added`                                | `send_message`, `react_to_message` | Yes (OAuth2 & Bot Token) |
+| **GitHub**        | `push_event`, `pull_request_event`, `issue_event` *(via Webhook)* |                                    | Yes (OAuth2)             |
+| **Twitch**        | `stream_live` *(via Polling)*                                     | `Messages`                         | Yes (OAuth2)             |
+| **Spotify**       |                                                                   | `add_to_playlist`, `add_to_queue`  | Yes (OAuth2)             |
+| **Reddit**        | `hot_post_in_subreddit`                                           | `create_reddit_post`               | Yes (OAuth2)             |
 
 ## Technology Stack
 
-**Backend:**
-
-- Framework: [Node.js](https://nodejs.org/) with [NestJS](https://nestjs.com/)
-- Database: [PostgreSQL](https://www.postgresql.org/)
-- Authentication: [JWT](https://www.jwt.io/), [OAuth2](https://auth0.com/fr/intro-to-iam/what-is-oauth-2)
-- API Type: [RESTful](https://fr.wikipedia.org/wiki/Representational_state_transfer)
-
-**Frontend (Web):**
-
-- Framework: [React](https://react.dev/)
-- HTTP Client: [Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) / [Axios](https://axios-http.com/)
-- UI Framework: [Tailwind CSS](https://tailwindcss.com/)
-
-**Mobile:**
-
-- Platform: [Android](https://www.android.com/)
-- Language: [Flutter](https://flutter.dev/)
-
-**DevOps:**
-
-- Containerization: [Docker](https://www.docker.com/) & [Docker Compose](https://docs.docker.com/compose/)
-- Continuous Integration: [GitHub Actions](https://github.com/features/actions)
-- Continuous Deployment: [Jenkins](https://www.jenkins.io/)
+- **Backend**: Node.js, NestJS, TypeScript, PostgreSQL, TypeORM, JWT, Passport.js, Bcrypt
+- **Frontend (Web)**: React, Vite, TypeScript, Tailwind CSS, React Router, Fetch API
+- **Mobile**: Flutter, Dart, http, webview\_flutter, flutter\_dotenv, shared\_preferences (Targets Android)
+- **DevOps**: Docker, Docker Compose, Nginx (for web client serving), GitHub Actions (CI)
 
 ## Prerequisites
 
-- [Docker](https://docs.docker.com/engine/install/) - version **28.4+**
-- [Docker Compose](https://docs.docker.com/compose/install/) - version **2.39+**
-- [Node.js](https://nodejs.org/en/download) - version **22.19+** *(for local development)*
-- [NPM](https://nodejs.org/en/download) - version **11.6+** *(for local development)*
-- [Flutter](https://docs.flutter.dev/get-started) - version **3.35+** *(for local development)*
-- [Dart SDK](https://docs.flutter.dev/get-started) - version **3.9+** *(for local development)*
+- **For Docker Deployment**:
+  - [Docker Engine](https://docs.docker.com/engine/install/) (v20+)
+  - [Docker Compose](https://docs.docker.com/compose/install/) (v2+)
+- **For Local Development (Optional)**:
+  - [Node.js](https://nodejs.org/) (v22 recommended)
+  - [npm](https://www.npmjs.com/) (v10+) or [pnpm](https://pnpm.io/) (v10+)
+  - [Flutter SDK](https://docs.flutter.dev/get-started/install) (3.35+)
+  - [Dart SDK](https://www.google.com/search?q=https://dart.dev/get-sdk) (3.9+)
+  - [PostgreSQL](https://www.postgresql.org/download/) Server (16+)
+  - Android Development Environment (e.g. Android Studio, SDK, Emulator/Device) for mobile development.
 
-## Installation
+## Getting Started (Docker - Recommended)
 
-### Using Docker (Recommended)
+This is the simplest way to get the entire application running.
 
-Clone the repository:
+1. **Clone the repository:**
 
-```bash
-git clone https://github.com/Enoal-Fauchille-Bolle/AREA.git
-cd AREA
-```
+    ```bash
+    git clone https://github.com/Enoal-Fauchille-Bolle/AREA.git
+    cd AREA
+    ```
 
-Build the Docker images:
+2. **Configure Environment Variables:**
 
-```bash
-docker-compose build
-```
+      - Copy the example environment files:
 
-Start the services:
+        ```bash
+        cp application-server/.env.example application-server/.env
+        cp web-client/.env.example web-client/.env
+        cp mobile-client/.env.example mobile-client/.env
+        # Also copy the root .env.example if needed for docker-compose variables
+        TODO: mobile-client/android/...
+        cp .env.example .env
+        ```
 
-```bash
-docker-compose up
-```
+      - Edit the `.env` files (especially `application-server/.env`) to set:
+          - Database credentials (`POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`). **Ensure these match between `docker-compose.yaml` and `application-server/.env`**.
+          - `JWT_SECRET` (generate a strong random string).
+          - OAuth Client IDs/Secrets for services you want to use (Google, Discord, GitHub, etc.). Get these from the respective developer consoles.
+          - Redirect URIs must match your setup (e.g., `http://localhost:8080/auth/callback` for server, potentially different ones for clients).
+          - `SERVER_URL` (e.g., `http://localhost:8080`).
+          - `DISCORD_BOT_TOKEN` if using Discord features.
 
-The application will be available at:
+3. **Build and Start Containers:**
 
-- Application Server: `http://localhost:8080`
-- Web Client: `http://localhost:8081`
-- Mobile Client APK: `http://localhost:8081/client.apk`
+    ```bash
+    docker-compose build
+    docker-compose up -d # Use -d to run in detached mode (background)
+    ```
 
-### Local Development Setup
+    *(Note: The first build, especially for the mobile client, can take a significant amount of time.)*
 
-#### Application Server
+4. **Access Services:**
 
-```bash
-cd application-server
-npm install
-npm run start:dev
-```
+      - **Application Server API**: `http://localhost:8080`
+      - **API Docs (Swagger)**: `http://localhost:8080/docs`
+      - **Web Client**: `http://localhost:8081`
+      - **Mobile Client APK**: Download from `http://localhost:8081/client.apk` and install on an Android device/emulator.
 
-#### Web Client
+5. **Stopping:**
 
-```bash
-cd web-client
-npm install
-npm run dev
-```
+    ```bash
+    docker-compose down
+    ```
 
-#### Mobile Client
+## Local Development Setup (Alternative)
 
-```bash
-cd mobile-client
-flutter run
-```
+Run each component individually without Docker containers (requires installing all prerequisites).
 
-More details are available about the developement, environment variables and configuration in these files:
+1. **Clone & Configure:** Follow steps 1 & 2 from the Docker setup to clone and configure `.env` files. Ensure `POSTGRES_HOST` points to your local DB address (often `localhost` or `127.0.0.1`).
 
-- [Application Server Configuration](./docs/APPLICATION_SERVER.md)
-- [Web Client Configuration](./docs/WEB_CLIENT.md)
-- [Mobile Client Configuration](./docs/MOBILE_CLIENT.md)
+2. **Start Database:** Ensure your local PostgreSQL server is running.
 
-### Creating Your First AREA
+3. **Install Dependencies:** At the root of the project, run:
 
-1. **Register/Login**
-   - Create an account or login with OAuth2 provider
-   - Confirm your email address
+    ```bash
+    npm install # or pnpm install
+    ```
 
-2. **Subscribe to Services**
-   - Navigate to "Services" page
-   - Click "Connect" on desired services
-   - Authorize the application via OAuth2
+4. **Start Application Server:**
 
-3. **Create an AREA**
-   - Go to "My AREAs" page
-   - Click "Create New AREA"
-   - Select an Action service and configure the trigger
-   - Select a REAction service and configure the response
-   - Name your AREA and activate it
+    ```bash
+    npm run dev:server
+    ```
 
-4. **Monitor Execution**
-   - View AREA execution logs in the dashboard
-   - Receive notifications when AREAs are triggered
-   - Enable/disable AREAs as needed
+    *(Server runs on `http://localhost:8080` by default)*
 
-### Example AREAs
+5. **Start Web Client:**
 
-**Gmail to Discord**
+    ```bash
+    npm run dev:web
+    ```
 
-- Action: Email received with a message containing "urgent"
-- REAction: Send message to Discord channel with the message
+    *(Web client runs on `http://localhost:8081` by default)*
 
-**Deezer to X**
+6. **Run Mobile Client:**
 
-- Action: New album released by artist "Coldplay"
-- REAction: Send tweet announcing the new album
+      - Ensure an Android emulator is running or a device is connected.
+      - Update `URL_BASE` in `mobile-client/.env` to point to your machine's local network IP (e.g., `http://192.168.1.100`) accessible by the emulator/device, **not** `localhost`.
 
-**Timer to YouTube**
+    <!-- end list -->
 
-- Action: At 8 AM the 30 September 2026
-- REAction: Like a specific video
+    ```bash
+    npm run build:mobile
+    ```
+
+## Usage Example
+
+1. Open the Web Client (`http://localhost:8081`) or the installed Mobile App.
+2. **Sign Up** for a new account or **Login**.
+3. Navigate to the **Services** page (Mobile) or relevant section (Web - likely User Profile) to connect your accounts (e.g., link your Google, Discord accounts via OAuth2).
+4. Navigate to **My Areas** (or similar) and click **Create**.
+5. Follow the steps:
+      - Choose an **Action Service** (e.g., Clock).
+      - Choose an **Action Component** (e.g., `daily_timer`).
+      - Choose a **REAction Service** (e.g., Email).
+      - Choose a **REAction Component** (e.g., `send_email`).
+      - Configure **Parameters** (e.g., set time `09:00` for the timer, set recipient `me@example.com` and subject `Daily Update` for the email).
+      - Give your AREA a **Name** (e.g., "Daily Email Alert").
+      - **Create** the AREA.
+6. Ensure the AREA is active. It will now run automatically based on the trigger.
 
 ## API Documentation
 
-You can see the full [API documentation here](./docs/APPLICATION_SERVER.md).
+The REST API provided by the Application Server is documented using Swagger/OpenAPI.
 
-## Docker Deployment
+- **Live Documentation**: Access <http://localhost:8080/docs> while the server is running.
+- **Static Documentation**: See [docs/ENDPOINTS.md](https://www.google.com/search?q=docs/ENDPOINTS.md) for a detailed list of endpoints.
+- **Server Configuration**: See [docs/APPLICATION\_SERVER.md](https://www.google.com/search?q=docs/APPLICATION_SERVER.md) for backend details.
 
-### Docker Compose Structure
-
-TODO
-
-```yaml
-name: area
-services:
-  application_server:
-    build: ./application-server
-    name: application-server
-    ports:
-      - "8080:8080"
-    environment:
-      - NODE_ENV=production
-    depends_on:
-      - database
-
-  web_client:
-    build: ./web-client
-    name: web-client
-    ports:
-      - "8081:8081"
-    depends_on:
-      - server
-      - client_mobile
-    volumes:
-      - mobile-builds:/usr/share/nginx/html/mobile
-
-  mobile_client:
-    build: ./mobile-client
-    name: mobile-client
-    volumes:
-      - mobile-builds:/app/build # TODO: Adjust path as needed
-
-  database:
-    image: postgres:14
-    # environment:
-    #   POSTGRES_DB: area
-    #   POSTGRES_USER: user
-    #   POSTGRES_PASSWORD: password
-    env_file:
-      - ./application-server/.env
-    volumes:
-      - db-data:/var/lib/postgresql/data
-
-volumes:
-  mobile-builds:
-  db-data:
-```
-
-### Commands
-
-Build all services:
-
-```bash
-docker-compose build
-```
-
-Start all services:
-
-```bash
-docker-compose up
-```
-
-Start in detached mode:
-
-```bash
-docker-compose up -d
-```
-
-View logs:
-
-```bash
-docker-compose logs -f
-```
-
-Stop all services:
-
-```bash
-docker-compose down
-```
-
-## Development
-
-### Project Structure
+## Project Structure
 
 ```txt
 AREA/
-├── README.md                   # Main documentation file
-├── LICENSE                     # License information
-├── HOWTOCONTRIBUTE.md          # Contribution guidelines
-├── assets/                     # Shared assets (images, icons, etc.)
-├── dev/                        # Development scripts and tools
-├── docs/                       # Documentation files
-├── shared/                     # Shared code and resources
-├── application-server/         # Backend server
-│   ├── src/
-│   ├── test/
-│   ├── tsconfig.build.json
-│   └── tsconfig.json
-├── web-client/                 # Web frontend
-│   ├── public/
-│   └── src/
-└── mobile-client/              # Mobile application
-    ├── android/
-    ├── assets/
-    ├── lib/
-    └── test/
+├── .github/              # GitHub Actions workflows, issue templates
+├── .husky/               # Git hooks (linting, commit messages)
+├── application-server/   # NestJS Backend source code, Dockerfile, tests
+├── assets/               # Shared images (e.g., user flow diagrams)
+├── dev/                  # Development utilities (e.g., local DB setup)
+├── docs/                 # Project documentation files (subject, API, etc.)
+├── mobile-client/        # Flutter Mobile App source code, Dockerfile, tests
+├── web-client/           # React Web App source code, Dockerfile, tests
+├── .dockerignore
+├── .gitignore
+├── commitlint.config.ts  # Commit message linting rules
+├── docker-compose.yaml   # Main Docker Compose file for orchestration
+├── HOWTOCONTRIBUTE.md    # Guide for contributors
+├── LICENSE               # Project License (GNU v3)
+├── package.json          # Root package file (for workspace commands like commit)
+├── pnpm-workspace.yaml   # PNPM workspace configuration
+└── README.md             # This file
 ```
 
-### Running Tests
+## Testing
 
-**Server:**
+Each component has its own testing setup:
 
-```bash
-cd application-server
-npm test
-```
+- **Application Server (NestJS)**: Unit and Integration/E2E tests using Jest.
 
-**Web Client:**
+    ```bash
+    npm run test:server       # Run unit tests & integration tests
+    ```
 
-```bash
-cd web-client
-npm test
-```
+- **Web Client (React)**: Component tests using Vitest and React Testing Library.
 
-**Mobile Client:**
+    ```bash
+    npm run test:web
+    ```
 
-```bash
-cd mobile-client
-./gradlew test
-```
+- **Mobile Client (Flutter)**: Widget tests using `flutter_test`.
 
-### Code Style
+    ```bash
+    npm run test:mobile
+    ```
 
-This project follows industry-standard coding conventions:
+Tests are automatically run on push/pull request via GitHub Actions.
 
-- Use ESLint for JavaScript/TypeScript
-- Use Prettier for code formatting
-- Follow RESTful API design principles
-- Write meaningful commit messages using Conventional Commits
+## Code Style & Conventions
+
+- **Formatting**: Prettier (TypeScript/JavaScript), Dart Formatter. Enforced via Husky pre-commit hooks.
+- **Linting**: ESLint (TypeScript/JavaScript), Flutter Analyze (Dart). Enforced via Husky pre-commit hooks.
+- **Commits**: Conventional Commits standard enforced via Commitlint and Husky hooks. Use `npm run commit` at the root for interactive commit message generation.
 
 ## Accessibility
 
-This application follows WCAG 2.1 guidelines to ensure accessibility:
-
-- Semantic HTML structure
-- ARIA labels where appropriate
-- Keyboard navigation support
-- Screen reader compatibility
-- Sufficient color contrast ratios
-- Responsive design for various screen sizes
+Web client development aims to follow WCAG guidelines. Basic accessibility tests are included. Further auditing and testing are encouraged. Mobile client accessibility relies on Flutter's built-in support.
 
 ## Security Considerations
 
-- All passwords are hashed using bcrypt
-- JWT tokens expire after configured period
-- OAuth2 tokens are stored securely
-- API endpoints are protected with authentication middleware
-- Input validation on all endpoints
-- CORS configured appropriately
-- SQL injection prevention
-- XSS protection
+- **Authentication**: Passwords hashed with bcrypt. JWT tokens used for session management with configurable expiration.
+- **Authorization**: API endpoints protected using `JwtAuthGuard`. *(Admin role/guard mentioned but not fully implemented)*.
+- **OAuth2**: Secure handling of OAuth tokens (stored in DB, refresh mechanism).
+- **Input Validation**: DTOs validated using `class-validator`.
+- **Dependencies**: Regularly update dependencies to patch vulnerabilities.
+- **Secrets Management**: Use `.env` files for sensitive credentials; do not commit them.
 
 ## Troubleshooting
 
-### Common Issues
+- **Port Conflicts**: If `docker-compose up` fails due to ports (8080, 8081, 5432) being in use, stop the conflicting service or change the host port mapping in `docker-compose.yaml`.
+- **Database Connection**: Ensure the PostgreSQL container (`database`) is running. Verify credentials in `application-server/.env` match those used by the database service in `docker-compose.yaml`. Check firewall settings.
+- **Mobile Client Connection**: Ensure `URL_BASE` in `mobile-client/.env` points to the correct IP address of your machine on the local network (not `localhost`), accessible from the emulator/device.
+- **OAuth Redirect URI Mismatch**: Ensure Redirect URIs in your `.env` files and configured in the OAuth provider's developer console (Google, Discord, etc.) exactly match.
 
-**Port already in use:**
+## Documentation & References
 
-```bash
-# Change ports in docker-compose.yml or kill the process
-lsof -ti:8080 | xargs kill -9
-```
-
-**Database connection failed:**
-
-- Check DATABASE_URL in .env file
-- Ensure database service is running
-- Verify credentials
-
-**OAuth2 redirect URI mismatch:**
-
-- Update redirect URIs in OAuth2 provider settings
-- Ensure callback URLs match in .env file
-
-**Mobile app can't connect to server:**
-
-- Use local network IP instead of localhost
-- Check firewall settings
-- Verify server is accessible from mobile device
-
-## References
-
-### Related Documentation
-
-- [Application Server Configuration](./docs/APPLICATION_SERVER.md)
-- [Web Client Configuration](./docs/WEB_CLIENT.md)
-- [Mobile Client Configuration](./docs/MOBILE_CLIENT.md)
-
-### External Resources
-
-- [NestJS Documentation](https://docs.nestjs.com/)
-- [React Documentation](https://react.dev/)
-- [Flutter Documentation](https://docs.flutter.dev/)
-- [PostgreSQL Documentation](https://www.postgresql.org/docs/)
+- **This File**: General overview and setup.
+- **[docs/G-DEV-500\_AREA.pdf](https://www.google.com/search?q=docs/G-DEV-500_AREA.pdf)**: The official Epitech project subject.
+- **[docs/APPLICATION\_SERVER.md](https://www.google.com/search?q=docs/APPLICATION_SERVER.md)**: Detailed backend documentation.
+- **[docs/WEB\_CLIENT.md](https://www.google.com/search?q=docs/WEB_CLIENT.md)**: Detailed web client documentation.
+- **[docs/MOBILE\_CLIENT.md](https://www.google.com/search?q=docs/MOBILE_CLIENT.md)**: Detailed mobile client documentation.
+- **[docs/DATABASE.md](https://www.google.com/search?q=docs/DATABASE.md)**: Database schema details.
+- **[docs/ENDPOINTS.md](https://www.google.com/search?q=docs/ENDPOINTS.md)**: Detailed API endpoint list.
+- **[HOWTOCONTRIBUTE.md](https://www.google.com/search?q=HOWTOCONTRIBUTE.md)**: Guide for contributing to the project.
+- **API Docs (Live)**: `http://localhost:8080/docs`
 
 ## Authors
 
-- **Samuel Giret**: [SamGave07](https://github.com/SamGave07) - Backend Developer
-- **Enoal Fauchille-Bolle**: [Enoal-Fauchille-Bolle](https://github.com/Enoal-Fauchille-Bolle) - Backend Developer
-- **Evan Mahe**: [Mahe-Evan](https://github.com/Mahe-Evan) - Mobile Developer
-- **Quentin Gerard**: [quent1111](https://github.com/quent1111) - Frontend Developer
-- **Renaud Manet**: [renman-ymd](https://github.com/renman-ymd) - Fullstack Developer
-
-## Support
-
-For support, please:
-
-- Open an issue on GitHub
-- Contact the development team
-- Check the documentation in `/docs`
+- **Samuel Giret**: [SamGave07](https://github.com/SamGave07)
+- **Enoal Fauchille-Bolle**: [Enoal-Fauchille-Bolle](https://github.com/Enoal-Fauchille-Bolle)
+- **Evan Mahe**: [Mahe-Evan](https://github.com/Mahe-Evan)
+- **Quentin Gerard**: [quent1111](https://github.com/quent1111)
+- **Renaud Manet**: [renman-ymd](https://github.com/renman-ymd)
 
 ## Contributing
 
-Please refer to [HOWTOCONTRIBUTE.md](./HOWTOCONTRIBUTE.md) for detailed information on how to contribute to this project.
+Contributions are welcome\! Please read the [HOWTOCONTRIBUTE.md](https://www.google.com/search?q=HOWTOCONTRIBUTE.md) guide for details on the process, code standards, and how to add new features.
 
 ## License
 
-This project is licensed under the GNU v3 License, see the [LICENSE file](./LICENSE) for details.
+This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](https://www.google.com/search?q=LICENSE) file for details.

@@ -35,7 +35,7 @@ export const appConfig = registerAs('app', () => {
       password: process.env.POSTGRES_PASSWORD || 'area_password',
       database: process.env.POSTGRES_DB || 'area_db',
       synchronize: process.env.NODE_ENV !== 'production',
-      logging: process.env.NODE_ENV !== 'production',
+      logging: process.env.NODE_ENV === 'debug',
     },
 
     // OAuth2 Configuration

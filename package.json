@@ -13,7 +13,23 @@
     "commit": "commit",
     "dev:server": "sh -c 'command -v pnpm >/dev/null 2>&1 && pnpm --filter application-server run start:dev || npm run start:dev --workspace=application-server'",
     "dev:web": "sh -c 'command -v pnpm >/dev/null 2>&1 && pnpm --filter web-client run dev || npm run dev --workspace=web-client'",
-    "dev:both": "concurrently \"npm run dev:server\" \"npm run dev:web\""
+    "dev:both": "concurrently \"npm run dev:server\" \"npm run dev:web\"",
+    "build:server": "sh -c 'command -v pnpm >/dev/null 2>&1 && pnpm --filter application-server run build || npm run build --workspace=application-server'",
+    "build:web": "sh -c 'command -v pnpm >/dev/null 2>&1 && pnpm --filter web-client run build || npm run build --workspace=web-client'",
+    "build:mobile": "cd mobile-client && flutter pub get && flutter create --platforms=android && flutter build apk --release && cd ..",
+    "build:all": "sh -c 'command -v pnpm >/dev/null 2>&1 && pnpm install && pnpm run build:server && pnpm run build:web && pnpm run build:mobile || npm install && npm run build:server && npm run build:web && npm run build:mobile'",
+    "lint:server": "sh -c 'command -v pnpm >/dev/null 2>&1 && pnpm --filter application-server run lint || npm run lint --workspace=application-server'",
+    "lint:web": "sh -c 'command -v pnpm >/dev/null 2>&1 && pnpm --filter web-client run lint || npm run lint --workspace=web-client'",
+    "lint:mobile": "cd mobile-client && flutter analyze && cd ..",
+    "lint:all": "npm run lint:server && npm run lint:web && npm run lint:mobile",
+    "format:server": "sh -c 'command -v pnpm >/dev/null 2>&1 && pnpm --filter application-server run format:fix || npm run format:fix --workspace=application-server'",
+    "format:web": "sh -c 'command -v pnpm >/dev/null 2>&1 && pnpm --filter web-client run format:fix || npm run format:fix --workspace=web-client'",
+    "format:mobile": "cd mobile-client && dart format . && cd ..",
+    "format:all": "npm run format:server && npm run format:web && npm run format:mobile",
+    "test:server": "sh -c 'command -v pnpm >/dev/null 2>&1 && pnpm --filter application-server run test:all || npm run test:all --workspace=application-server'",
+    "test:web": "sh -c 'command -v pnpm >/dev/null 2>&1 && pnpm --filter web-client run test || npm run test --workspace=web-client'",
+    "test:mobile": "cd mobile-client && flutter test && cd ..",
+    "test:all": "npm run test:server && npm run test:web && npm run test:mobile"
   },
   "lint-staged": {
     "application-server/**/*.ts": [

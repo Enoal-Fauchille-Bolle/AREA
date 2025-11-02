@@ -488,7 +488,7 @@ export class ServicesService {
 
     try {
       const appConfig = this.configService.get('app');
-      const apiKey = appConfig.oauth2.trello?.apiKey;
+      const apiKey = appConfig.oauth2.trello.apiKey;
 
       if (!apiKey) {
         throw new Error('Trello API key not configured');
@@ -525,7 +525,7 @@ export class ServicesService {
 
   getTrelloAuthUrl(): { authUrl: string } {
     const appConfig = this.configService.get('app');
-    const apiKey = appConfig.oauth2.trello?.apiKey;
+    const apiKey = appConfig.oauth2.trello.apiKey;
 
     if (!apiKey) {
       throw new InternalServerErrorException('Trello API key not configured');
@@ -555,7 +555,7 @@ export class ServicesService {
     // Verify the token is valid by making a test API call
     try {
       const appConfig = this.configService.get('app');
-      const apiKey = appConfig.oauth2.trello?.apiKey;
+      const apiKey = appConfig.oauth2.trello.apiKey;
 
       if (!apiKey) {
         throw new InternalServerErrorException('Trello API key not configured');
