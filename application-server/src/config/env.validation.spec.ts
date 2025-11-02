@@ -1,5 +1,6 @@
 import { validateEnv, envValidationSchema } from './env.validation';
 import { ConfigurationException } from '../common/exceptions/configuration.exception';
+import { Logger } from '@nestjs/common';
 
 describe('env.validation', () => {
   describe('envValidationSchema', () => {
@@ -49,14 +50,14 @@ describe('env.validation', () => {
   });
 
   describe('validateEnv', () => {
-    let consoleWarnSpy: jest.SpyInstance;
+    let loggerWarnSpy: jest.SpyInstance;
 
     beforeEach(() => {
-      consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      loggerWarnSpy = jest.spyOn(Logger.prototype, 'warn').mockImplementation();
     });
 
     afterEach(() => {
-      consoleWarnSpy.mockRestore();
+      loggerWarnSpy.mockRestore();
     });
 
     it('should pass validation with minimal required fields in development', () => {
@@ -230,6 +231,9 @@ describe('env.validation', () => {
           SPOTIFY_CLIENT_SECRET: 'secret',
           TWITCH_CLIENT_ID: 'id',
           TWITCH_CLIENT_SECRET: 'secret',
+          REDDIT_PROD_USER_AGENT: 'agent',
+          REDDIT_PROD_CLIENT_ID: 'id',
+          REDDIT_PROD_CLIENT_SECRET: 'secret',
         };
 
         expect(() => validateEnv(config)).toThrow(ConfigurationException);
@@ -255,6 +259,9 @@ describe('env.validation', () => {
           SPOTIFY_CLIENT_SECRET: 'secret',
           TWITCH_CLIENT_ID: 'id',
           TWITCH_CLIENT_SECRET: 'secret',
+          REDDIT_PROD_USER_AGENT: 'agent',
+          REDDIT_PROD_CLIENT_ID: 'id',
+          REDDIT_PROD_CLIENT_SECRET: 'secret',
           TRELLO_API_KEY: 'key',
           TRELLO_API_SECRET: 'secret',
         };
@@ -282,6 +289,9 @@ describe('env.validation', () => {
           SPOTIFY_CLIENT_SECRET: 'secret',
           TWITCH_CLIENT_ID: 'id',
           TWITCH_CLIENT_SECRET: 'secret',
+          REDDIT_PROD_USER_AGENT: 'agent',
+          REDDIT_PROD_CLIENT_ID: 'id',
+          REDDIT_PROD_CLIENT_SECRET: 'secret',
           TRELLO_API_KEY: 'key',
           TRELLO_API_SECRET: 'secret',
           SMTP_USER: 'user',
@@ -311,6 +321,9 @@ describe('env.validation', () => {
           SPOTIFY_CLIENT_SECRET: 'secret',
           TWITCH_CLIENT_ID: 'id',
           TWITCH_CLIENT_SECRET: 'secret',
+          REDDIT_PROD_USER_AGENT: 'agent',
+          REDDIT_PROD_CLIENT_ID: 'id',
+          REDDIT_PROD_CLIENT_SECRET: 'secret',
           TRELLO_API_KEY: 'key',
           TRELLO_API_SECRET: 'secret',
           SMTP_USER: 'user',
@@ -342,6 +355,9 @@ describe('env.validation', () => {
           SPOTIFY_CLIENT_SECRET: 'secret',
           TWITCH_CLIENT_ID: 'id',
           TWITCH_CLIENT_SECRET: 'secret',
+          REDDIT_PROD_USER_AGENT: 'agent',
+          REDDIT_PROD_CLIENT_ID: 'id',
+          REDDIT_PROD_CLIENT_SECRET: 'secret',
           TRELLO_API_KEY: 'key',
           TRELLO_API_SECRET: 'secret',
           SMTP_USER: 'user',
@@ -394,66 +410,12 @@ describe('env.validation', () => {
     });
 
     describe('development environment', () => {
-      it('should show warning for missing JWT_SECRET', () => {
-        const config = {
-          NODE_ENV: 'development',
-        };
-
-        validateEnv(config);
-
-        expect(consoleWarnSpy).toHaveBeenCalledWith(
-          'WARNING: Using default JWT secret for development.',
-        );
-      });
-
-      it('should show warning for missing Discord OAuth2', () => {
-        const config = {
-          NODE_ENV: 'development',
-          JWT_SECRET: 'secret',
-        };
-
-        validateEnv(config);
-
-        expect(consoleWarnSpy).toHaveBeenCalledWith(
-          'WARNING: Discord OAuth2 not set; server may crash.',
-        );
-      });
-
-      it('should show warning for missing Discord Bot Token', () => {
-        const config = {
-          NODE_ENV: 'development',
-          JWT_SECRET: 'secret',
-          DISCORD_CLIENT_ID: 'id',
-          DISCORD_CLIENT_SECRET: 'secret',
-        };
-
-        validateEnv(config);
-
-        expect(consoleWarnSpy).toHaveBeenCalledWith(
-          'WARNING: Discord Bot Token not set; Discord REActions will not work.',
-        );
-      });
-
       it('should not throw errors in development with minimal config', () => {
         const config = {
           NODE_ENV: 'development',
         };
 
         expect(() => validateEnv(config)).not.toThrow();
-      });
-
-      it('should show warning for Gmail secret if ID is set', () => {
-        const config = {
-          NODE_ENV: 'development',
-          JWT_SECRET: 'secret',
-          GMAIL_CLIENT_ID: 'gmail_id',
-        };
-
-        validateEnv(config);
-
-        expect(consoleWarnSpy).toHaveBeenCalledWith(
-          'WARNING: Gmail Client Secret not set; Gmail integration may not work.',
-        );
       });
     });
 

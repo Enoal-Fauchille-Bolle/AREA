@@ -25,7 +25,7 @@ describe('appConfig', () => {
 
       const config = appConfig();
 
-      expect(config.serverUrl).toBe('http://127.0.0.1:8080');
+      expect(config.serverUrl).toBe('http://localhost:8080');
       expect(config.port).toBe(8080);
       expect(config.nodeEnv).toBe('development');
       expect(config.jwt.secret).toBe('dev-default-secret-key');
