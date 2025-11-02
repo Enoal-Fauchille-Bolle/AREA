@@ -11,6 +11,13 @@ import {
   ParseIntPipe,
   Query,
 } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { VariablesService } from './variables.service';
 import {
   CreateVariableDto,
@@ -19,6 +26,7 @@ import {
 } from './dto';
 import { VariableKind, VariableType } from './entities/variable.entity';
 
+@ApiTags('Variables')
 @Controller('variables')
 export class VariablesController {
   constructor(private readonly variablesService: VariablesService) {}
@@ -31,6 +39,40 @@ export class VariablesController {
     return this.variablesService.create(createVariableDto);
   }
 
+  @ApiOperation({
+    summary: 'Get all variables',
+    description:
+      'Retrieves all variables. Supports filtering by kind, component ID, type, or required status',
+  })
+  @ApiQuery({
+    name: 'kind',
+    required: false,
+    enum: VariableKind,
+    description: 'Filter by variable kind',
+  })
+  @ApiQuery({
+    name: 'component_id',
+    required: false,
+    type: 'integer',
+    description: 'Filter by component ID',
+  })
+  @ApiQuery({
+    name: 'type',
+    required: false,
+    enum: VariableType,
+    description: 'Filter by variable type',
+  })
+  @ApiQuery({
+    name: 'required',
+    required: false,
+    type: 'boolean',
+    description: 'Filter required variables',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of variables',
+    type: [VariableResponseDto],
+  })
   @Get()
   findAll(
     @Query('kind') kind?: string,
@@ -130,6 +172,22 @@ export class VariablesController {
     return this.variablesService.findByType(type);
   }
 
+  @ApiOperation({
+    summary: 'Get variable by ID',
+    description: 'Retrieves a specific variable by its ID',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Variable ID',
+    type: 'integer',
+    example: 1,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Variable details',
+    type: VariableResponseDto,
+  })
+  @ApiResponse({ status: 404, description: 'Variable not found' })
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number): Promise<VariableResponseDto> {
     return this.variablesService.findOne(id);

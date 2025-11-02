@@ -1,4 +1,5 @@
-import { OmitType } from '@nestjs/mapped-types';
+import { OmitType } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { ComponentResponseDto } from '../../components/dto/component-response.dto';
 import { VariableResponseDto } from '../../variables/dto/variable-response.dto';
 import { Component } from '../../components/entities/component.entity';
@@ -47,6 +48,10 @@ export class ServiceComponentsResponseDto extends OmitType(
   ComponentResponseDto,
   ['service_id', 'webhook_endpoint', 'polling_interval', 'is_active'],
 ) {
+  @ApiProperty({
+    description: 'Variables associated with this component',
+    type: [ServiceComponentVariablesResponseDto],
+  })
   variables: ServiceComponentVariablesResponseDto[];
 
   constructor(data: ServiceComponentsResponseDto) {

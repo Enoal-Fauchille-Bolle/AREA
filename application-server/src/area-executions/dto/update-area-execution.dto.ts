@@ -1,14 +1,15 @@
-import { PartialType } from '@nestjs/mapped-types';
+import { PartialType } from '@nestjs/swagger';
 import { CreateAreaExecutionDto } from './create-area-execution.dto';
-import { ExecutionStatus } from '../entities/area-execution.entity';
 
+/**
+ * UpdateAreaExecutionDto allows updating the following fields:
+ * - status
+ * - executionResult
+ * - errorMessage
+ * - startedAt
+ * - completedAt
+ * - executionTimeMs
+ */
 export class UpdateAreaExecutionDto extends PartialType(
   CreateAreaExecutionDto,
-) {
-  status?: ExecutionStatus;
-  executionResult?: Record<string, any>;
-  errorMessage?: string;
-  startedAt?: Date;
-  completedAt?: Date;
-  executionTimeMs?: number;
-}
+) {}

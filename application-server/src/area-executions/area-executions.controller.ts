@@ -11,6 +11,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { AreaExecutionsService } from './area-executions.service';
 import {
   CreateAreaExecutionDto,
@@ -19,10 +20,24 @@ import {
 } from './dto';
 import { ExecutionStatus } from './entities/area-execution.entity';
 
+@ApiTags('Area Executions')
 @Controller('area-executions')
 export class AreaExecutionsController {
   constructor(private readonly areaExecutionsService: AreaExecutionsService) {}
 
+  @ApiOperation({
+    summary: 'Create area execution',
+    description: 'Creates a new execution record for an AREA',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Execution successfully created',
+    type: AreaExecutionResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad Request - Invalid input data',
+  })
   @Post()
   async create(
     @Body() createAreaExecutionDto: CreateAreaExecutionDto,
@@ -30,6 +45,15 @@ export class AreaExecutionsController {
     return this.areaExecutionsService.create(createAreaExecutionDto);
   }
 
+  @ApiOperation({
+    summary: 'Get all area executions',
+    description: 'Retrieves all area execution records',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of all executions',
+    type: [AreaExecutionResponseDto],
+  })
   @Get()
   async findAll(): Promise<AreaExecutionResponseDto[]> {
     return this.areaExecutionsService.findAll();
@@ -65,6 +89,21 @@ export class AreaExecutionsController {
     return this.areaExecutionsService.findFailedExecutions(areaId);
   }
 
+  @ApiOperation({
+    summary: 'Get executions by area ID',
+    description: 'Retrieves all executions for a specific AREA',
+  })
+  @ApiParam({
+    name: 'areaId',
+    description: 'AREA ID',
+    type: 'integer',
+    example: 1,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of executions for the AREA',
+    type: [AreaExecutionResponseDto],
+  })
   @Get('area/:areaId')
   async findByAreaId(
     @Param('areaId', ParseIntPipe) areaId: number,
@@ -72,6 +111,32 @@ export class AreaExecutionsController {
     return this.areaExecutionsService.findByAreaId(areaId);
   }
 
+  @ApiOperation({
+    summary: 'Get area execution statistics',
+    description: 'Retrieves execution statistics for a specific AREA',
+  })
+  @ApiParam({
+    name: 'areaId',
+    description: 'AREA ID',
+    type: 'integer',
+    example: 1,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Execution statistics',
+    schema: {
+      type: 'object',
+      properties: {
+        total: { type: 'integer', example: 100 },
+        pending: { type: 'integer', example: 5 },
+        running: { type: 'integer', example: 2 },
+        completed: { type: 'integer', example: 85 },
+        failed: { type: 'integer', example: 7 },
+        cancelled: { type: 'integer', example: 1 },
+        avgExecutionTimeMs: { type: 'number', example: 1250.5, nullable: true },
+      },
+    },
+  })
   @Get('area/:areaId/stats')
   async getAreaStats(@Param('areaId', ParseIntPipe) areaId: number): Promise<{
     total: number;
@@ -98,6 +163,22 @@ export class AreaExecutionsController {
     return this.areaExecutionsService.getExecutionStats();
   }
 
+  @ApiOperation({
+    summary: 'Get execution by ID',
+    description: 'Retrieves a specific execution by its ID',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Execution ID',
+    type: 'integer',
+    example: 123,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Execution details',
+    type: AreaExecutionResponseDto,
+  })
+  @ApiResponse({ status: 404, description: 'Execution not found' })
   @Get(':id')
   async findOne(
     @Param('id', ParseIntPipe) id: number,
