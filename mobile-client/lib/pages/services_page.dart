@@ -7,6 +7,7 @@ import '../services/twitch_oauth_service.dart';
 import '../services/youtube_oauth_service.dart';
 import '../services/spotify_oauth_service.dart';
 import '../services/reddit_oauth_service.dart';
+import '../services/trello_oauth_service.dart';
 import '../widgets/service_card.dart';
 import '../utils/app_logger.dart';
 
@@ -75,7 +76,7 @@ class _ServicesPageState extends State<ServicesPage> {
           await _loadServices();
         }
       } else {
-        // Handle OAuth flow for Discord, GitHub, Gmail, Twitch, YouTube, Spotify, and Reddit
+        // Handle OAuth flow for Discord, GitHub, Gmail, Twitch, YouTube, Spotify, Reddit, and Trello
         AppLogger.log('Checking service type: ${serviceName.toLowerCase()}');
         final serviceNameLower = serviceName.toLowerCase();
 
@@ -85,7 +86,8 @@ class _ServicesPageState extends State<ServicesPage> {
             serviceNameLower == 'twitch' ||
             serviceNameLower == 'youtube' ||
             serviceNameLower == 'spotify' ||
-            serviceNameLower == 'reddit') {
+            serviceNameLower == 'reddit' ||
+            serviceNameLower == 'trello') {
           AppLogger.log('Service is $serviceName, starting OAuth flow...');
           if (mounted) {
             String? code;
@@ -112,6 +114,28 @@ class _ServicesPageState extends State<ServicesPage> {
             } else if (serviceNameLower == 'reddit') {
               code =
                   await RedditOAuthService.authorize(context, forService: true);
+            } else if (serviceNameLower == 'trello') {
+              // Trello uses OAuth 1.0a - returns token directly
+              final token = await TrelloOAuthService.authorize(context);
+              if (token == null) {
+                AppLogger.log('Trello OAuth cancelled or failed');
+                return;
+              }
+              AppLogger.log('Got Trello token, linking service...');
+              // Link Trello using the special endpoint
+              success = await TrelloOAuthService.linkTrello(token);
+              if (success) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Trello linked successfully'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+                await _loadServices();
+              }
+              return; // Early return for Trello
             }
 
             AppLogger.log(
