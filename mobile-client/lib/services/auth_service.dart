@@ -258,6 +258,63 @@ class AuthService {
     await prefs.remove(_userKey);
   }
 
+  // Verify email with 2FA code
+  Future<Map<String, dynamic>> verifyEmail(String email, String code) async {
+    try {
+      final serverUrl = await _config.getServerUrl();
+      final response = await http.post(
+        Uri.parse('$serverUrl/auth/verify-email'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': email,
+          'code': code,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {'success': true, 'message': data['message']};
+      } else {
+        final data = jsonDecode(response.body);
+        return {
+          'success': false,
+          'message': data['message'] ?? 'Verification failed'
+        };
+      }
+    } catch (e) {
+      AppLogger.error('Verify email error: $e');
+      return {'success': false, 'message': 'Verification error: $e'};
+    }
+  }
+
+  // Resend verification code
+  Future<Map<String, dynamic>> resendVerificationCode(String email) async {
+    try {
+      final serverUrl = await _config.getServerUrl();
+      final response = await http.post(
+        Uri.parse('$serverUrl/auth/resend-verification'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': email,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {'success': true, 'message': data['message']};
+      } else {
+        final data = jsonDecode(response.body);
+        return {
+          'success': false,
+          'message': data['message'] ?? 'Failed to resend code'
+        };
+      }
+    } catch (e) {
+      AppLogger.error('Resend verification error: $e');
+      return {'success': false, 'message': 'Resend error: $e'};
+    }
+  }
+
   // Check if user is logged in
   Future<bool> isLoggedIn() async {
     final token = await getToken();
