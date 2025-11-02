@@ -119,5 +119,87 @@ describe('VariableInterpolationService', () => {
         number: 42,
       });
     });
+
+    it('should handle nested objects', () => {
+      const obj = {
+        outer: {
+          inner: 'Value: {{value}}',
+        },
+      };
+      const variables = { value: 'test' };
+      const result = service.interpolateObject(obj, variables);
+      expect(result).toEqual({
+        outer: {
+          inner: 'Value: test',
+        },
+      });
+    });
+
+    it('should preserve arrays', () => {
+      const obj = {
+        items: ['{{item1}}', '{{item2}}'],
+        text: '{{value}}',
+      };
+      const variables = { item1: 'a', item2: 'b', value: 'test' };
+      const result = service.interpolateObject(obj, variables);
+      expect(result).toEqual({
+        items: ['{{item1}}', '{{item2}}'],
+        text: 'test',
+      });
+    });
+  });
+
+  describe('edge cases', () => {
+    it('should handle non-string template in interpolate', () => {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      const result = service.interpolate(null as any, {});
+      expect(result).toBeNull();
+    });
+
+    it('should handle non-string template in hasVariables', () => {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      expect(service.hasVariables(null as any)).toBe(false);
+    });
+
+    it('should handle non-string template in extractVariableNames', () => {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      const result = service.extractVariableNames(null as any);
+      expect(result).toEqual([]);
+    });
+
+    it('should handle unsupported variable types', () => {
+      const template = 'Symbol: {{sym}}, Function: {{func}}';
+      const variables = {
+        sym: Symbol('test'),
+        func: () => 'test',
+      };
+      const result = service.interpolate(template, variables);
+      expect(result).toBe('Symbol: , Function: ');
+    });
+
+    it('should handle undefined variable value', () => {
+      const template = 'Value: {{value}}';
+      const variables = { value: undefined };
+      const result = service.interpolate(template, variables);
+      expect(result).toBe('Value: ');
+    });
+
+    it('should handle template with no variables', () => {
+      const template = 'Hello world';
+      const variables = { name: 'John' };
+      const result = service.interpolate(template, variables);
+      expect(result).toBe('Hello world');
+    });
+
+    it('should handle empty template', () => {
+      const result = service.interpolate('', {});
+      expect(result).toBe('');
+    });
+
+    it('should handle empty variables object', () => {
+      const template = 'Hello {{name}}!';
+      const result = service.interpolate(template, {});
+      expect(result).toBe('Hello {{name}}!');
+    });
   });
 });

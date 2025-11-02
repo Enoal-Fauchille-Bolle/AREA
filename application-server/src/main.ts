@@ -3,11 +3,6 @@ import { type INestApplication, ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
-import * as dotenv from 'dotenv';
-import * as path from 'path';
-
-// Load .env file before NestJS bootstrap to ensure all env vars are available
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 function setupSwagger(app: INestApplication): void {
   const config = new DocumentBuilder()

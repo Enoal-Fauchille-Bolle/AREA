@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 class ServiceCard extends StatelessWidget {
   final String name;
@@ -61,19 +62,17 @@ class ServiceCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       description,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.grey[600],
-                          ),
+                      style: Theme.of(context).textTheme.bodySmall,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     if (!isActive)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4),
+                      const Padding(
+                        padding: EdgeInsets.only(top: 4),
                         child: Text(
                           'Inactive',
                           style: TextStyle(
-                            color: Colors.red[700],
+                            color: AppTheme.errorColor,
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
                           ),
@@ -88,7 +87,9 @@ class ServiceCard extends StatelessWidget {
                 IconButton(
                   icon: Icon(
                     isLinked ? Icons.link_off : Icons.link,
-                    color: isLinked ? Colors.red : Colors.blue,
+                    color: isLinked
+                        ? AppTheme.errorColor
+                        : Theme.of(context).colorScheme.primary,
                   ),
                   tooltip: isLinked ? 'Unlink' : 'Link',
                   onPressed: onLinkToggle,
@@ -100,13 +101,13 @@ class ServiceCard extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.green[100],
+                    color: AppTheme.successColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Text(
+                  child: const Text(
                     'Linked',
                     style: TextStyle(
-                      color: Colors.green[700],
+                      color: AppTheme.successColor,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
@@ -124,12 +125,12 @@ class ServiceCard extends StatelessWidget {
       width: 48,
       height: 48,
       decoration: BoxDecoration(
-        color: Colors.blue[100],
+        color: AppTheme.primaryColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Icon(
+      child: const Icon(
         Icons.apps,
-        color: Colors.blue[700],
+        color: AppTheme.primaryColor,
         size: 28,
       ),
     );

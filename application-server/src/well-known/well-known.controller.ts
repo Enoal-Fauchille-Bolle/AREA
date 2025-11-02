@@ -1,4 +1,10 @@
-import { Controller, Get, Header } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Header,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 
@@ -25,6 +31,7 @@ export class WellKnownController {
 
   @Get('assetlinks.json')
   @Header('Content-Type', 'application/json')
+  @Header('Access-Control-Allow-Origin', '*')
   @ApiOperation({
     summary:
       'Get the Digital Asset Links file for Android deep linking Universal Links.',
@@ -35,11 +42,15 @@ export class WellKnownController {
   })
   getAssetLinks() {
     if (!this.androidPackageName || !this.androidSha256Fingerprint) {
-      throw new Error('Android configuration is not properly set');
+      throw new HttpException(
+        'Android App Links configuration is missing. Please set ANDROID_PACKAGE_NAME and ANDROID_SHA256_FINGERPRINT',
+        HttpStatus.SERVICE_UNAVAILABLE,
+      );
     }
+
     return [
       {
-        relations: ['delegate_permission/common.handle_all_urls'],
+        relation: ['delegate_permission/common.handle_all_urls'],
         target: {
           namespace: 'android_app',
           package_name: this.androidPackageName,
@@ -51,6 +62,7 @@ export class WellKnownController {
 
   @Get('apple-app-site-association')
   @Header('Content-Type', 'application/json')
+  @Header('Access-Control-Allow-Origin', '*')
   @ApiOperation({
     summary:
       'Get the Apple App Site Association file for iOS deep linking Universal Links.',
@@ -61,8 +73,12 @@ export class WellKnownController {
   })
   getAppleAppSiteAssociation() {
     if (!this.iosTeamId || !this.iosBundleId) {
-      throw new Error('iOS configuration is not properly set');
+      throw new HttpException(
+        'iOS Universal Links configuration is missing. Please set IOS_TEAM_ID and IOS_BUNDLE_ID',
+        HttpStatus.SERVICE_UNAVAILABLE,
+      );
     }
+
     return {
       applinks: {
         apps: [],

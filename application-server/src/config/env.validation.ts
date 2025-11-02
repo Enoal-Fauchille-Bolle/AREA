@@ -11,7 +11,7 @@ export const envValidationSchema = z.object({
   SERVER_URL: z.string().default('http://127.0.0.1:8080'),
   PORT: z.string().default('8080'),
   NODE_ENV: z
-    .enum(['development', 'production', 'test'])
+    .enum(['development', 'production', 'test', 'debug'])
     .default('development'),
   JWT_SECRET: z.string().optional(),
   JWT_EXPIRES_IN: z.string().default('24h'),
@@ -37,6 +37,8 @@ export const envValidationSchema = z.object({
   REDDIT_PROD_USER_AGENT: z.string().optional(),
   REDDIT_PROD_CLIENT_ID: z.string().optional(),
   REDDIT_PROD_CLIENT_SECRET: z.string().optional(),
+  TRELLO_API_KEY: z.string().optional(),
+  TRELLO_API_SECRET: z.string().optional(),
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
   ANDROID_PACKAGE_NAME: z.string().optional(),
@@ -123,6 +125,11 @@ export function validateEnv(config: Record<string, unknown>) {
         'Reddit OAuth2 must be set in production.',
       );
     }
+    if (!env.TRELLO_API_KEY || !env.TRELLO_API_SECRET) {
+      throw new ConfigurationException(
+        'Trello API credentials must be set in production.',
+      );
+    }
     if (!env.SMTP_USER || !env.SMTP_PASS) {
       throw new ConfigurationException(
         'SMTP credentials must be set in production.',
@@ -176,6 +183,11 @@ export function validateEnv(config: Record<string, unknown>) {
       !env.REDDIT_DEV_CLIENT_SECRET
     ) {
       logger.warn('Reddit OAuth2 not set; server may crash.');
+    }
+    if (!env.TRELLO_API_KEY || !env.TRELLO_API_SECRET) {
+      logger.warn(
+        'WARNING: Trello API credentials not set; Trello integration will not work.',
+      );
     }
     if (!env.SMTP_USER || !env.SMTP_PASS) {
       logger.warn('SMTP credentials not set; email may not work.');

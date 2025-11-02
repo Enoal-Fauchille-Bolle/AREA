@@ -1,12 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../utils/app_logger.dart';
+import 'runtime_config.dart';
 
 class AuthService {
-  final String baseUrl = dotenv.env['URL_BASE'] ?? 'http://10.84.107.120';
-  final String port = dotenv.env['PORT'] ?? '8080';
+  final _config = RuntimeConfig();
   static const String _tokenKey = 'jwt_token';
   static const String _userKey = 'user_data';
 
@@ -41,8 +40,9 @@ class AuthService {
   // Login with email and password
   Future<bool> login(String email, String password) async {
     try {
+      final serverUrl = await _config.getServerUrl();
       final response = await http.post(
-        Uri.parse('$baseUrl:$port/auth/login'),
+        Uri.parse('$serverUrl/auth/login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'email': email,
@@ -66,16 +66,25 @@ class AuthService {
   }
 
   // Login with OAuth2
-  Future<bool> loginOAuth2(String service, String code) async {
+  Future<bool> loginOAuth2(
+      String provider, String code, String redirectUri) async {
     try {
+      AppLogger.log(
+          'OAuth2 login attempt: provider=$provider, redirectUri=$redirectUri');
+
+      final serverUrl = await _config.getServerUrl();
       final response = await http.post(
-        Uri.parse('$baseUrl:$port/auth/login-oauth2'),
+        Uri.parse('$serverUrl/auth/login-oauth2'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'service': service,
+          'provider': provider,
           'code': code,
+          'redirect_uri': redirectUri,
         }),
       );
+
+      AppLogger.log(
+          'OAuth2 login response: statusCode=${response.statusCode}, body=${response.body}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -83,6 +92,8 @@ class AuthService {
         await fetchUserProfile();
         return true;
       }
+      AppLogger.error(
+          'OAuth2 login failed with status code: ${response.statusCode}');
       return false;
     } catch (e) {
       AppLogger.error('OAuth2 login error: $e');
@@ -93,8 +104,9 @@ class AuthService {
   // Register new user
   Future<bool> register(String email, String username, String password) async {
     try {
+      final serverUrl = await _config.getServerUrl();
       final response = await http.post(
-        Uri.parse('$baseUrl:$port/auth/register'),
+        Uri.parse('$serverUrl/auth/register'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'email': email,
@@ -117,16 +129,25 @@ class AuthService {
   }
 
   // Register with OAuth2
-  Future<bool> registerOAuth2(String service, String code) async {
+  Future<bool> registerOAuth2(
+      String provider, String code, String redirectUri) async {
     try {
+      AppLogger.log(
+          'OAuth2 register attempt: provider=$provider, redirectUri=$redirectUri');
+
+      final serverUrl = await _config.getServerUrl();
       final response = await http.post(
-        Uri.parse('$baseUrl:$port/auth/register-oauth2'),
+        Uri.parse('$serverUrl/auth/register-oauth2'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'service': service,
+          'provider': provider,
           'code': code,
+          'redirect_uri': redirectUri,
         }),
       );
+
+      AppLogger.log(
+          'OAuth2 register response: statusCode=${response.statusCode}, body=${response.body}');
 
       if (response.statusCode == 201) {
         final data = jsonDecode(response.body);
@@ -134,6 +155,8 @@ class AuthService {
         await fetchUserProfile();
         return true;
       }
+      AppLogger.error(
+          'OAuth2 register failed with status code: ${response.statusCode}');
       return false;
     } catch (e) {
       AppLogger.error('OAuth2 register error: $e');
@@ -142,13 +165,14 @@ class AuthService {
   }
 
   // Fetch user profile
-  Future<Map<String, dynamic>?> fetchUserProfile() async {
+  Future<void> fetchUserProfile() async {
     try {
       final token = await getToken();
-      if (token == null) return null;
+      if (token == null) return;
 
+      final serverUrl = await _config.getServerUrl();
       final response = await http.get(
-        Uri.parse('$baseUrl:$port/auth/me'),
+        Uri.parse('$serverUrl/auth/me'),
         headers: {
           'Authorization': 'Bearer $token',
         },
@@ -157,12 +181,9 @@ class AuthService {
       if (response.statusCode == 200) {
         final userData = jsonDecode(response.body);
         await _saveUserData(userData);
-        return userData;
       }
-      return null;
     } catch (e) {
       AppLogger.error('Fetch profile error: $e');
-      return null;
     }
   }
 
@@ -183,8 +204,9 @@ class AuthService {
       if (password != null) body['password'] = password;
       if (iconUrl != null) body['icon_url'] = iconUrl;
 
+      final serverUrl = await _config.getServerUrl();
       final response = await http.patch(
-        Uri.parse('$baseUrl:$port/auth/me'),
+        Uri.parse('$serverUrl/auth/me'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -210,8 +232,9 @@ class AuthService {
       final token = await getToken();
       if (token == null) return false;
 
+      final serverUrl = await _config.getServerUrl();
       final response = await http.delete(
-        Uri.parse('$baseUrl/auth/me'),
+        Uri.parse('$serverUrl/auth/me'),
         headers: {
           'Authorization': 'Bearer $token',
         },
@@ -233,6 +256,63 @@ class AuthService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tokenKey);
     await prefs.remove(_userKey);
+  }
+
+  // Verify email with 2FA code
+  Future<Map<String, dynamic>> verifyEmail(String email, String code) async {
+    try {
+      final serverUrl = await _config.getServerUrl();
+      final response = await http.post(
+        Uri.parse('$serverUrl/auth/verify-email'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': email,
+          'code': code,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {'success': true, 'message': data['message']};
+      } else {
+        final data = jsonDecode(response.body);
+        return {
+          'success': false,
+          'message': data['message'] ?? 'Verification failed'
+        };
+      }
+    } catch (e) {
+      AppLogger.error('Verify email error: $e');
+      return {'success': false, 'message': 'Verification error: $e'};
+    }
+  }
+
+  // Resend verification code
+  Future<Map<String, dynamic>> resendVerificationCode(String email) async {
+    try {
+      final serverUrl = await _config.getServerUrl();
+      final response = await http.post(
+        Uri.parse('$serverUrl/auth/resend-verification'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': email,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {'success': true, 'message': data['message']};
+      } else {
+        final data = jsonDecode(response.body);
+        return {
+          'success': false,
+          'message': data['message'] ?? 'Failed to resend code'
+        };
+      }
+    } catch (e) {
+      AppLogger.error('Resend verification error: $e');
+      return {'success': false, 'message': 'Resend error: $e'};
+    }
   }
 
   // Check if user is logged in

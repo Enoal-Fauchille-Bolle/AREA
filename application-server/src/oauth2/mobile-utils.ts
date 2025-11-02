@@ -1,4 +1,5 @@
 import { Response } from 'express';
+import { HttpStatus } from '@nestjs/common';
 import { type OAuthProvider } from './dto';
 import { ConfigService } from '@nestjs/config';
 
@@ -124,5 +125,68 @@ export function handleMobileCallback(
 </body>
 </html>`;
 
-  return res.status(200).contentType('text/html').send(html);
+  return res.status(HttpStatus.OK).contentType('text/html').send(html);
+}
+
+export function handleNonMobileRequest(res: Response) {
+  const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Only Endpoint</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            text-align: center;
+            padding: 2rem;
+            max-width: 600px;
+        }
+        .icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        h1 {
+            font-size: 2rem;
+            margin: 1rem 0;
+        }
+        p {
+            font-size: 1.125rem;
+            line-height: 1.6;
+            margin: 1rem 0;
+            opacity: 0.9;
+        }
+        .info-box {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">📱</div>
+        <h1>Mobile Only Endpoint</h1>
+        <p>This endpoint is designed exclusively for mobile OAuth2 redirects.</p>
+        <div class="info-box">
+            <p>Please use a mobile device to access this authentication flow.</p>
+        </div>
+    </div>
+</body>
+</html>`;
+
+  return res.status(HttpStatus.BAD_REQUEST).contentType('text/html').send(html);
 }
