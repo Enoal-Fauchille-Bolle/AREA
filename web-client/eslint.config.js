@@ -9,7 +9,10 @@ import prettierConfig from 'eslint-config-prettier';
 export default defineConfig([
   {
     ignores: ['dist'],
+  },
+  {
     files: ['**/*.{ts,tsx}'],
+    ignores: ['vite.config.ts', 'vitest.config.ts', 'vite-env.d.ts'],
     extends: [
       js.configs.recommended,
       tseslint.configs.recommended,
@@ -20,6 +23,26 @@ export default defineConfig([
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
+      parserOptions: {
+        tsconfigRootDir: import.meta.dirname,
+        project: './tsconfig.app.json',
+      },
+    },
+  },
+  {
+    files: ['vite.config.ts', 'vitest.config.ts', 'vite-env.d.ts'],
+    extends: [
+      js.configs.recommended,
+      tseslint.configs.recommended,
+      prettierConfig,
+    ],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.node,
+      parserOptions: {
+        tsconfigRootDir: import.meta.dirname,
+        project: './tsconfig.node.json',
+      },
     },
   },
 ]);
