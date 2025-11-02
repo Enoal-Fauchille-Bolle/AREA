@@ -1,1 +1,5 @@
-describe('AuthService', () => { it('placeholder', () => { expect(true).toBe(true); }); });
+describe('AuthService', () => {
+  it('placeholder', () => {
+    expect(true).toBe(true);
+  });
+});
