@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
 import '../services/service_api_service.dart';
 import '../services/discord_oauth_service.dart';
+import '../services/github_oauth_service.dart';
+import '../services/gmail_oauth_service.dart';
+import '../services/twitch_oauth_service.dart';
+import '../services/youtube_oauth_service.dart';
+import '../services/spotify_oauth_service.dart';
+import '../services/reddit_oauth_service.dart';
+import '../services/trello_oauth_service.dart';
 import '../widgets/service_card.dart';
 import '../utils/app_logger.dart';
 
@@ -35,9 +42,9 @@ class _ServicesPageState extends State<ServicesPage> {
       final userServices = await _serviceApi.fetchUserServices();
 
       // Create a set of linked service IDs
-      // Note: userServices contains service_id field, not id
+      // Note: /services/me returns services with 'id' field
       _linkedServiceIds = userServices
-          .map((s) => s['service_id']?.toString() ?? '')
+          .map((s) => s['id']?.toString() ?? '')
           .where((id) => id.isNotEmpty)
           .toSet();
 
@@ -54,6 +61,8 @@ class _ServicesPageState extends State<ServicesPage> {
   Future<void> _handleLinkToggle(
       String serviceId, bool isLinked, String serviceName) async {
     try {
+      AppLogger.log(
+          '_handleLinkToggle called: serviceId=$serviceId, isLinked=$isLinked, serviceName=$serviceName');
       bool success;
       if (isLinked) {
         success = await _serviceApi.unlinkService(serviceId);
@@ -67,26 +76,89 @@ class _ServicesPageState extends State<ServicesPage> {
           await _loadServices();
         }
       } else {
-        // Handle Discord OAuth flow
-        if (serviceName.toLowerCase() == 'discord') {
+        // Handle OAuth flow for Discord, GitHub, Gmail, Twitch, YouTube, Spotify, Reddit, and Trello
+        AppLogger.log('Checking service type: ${serviceName.toLowerCase()}');
+        final serviceNameLower = serviceName.toLowerCase();
+
+        if (serviceNameLower == 'discord' ||
+            serviceNameLower == 'github' ||
+            serviceNameLower == 'gmail' ||
+            serviceNameLower == 'twitch' ||
+            serviceNameLower == 'youtube' ||
+            serviceNameLower == 'spotify' ||
+            serviceNameLower == 'reddit' ||
+            serviceNameLower == 'trello') {
+          AppLogger.log('Service is $serviceName, starting OAuth flow...');
           if (mounted) {
-            // Open Discord OAuth in WebView
-            final code = await DiscordOAuthService.authorize(context);
+            String? code;
+
+            // Open appropriate OAuth flow
+            if (serviceNameLower == 'discord') {
+              code = await DiscordOAuthService.authorize(context,
+                  forService: true);
+            } else if (serviceNameLower == 'github') {
+              code =
+                  await GithubOAuthService.authorize(context, forService: true);
+            } else if (serviceNameLower == 'gmail') {
+              code =
+                  await GmailOAuthService.authorize(context, forService: true);
+            } else if (serviceNameLower == 'twitch') {
+              code =
+                  await TwitchOAuthService.authorize(context, forService: true);
+            } else if (serviceNameLower == 'youtube') {
+              code = await YoutubeOAuthService.authorize(context,
+                  forService: true);
+            } else if (serviceNameLower == 'spotify') {
+              code = await SpotifyOAuthService.authorize(context,
+                  forService: true);
+            } else if (serviceNameLower == 'reddit') {
+              code =
+                  await RedditOAuthService.authorize(context, forService: true);
+            } else if (serviceNameLower == 'trello') {
+              // Trello uses OAuth 1.0a - returns token directly
+              final token = await TrelloOAuthService.authorize(context);
+              if (token == null) {
+                AppLogger.log('Trello OAuth cancelled or failed');
+                return;
+              }
+              AppLogger.log('Got Trello token, linking service...');
+              // Link Trello using the special endpoint
+              success = await TrelloOAuthService.linkTrello(token);
+              if (success) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Trello linked successfully'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+                await _loadServices();
+              }
+              return; // Early return for Trello
+            }
+
+            AppLogger.log(
+                '$serviceName OAuth returned code: ${code != null ? "YES (length: ${code.length})" : "NULL"}');
 
             if (code == null) {
               // User cancelled or error occurred
+              AppLogger.log('$serviceName OAuth cancelled or failed');
               return;
             }
 
-            AppLogger.log('Got Discord authorization code, linking service...');
+            AppLogger.log(
+                'Got $serviceName authorization code, linking service...');
 
             // Link service with the authorization code
             success = await _serviceApi.linkService(serviceId, code: code);
           } else {
+            AppLogger.log('Widget not mounted, aborting');
             return;
           }
         } else {
           // For non-OAuth services, use simple linking
+          AppLogger.log('Service is not OAuth-based, using simple linking');
           success = await _serviceApi.linkService(serviceId);
         }
 
@@ -159,7 +231,7 @@ class _ServicesPageState extends State<ServicesPage> {
                   const SizedBox(height: 8),
                   Text(
                     '${snapshot.error}',
-                    style: TextStyle(color: Colors.grey[600]),
+                    style: Theme.of(context).textTheme.bodyMedium,
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
@@ -180,7 +252,11 @@ class _ServicesPageState extends State<ServicesPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.apps, size: 64, color: Colors.grey[300]),
+                  Icon(
+                    Icons.apps,
+                    size: 64,
+                    color: Theme.of(context).colorScheme.secondary,
+                  ),
                   const SizedBox(height: 16),
                   Text(
                     'No services available',

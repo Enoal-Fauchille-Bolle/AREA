@@ -239,7 +239,7 @@ export class ServicesService {
       );
     }
 
-    const redirectUri =
+    let redirectUri =
       body.platform === LinkPlatform.WEB
         ? this.webRedirectUri
         : this.mobileRedirectUri;
@@ -249,6 +249,11 @@ export class ServicesService {
       throw new BadRequestException(
         `Cannot link service "${service.name}". The service may not be implemented or is not supported for linking.`,
       );
+    }
+
+    // Spotify refuses localhost and requires 127.0.0.1
+    if (service.name.toLowerCase() === 'spotify') {
+      redirectUri = redirectUri.replace('localhost', '127.0.0.1');
     }
 
     const tokens = await this.oauth2Service.exchangeCodeForTokens({

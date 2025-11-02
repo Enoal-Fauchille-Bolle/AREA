@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'pages/welcome_page.dart';
+import 'theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -8,8 +9,17 @@ Future<void> main() async {
   // Load environment variables
   try {
     await dotenv.load(fileName: ".env");
+    debugPrint('Successfully loaded .env file');
   } catch (e) {
-    // Continue with default values if .env file doesn't exist
+    debugPrint('Warning: Could not load .env file: $e');
+    try {
+      await dotenv.load(fileName: ".env.example");
+      debugPrint('Successfully loaded .env.example file as fallback');
+    } catch (e2) {
+      debugPrint('Warning: Could not load .env.example file: $e2');
+      debugPrint('Using default environment values');
+      // Continue with default values if neither file exists
+    }
   }
 
   runApp(const MyApp());
@@ -22,22 +32,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'AREA',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
-        appBarTheme: const AppBarTheme(centerTitle: true, elevation: 0),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            elevation: 2,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          ),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-          filled: true,
-          fillColor: Colors.grey[50],
-        ),
-      ),
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.system,
       home: const WelcomePage(),
       debugShowCheckedModeBanner: false,
     );
