@@ -517,6 +517,56 @@ export const servicesApi = {
     return handleResponse(response);
   },
 
+  async getTrelloProfile(): Promise<{
+    id: string;
+    username: string;
+    fullName: string;
+    avatarUrl: string | null;
+    email?: string;
+  }> {
+    const token = tokenService.getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/services/trello/profile`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return handleResponse(response);
+  },
+
+  async linkTrelloService(trelloToken: string): Promise<void> {
+    const token = tokenService.getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/services/trello/link`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ token: trelloToken }),
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to link Trello service';
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorData.error || errorMessage;
+      } catch {
+        errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
+    }
+  },
+
   async disconnectService(serviceName: string): Promise<void> {
     const token = tokenService.getToken();
     if (!token) {

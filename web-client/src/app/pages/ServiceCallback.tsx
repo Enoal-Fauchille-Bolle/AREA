@@ -6,6 +6,7 @@ import { githubOAuth } from '../../lib/githubOAuth';
 import { discordOAuth } from '../../lib/discordOAuth';
 import { twitchOAuth } from '../../lib/twitchOAuth';
 import { gmailOAuth } from '../../lib/gmailOAuth';
+import { trelloOAuth } from '../../lib/trelloOAuth';
 
 function ServiceCallback() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>(
@@ -28,6 +29,12 @@ function ServiceCallback() {
       const error = urlParams.get('error');
       const state = urlParams.get('state');
 
+      // Handle Trello OAuth1 token in URL fragment
+      let trelloToken: string | null = null;
+      if (state?.includes('trello')) {
+        trelloToken = trelloOAuth.extractTokenFromUrl(window.location.href);
+      }
+
       if (window.opener) {
         let service = 'UNKNOWN';
         if (state?.includes('discord')) {
@@ -42,6 +49,8 @@ function ServiceCallback() {
           service = 'REDDIT';
         } else if (state?.includes('spotify')) {
           service = 'SPOTIFY';
+        } else if (state?.includes('trello')) {
+          service = 'TRELLO';
         } else if (state?.includes('google')) {
           service = 'GOOGLE';
         } else {
@@ -54,6 +63,11 @@ function ServiceCallback() {
             type: `${service}_OAUTH_ERROR`,
             error: error,
           };
+        } else if (trelloToken && service === 'TRELLO') {
+          message = {
+            type: `${service}_OAUTH_SUCCESS`,
+            token: trelloToken,
+          };
         } else if (code) {
           message = {
             type: `${service}_OAUTH_SUCCESS`,
@@ -62,7 +76,7 @@ function ServiceCallback() {
         } else {
           message = {
             type: `${service}_OAUTH_ERROR`,
-            error: 'No authorization code received',
+            error: 'No authorization code or token received',
           };
         }
 

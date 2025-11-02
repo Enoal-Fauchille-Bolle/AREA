@@ -317,5 +317,75 @@ describe('API Services', () => {
         servicesApi.linkService(1, 'invalid-code'),
       ).rejects.toThrow();
     });
+
+    it('should link Trello service with token', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 204,
+      });
+
+      await servicesApi.linkTrelloService('trello-token-123');
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        `${API_BASE_URL}/services/trello/link`,
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({ token: 'trello-token-123' }),
+        }),
+      );
+    });
+
+    it('should get Trello profile', async () => {
+      const mockProfile = {
+        id: 'user123',
+        username: 'testuser',
+        fullName: 'Test User',
+        avatarUrl: 'https://trello.com/avatar.png',
+      };
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => mockProfile,
+      });
+
+      const result = await servicesApi.getTrelloProfile();
+
+      expect(result).toEqual(mockProfile);
+      expect(global.fetch).toHaveBeenCalledWith(
+        `${API_BASE_URL}/services/trello/profile`,
+        expect.objectContaining({
+          method: 'GET',
+          headers: expect.objectContaining({
+            Authorization: 'Bearer test-token',
+          }),
+        }),
+      );
+    });
+
+    it('should get Reddit profile', async () => {
+      const mockProfile = {
+        id: 'user456',
+        name: 'reddituser',
+        icon_img: 'https://reddit.com/icon.png',
+      };
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => mockProfile,
+      });
+
+      const result = await servicesApi.getRedditProfile();
+
+      expect(result).toEqual(mockProfile);
+      expect(global.fetch).toHaveBeenCalledWith(
+        `${API_BASE_URL}/services/reddit/profile`,
+        expect.objectContaining({
+          method: 'GET',
+          headers: expect.objectContaining({
+            Authorization: 'Bearer test-token',
+          }),
+        }),
+      );
+    });
   });
 });

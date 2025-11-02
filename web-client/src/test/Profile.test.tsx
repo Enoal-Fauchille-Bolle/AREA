@@ -65,6 +65,16 @@ vi.mock('../hooks/useSpotifyAuth', () => ({
   }),
 }));
 
+vi.mock('../hooks/useTrelloAuth', () => ({
+  useTrelloAuth: () => ({
+    connectToTrello: vi.fn(),
+    disconnectTrello: vi.fn(),
+    isConnecting: false,
+    isConnected: false,
+    trelloUser: null,
+  }),
+}));
+
 // Mock de l'API services
 vi.mock('../services/api', () => ({
   servicesApi: {
@@ -100,7 +110,7 @@ describe('Profile Component', () => {
     });
   });
 
-  it('displays all 6 OAuth services', async () => {
+  it('displays all 7 OAuth services', async () => {
     render(
       <BrowserRouter>
         <Profile />
@@ -114,6 +124,7 @@ describe('Profile Component', () => {
       expect(screen.getByText(/Gmail/i)).toBeInTheDocument();
       expect(screen.getByText(/Reddit/i)).toBeInTheDocument();
       expect(screen.getByText(/Spotify/i)).toBeInTheDocument();
+      expect(screen.getByText(/Trello/i)).toBeInTheDocument();
     });
   });
 
@@ -152,7 +163,7 @@ describe('Profile Component', () => {
     );
 
     await waitFor(() => {
-      const statusText = screen.getByText(/0 of 6 connected/i);
+      const statusText = screen.getByText(/0 of 7 connected/i);
       expect(statusText).toBeInTheDocument();
     });
   });

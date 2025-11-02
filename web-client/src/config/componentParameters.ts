@@ -461,6 +461,85 @@ export const spotifyComponentsConfig: ComponentConfig[] = [
   },
 ];
 
+export const trelloComponentsConfig: ComponentConfig[] = [
+  {
+    componentName: 'new_card_in_list',
+    parameters: [
+      {
+        name: 'list_id',
+        description: 'Trello list ID to monitor for new cards',
+        type: 'string',
+        required: true,
+        placeholder: '5e9a1234567890abcdef1234',
+      },
+    ],
+  },
+  {
+    componentName: 'card_moved_to_list',
+    parameters: [
+      {
+        name: 'board_id',
+        description: 'Trello board ID where the list is located',
+        type: 'string',
+        required: true,
+        placeholder: '5e9a1234567890abcdef1234',
+      },
+      {
+        name: 'target_list_id',
+        description: 'Trello list ID to monitor for moved cards',
+        type: 'string',
+        required: true,
+        placeholder: '5e9a1234567890abcdef5678',
+      },
+    ],
+  },
+  {
+    componentName: 'create_card',
+    parameters: [
+      {
+        name: 'list_id',
+        description: 'Trello list ID where the card will be created',
+        type: 'string',
+        required: true,
+        placeholder: '5e9a1234567890abcdef1234',
+      },
+      {
+        name: 'card_name',
+        description: 'Name/title of the card',
+        type: 'string',
+        required: true,
+        placeholder: 'New Task',
+      },
+      {
+        name: 'card_description',
+        description: 'Description of the card (optional)',
+        type: 'string',
+        required: false,
+        placeholder: 'Task description here',
+      },
+    ],
+  },
+  {
+    componentName: 'move_card',
+    parameters: [
+      {
+        name: 'card_id',
+        description: 'Trello card ID to move',
+        type: 'string',
+        required: true,
+        placeholder: '5e9a1234567890abcdef1234',
+      },
+      {
+        name: 'target_list_id',
+        description: 'Trello list ID to move the card to',
+        type: 'string',
+        required: true,
+        placeholder: '5e9a1234567890abcdef5678',
+      },
+    ],
+  },
+];
+
 export function getComponentParameters(
   componentName: string,
 ): ComponentParameter[] {
@@ -473,6 +552,7 @@ export function getComponentParameters(
     ...gmailComponentsConfig,
     ...redditComponentsConfig,
     ...spotifyComponentsConfig,
+    ...trelloComponentsConfig,
   ];
   const config = allConfigs.find((c) => c.componentName === componentName);
   return config ? config.parameters : [];

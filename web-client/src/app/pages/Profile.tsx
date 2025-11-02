@@ -7,6 +7,7 @@ import { useTwitchAuth } from '../../hooks/useTwitchAuth';
 import { useGmailAuth } from '../../hooks/useGmailAuth';
 import { useRedditAuth } from '../../hooks/useRedditAuth';
 import { useSpotifyAuth } from '../../hooks/useSpotifyAuth';
+import { useTrelloAuth } from '../../hooks/useTrelloAuth';
 
 interface ServiceCard {
   id: number;
@@ -73,6 +74,13 @@ const Profile: React.FC = () => {
     spotifyUser,
     connectToSpotify,
   } = useSpotifyAuth();
+
+  const {
+    isConnecting: isConnectingTrello,
+    isConnected: isConnectedTrello,
+    trelloUser,
+    connectToTrello,
+  } = useTrelloAuth();
 
   const [servicesData, setServicesData] = useState<
     Array<{ id: number; name: string }>
@@ -304,6 +312,33 @@ const Profile: React.FC = () => {
         : undefined,
       onConnect: () => handleConnect('Spotify', connectToSpotify),
     },
+    {
+      id: 7,
+      name: 'Trello',
+      displayName: 'Trello',
+      icon: (
+        <svg
+          width="32"
+          height="32"
+          viewBox="0 0 24 24"
+          className="w-8 h-8"
+          fill="#0079BF"
+        >
+          <path d="M21 0H3C1.343 0 0 1.343 0 3v18c0 1.656 1.343 3 3 3h18c1.656 0 3-1.344 3-3V3c0-1.657-1.344-3-3-3zM10.44 18.18c0 .795-.645 1.44-1.44 1.44H4.56c-.795 0-1.44-.646-1.44-1.44V4.56c0-.795.645-1.44 1.44-1.44H9c.795 0 1.44.645 1.44 1.44v13.62zm10.44-6c0 .794-.645 1.44-1.44 1.44H15c-.795 0-1.44-.646-1.44-1.44V4.56c0-.795.645-1.44 1.44-1.44h4.44c.795 0 1.44.645 1.44 1.44v7.62z" />
+        </svg>
+      ),
+      isConnecting: isConnectingTrello,
+      isConnected: isConnectedTrello,
+      user: trelloUser
+        ? {
+            id: trelloUser.id,
+            username: trelloUser.username,
+            email: trelloUser.email,
+            avatar: trelloUser.avatarUrl || undefined,
+          }
+        : undefined,
+      onConnect: () => handleConnect('Trello', connectToTrello),
+    },
   ];
 
   const connectedCount = services.filter((s) => s.isConnected).length;
@@ -390,7 +425,7 @@ const Profile: React.FC = () => {
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
-                    <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-gray-700 rounded-lg flex-shrink-0">
+                    <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-gray-700 rounded-lg shrink-0">
                       {service.icon}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -399,7 +434,7 @@ const Profile: React.FC = () => {
                           {service.displayName}
                         </h3>
                         {service.isConnected && (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-900 bg-opacity-50 text-green-300 border border-green-500 flex-shrink-0">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-900 bg-opacity-50 text-green-300 border border-green-500 shrink-0">
                             <svg
                               className="w-3 h-3 mr-1"
                               fill="currentColor"
@@ -444,7 +479,7 @@ const Profile: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="flex-shrink-0">
+                  <div className="shrink-0">
                     {service.isConnected ? (
                       <button
                         onClick={() => handleDisconnect(service.name)}
@@ -483,7 +518,7 @@ const Profile: React.FC = () => {
               </div>
               <button
                 onClick={() => navigate('/create')}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors whitespace-nowrap flex-shrink-0"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors whitespace-nowrap shrink-0"
                 aria-label="Create New AREA"
               >
                 Create New AREA
