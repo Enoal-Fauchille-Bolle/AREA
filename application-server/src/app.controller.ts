@@ -42,7 +42,11 @@ export class AppController {
     }
     const redirectUrl = new URL(redirectUri);
     redirectUrl.searchParams.append('code', code);
-    redirectUrl.searchParams.append('state', 'reddit');
+    if (state.includes('mobile')) {
+      redirectUrl.searchParams.append('state', 'reddit');
+    } else if (state === 'web:service') {
+      redirectUrl.searchParams.append('state', 'reddit:service_link');
+    }
 
     return res.redirect(redirectUrl.toString());
   }
