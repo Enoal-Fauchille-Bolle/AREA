@@ -3,6 +3,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/require-await */
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { TrelloReactionsService } from './trello-reactions.service';
 import { AreaExecutionsService } from '../../area-executions/area-executions.service';
@@ -21,6 +22,7 @@ describe('TrelloReactionsService', () => {
   let mockAreaParametersService: any;
   let mockUserServicesService: any;
   let mockServicesService: any;
+  let mockConfigService: any;
 
   beforeEach(async () => {
     mockAreaRepository = {
@@ -46,6 +48,16 @@ describe('TrelloReactionsService', () => {
       findAll: jest.fn(),
     };
 
+    mockConfigService = {
+      get: jest.fn().mockReturnValue({
+        oauth2: {
+          trello: {
+            apiKey: 'test-api-key',
+          },
+        },
+      }),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TrelloReactionsService,
@@ -69,16 +81,15 @@ describe('TrelloReactionsService', () => {
           provide: ServicesService,
           useValue: mockServicesService,
         },
+        {
+          provide: ConfigService,
+          useValue: mockConfigService,
+        },
       ],
     }).compile();
 
     service = module.get<TrelloReactionsService>(TrelloReactionsService);
     jest.clearAllMocks();
-    process.env.TRELLO_API_KEY = 'test-api-key';
-  });
-
-  afterEach(() => {
-    delete process.env.TRELLO_API_KEY;
   });
 
   it('should be defined', () => {

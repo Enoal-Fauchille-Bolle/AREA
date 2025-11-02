@@ -245,49 +245,65 @@ describe('AuthController', () => {
 
   describe('oauth2Callback', () => {
     it('should throw BadRequestException when code is missing', () => {
-      const res = {} as any;
+      const res = {
+        status: jest.fn().mockReturnThis(),
+        contentType: jest.fn().mockReturnThis(),
+        send: jest.fn().mockReturnThis(),
+      } as any;
 
       expect(() =>
-        controller.oauth2Callback('Mozilla', undefined as any, 'discord', res),
+        controller.oauth2Callback('Android', undefined as any, 'discord', res),
       ).toThrow(BadRequestException);
       expect(() =>
-        controller.oauth2Callback('Mozilla', undefined as any, 'discord', res),
+        controller.oauth2Callback('Android', undefined as any, 'discord', res),
       ).toThrow('Missing OAuth code');
     });
 
     it('should throw BadRequestException when provider is missing', () => {
-      const res = {} as any;
+      const res = {
+        status: jest.fn().mockReturnThis(),
+        contentType: jest.fn().mockReturnThis(),
+        send: jest.fn().mockReturnThis(),
+      } as any;
 
       expect(() =>
-        controller.oauth2Callback('Mozilla', 'code123', undefined as any, res),
+        controller.oauth2Callback('iPhone', 'code123', undefined as any, res),
       ).toThrow(BadRequestException);
       expect(() =>
-        controller.oauth2Callback('Mozilla', 'code123', undefined as any, res),
+        controller.oauth2Callback('iPhone', 'code123', undefined as any, res),
       ).toThrow('Missing OAuth provider');
     });
 
     it('should throw BadRequestException for invalid provider', () => {
-      const res = {} as any;
+      const res = {
+        status: jest.fn().mockReturnThis(),
+        contentType: jest.fn().mockReturnThis(),
+        send: jest.fn().mockReturnThis(),
+      } as any;
 
       expect(() =>
-        controller.oauth2Callback('Mozilla', 'code123', 'invalid', res),
+        controller.oauth2Callback('iPad', 'code123', 'invalid', res),
       ).toThrow(BadRequestException);
       expect(() =>
-        controller.oauth2Callback('Mozilla', 'code123', 'invalid', res),
+        controller.oauth2Callback('iPad', 'code123', 'invalid', res),
       ).toThrow('Invalid OAuth provider');
     });
 
     it('should return message for non-mobile requests', () => {
-      const res = {} as any;
+      const res = {
+        status: jest.fn().mockReturnThis(),
+        contentType: jest.fn().mockReturnThis(),
+        send: jest.fn().mockReturnThis(),
+      } as any;
 
-      const result = controller.oauth2Callback(
-        'Mozilla',
-        'code123',
-        'discord',
-        res,
-      );
+      controller.oauth2Callback('Mozilla', 'code123', 'discord', res);
 
-      expect(result).toBe('Redirecting to mobile application...\n');
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(res.status).toHaveBeenCalledWith(400);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(res.contentType).toHaveBeenCalledWith('text/html');
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(res.send).toHaveBeenCalled();
     });
   });
 });

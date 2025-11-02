@@ -62,7 +62,7 @@ describe('WellKnownController', () => {
 
       expect(result).toEqual([
         {
-          relations: ['delegate_permission/common.handle_all_urls'],
+          relation: ['delegate_permission/common.handle_all_urls'],
           target: {
             namespace: 'android_app',
             package_name: mockAndroidConfig.packageName,
@@ -87,7 +87,7 @@ describe('WellKnownController', () => {
       );
 
       expect(() => newController.getAssetLinks()).toThrow(
-        'Android configuration is not properly set',
+        'Android App Links configuration is missing. Please set ANDROID_PACKAGE_NAME and ANDROID_SHA256_FINGERPRINT',
       );
     });
 
@@ -105,7 +105,7 @@ describe('WellKnownController', () => {
       );
 
       expect(() => newController.getAssetLinks()).toThrow(
-        'Android configuration is not properly set',
+        'Android App Links configuration is missing. Please set ANDROID_PACKAGE_NAME and ANDROID_SHA256_FINGERPRINT',
       );
     });
   });
@@ -147,7 +147,7 @@ describe('WellKnownController', () => {
       );
 
       expect(() => newController.getAppleAppSiteAssociation()).toThrow(
-        'iOS configuration is not properly set',
+        'iOS Universal Links configuration is missing',
       );
     });
 
@@ -165,7 +165,7 @@ describe('WellKnownController', () => {
       );
 
       expect(() => newController.getAppleAppSiteAssociation()).toThrow(
-        'iOS configuration is not properly set',
+        'iOS Universal Links configuration is missing',
       );
     });
 

@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { TrelloService } from './trello.service';
 import { AreaExecutionsService } from '../area-executions/area-executions.service';
@@ -23,6 +24,7 @@ describe('TrelloService', () => {
   let mockHookStatesService: any;
   let mockAreasService: any;
   let mockReactionProcessorService: any;
+  let mockConfigService: any;
 
   beforeEach(async () => {
     mockAreaRepository = {
@@ -64,6 +66,16 @@ describe('TrelloService', () => {
       processReaction: jest.fn(),
     };
 
+    mockConfigService = {
+      get: jest.fn().mockReturnValue({
+        oauth2: {
+          trello: {
+            apiKey: 'test-api-key',
+          },
+        },
+      }),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TrelloService,
@@ -98,6 +110,10 @@ describe('TrelloService', () => {
         {
           provide: ReactionProcessorService,
           useValue: mockReactionProcessorService,
+        },
+        {
+          provide: ConfigService,
+          useValue: mockConfigService,
         },
       ],
     }).compile();
