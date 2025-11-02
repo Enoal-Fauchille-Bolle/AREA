@@ -1,4 +1,10 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  BadRequestException,
+  InternalServerErrorException,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AreaExecutionsService } from '../../area-executions/area-executions.service';
@@ -27,6 +33,7 @@ interface RedditSubmitResponse {
 export class RedditReactionsService {
   private readonly logger = new Logger(RedditReactionsService.name);
   private readonly redditOAuthApiUrl = 'https://oauth.reddit.com';
+  private readonly redditUserAgent: string | undefined;
 
   constructor(
     @InjectRepository(Area)
@@ -35,7 +42,14 @@ export class RedditReactionsService {
     private readonly areaParametersService: AreaParametersService,
     private readonly userServicesService: UserServicesService,
     private readonly servicesService: ServicesService,
-  ) {}
+    private readonly configService: ConfigService,
+  ) {
+    const appConfig = this.configService.get('app');
+    this.redditUserAgent =
+      appConfig.nodeEnv === 'production'
+        ? appConfig.oauth2.reddit.prodUserAgent
+        : appConfig.oauth2.reddit.devUserAgent;
+  }
 
   /**
    * Create a post in a subreddit (REACTION)
@@ -169,6 +183,11 @@ export class RedditReactionsService {
     title: string,
     text: string,
   ): Promise<{ id: string; url: string }> {
+    if (!this.redditUserAgent) {
+      throw new InternalServerErrorException(
+        'Reddit User-Agent is not configured properly.',
+      );
+    }
     try {
       const formData = new URLSearchParams({
         sr: subreddit,
@@ -181,7 +200,7 @@ export class RedditReactionsService {
       const response = await fetch(`${this.redditOAuthApiUrl}/api/submit`, {
         method: 'POST',
         headers: {
-          'User-Agent': 'AREA-Application/1.0',
+          'User-Agent': this.redditUserAgent,
           Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/x-www-form-urlencoded',
         },

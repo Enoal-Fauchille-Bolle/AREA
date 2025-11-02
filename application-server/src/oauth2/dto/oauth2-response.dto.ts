@@ -123,7 +123,6 @@ export class OAuth2ResponseDto {
       { $ref: '#/components/schemas/RedditUserInfo' },
       { $ref: '#/components/schemas/SpotifyUserInfo' },
       { $ref: '#/components/schemas/TwitchUserInfo' },
-      { $ref: '#/components/schemas/RedditUserInfo' },
     ],
   })
   rawData: ProviderUserInfo;

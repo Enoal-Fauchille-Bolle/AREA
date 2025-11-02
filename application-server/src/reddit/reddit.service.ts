@@ -1,4 +1,11 @@
-import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  Inject,
+  forwardRef,
+  InternalServerErrorException,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -34,7 +41,8 @@ interface RedditApiResponse {
 @Injectable()
 export class RedditService {
   private readonly logger = new Logger(RedditService.name);
-  private readonly redditApiUrl = 'https://www.reddit.com';
+  private readonly redditApiUrl = 'https://oauth.reddit.com';
+  private readonly redditUserAgent: string | undefined;
 
   constructor(
     @InjectRepository(Area)
@@ -47,7 +55,14 @@ export class RedditService {
     private readonly areasService: AreasService,
     @Inject(forwardRef(() => ReactionProcessorService))
     private readonly reactionProcessorService: ReactionProcessorService,
-  ) {}
+    private readonly configService: ConfigService,
+  ) {
+    const appConfig = this.configService.get('app');
+    this.redditUserAgent =
+      appConfig.nodeEnv === 'production'
+        ? appConfig.oauth2.reddit.prodUserAgent
+        : appConfig.oauth2.reddit.devUserAgent;
+  }
 
   /**
    * Cron job to check for hot posts every minute
@@ -186,15 +201,20 @@ export class RedditService {
     subreddit: string,
     accessToken: string,
   ): Promise<RedditPost[]> {
+    if (!this.redditUserAgent) {
+      throw new InternalServerErrorException(
+        'Reddit User-Agent is not configured properly.',
+      );
+    }
     try {
       // Use OAuth API endpoint instead of public JSON
-      const url = `https://oauth.reddit.com/r/${subreddit}/hot?limit=1`;
+      const url = `${this.redditApiUrl}/r/${subreddit}/hot?limit=1`;
 
       this.logger.debug(`Fetching hot posts from: ${url}`);
 
       const response = await fetch(url, {
         headers: {
-          'User-Agent': 'AREA-Application/1.0',
+          'User-Agent': this.redditUserAgent,
           Authorization: `Bearer ${accessToken}`,
         },
       });
@@ -226,7 +246,6 @@ export class RedditService {
           this.logger.debug(`Error cause: ${JSON.stringify(error.cause)}`);
         }
       }
-
       throw error;
     }
   }

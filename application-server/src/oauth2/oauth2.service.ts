@@ -112,11 +112,16 @@ export class OAuth2Service {
 
       // Reddit requires Basic Auth header and User-Agent
       if (isReddit) {
+        if (!this.REDDIT_USER_AGENT) {
+          throw new InternalServerErrorException(
+            'Reddit User-Agent is not configured properly.',
+          );
+        }
         const auth = Buffer.from(`${clientId}:${clientSecret}`).toString(
           'base64',
         );
         headers['Authorization'] = `Basic ${auth}`;
-        headers['User-Agent'] = 'AREA:v1.0.0 (by /u/area_app)';
+        headers['User-Agent'] = this.REDDIT_USER_AGENT;
       }
 
       const response = await firstValueFrom(
@@ -174,11 +179,16 @@ export class OAuth2Service {
 
       // Reddit requires Basic Auth header and User-Agent
       if (isReddit) {
+        if (!this.REDDIT_USER_AGENT) {
+          throw new InternalServerErrorException(
+            'Reddit User-Agent is not configured properly.',
+          );
+        }
         const auth = Buffer.from(`${clientId}:${clientSecret}`).toString(
           'base64',
         );
         headers['Authorization'] = `Basic ${auth}`;
-        headers['User-Agent'] = 'AREA:v1.0.0 (by /u/area_app)';
+        headers['User-Agent'] = this.REDDIT_USER_AGENT;
       }
 
       const response = await firstValueFrom(
