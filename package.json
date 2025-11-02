@@ -16,7 +16,7 @@
     "dev:both": "concurrently \"npm run dev:server\" \"npm run dev:web\"",
     "build:server": "sh -c 'command -v pnpm >/dev/null 2>&1 && pnpm --filter application-server run build || npm run build --workspace=application-server'",
     "build:web": "sh -c 'command -v pnpm >/dev/null 2>&1 && pnpm --filter web-client run build || npm run build --workspace=web-client'",
-    "build:mobile": "cd mobile-client && flutter pub get && flutter create --platforms=android && flutter build apk --release && cd ..",
+    "build:mobile": "cd mobile-client && flutter clean && flutter build apk --release && adb adb install -r build/app/outputs/flutter-apk/app-release.apk && cd ..",
     "build:all": "sh -c 'command -v pnpm >/dev/null 2>&1 && pnpm install && pnpm run build:server && pnpm run build:web && pnpm run build:mobile || npm install && npm run build:server && npm run build:web && npm run build:mobile'",
     "lint:server": "sh -c 'command -v pnpm >/dev/null 2>&1 && pnpm --filter application-server run lint || npm run lint --workspace=application-server'",
     "lint:web": "sh -c 'command -v pnpm >/dev/null 2>&1 && pnpm --filter web-client run lint || npm run lint --workspace=web-client'",

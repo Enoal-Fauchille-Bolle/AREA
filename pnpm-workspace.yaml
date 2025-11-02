@@ -1,4 +1,11 @@
 packages:
-  - 'application-server'
-  - 'web-client'
-  - 'mobile-client'
+  - application-server
+  - web-client
+  - mobile-client
+
+onlyBuiltDependencies:
+  - '@nestjs/core'
+  - '@scarf/scarf'
+  - bcrypt
+  - esbuild
+  - unrs-resolver
