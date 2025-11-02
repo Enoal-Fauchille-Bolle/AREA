@@ -238,7 +238,11 @@ describe('AreasService', () => {
       mockVariablesService.findByComponent.mockResolvedValue([]);
       mockVariablesService.create.mockResolvedValue({ id: 1, name: 'time' });
 
-      const result = await service.createWithParameters(1, createDto, parameters);
+      const result = await service.createWithParameters(
+        1,
+        createDto,
+        parameters,
+      );
 
       expect(result.id).toBe(1);
       expect(mockComponentsService.findOne).toHaveBeenCalledTimes(2);
