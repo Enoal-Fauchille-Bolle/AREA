@@ -36,6 +36,7 @@ import { GmailModule } from './gmail/gmail.module';
 import { TwitchModule } from './twitch/twitch.module';
 import { RedditModule } from './reddit/reddit.module';
 import { SpotifyModule } from './spotify/spotify.module';
+import { TrelloModule } from './trello/trello.module';
 
 @Module({
   imports: [
@@ -99,6 +100,7 @@ import { SpotifyModule } from './spotify/spotify.module';
     TwitchModule,
     RedditModule,
     SpotifyModule,
+    TrelloModule,
   ],
   controllers: [AppController],
   providers: [AppService],

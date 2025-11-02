@@ -26,6 +26,7 @@ export class AreaExecutionsService {
     const areaExecution = this.areaExecutionRepository.create({
       ...createAreaExecutionDto,
       status: createAreaExecutionDto.status || ExecutionStatus.PENDING,
+      startedAt: createAreaExecutionDto.startedAt || new Date(),
     });
 
     const savedExecution =
