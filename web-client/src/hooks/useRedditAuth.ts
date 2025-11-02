@@ -43,10 +43,12 @@ export const useRedditAuth = () => {
       setIsConnecting(true);
 
       const clientId = import.meta.env.VITE_REDDIT_CLIENT_ID;
-      const redirectUri = `${window.location.origin}/service/callback`;
+      const redirectUri =
+        import.meta.env.VITE_REDDIT_REDIRECT_URI ||
+        'http://localhost:8080/reddit/callback';
       const encodedRedirectUri = encodeURIComponent(redirectUri);
       const scope = encodeURIComponent('identity submit read');
-      const state = encodeURIComponent('reddit:service_link');
+      const state = encodeURIComponent('web:service');
 
       if (!clientId) {
         throw new Error('Reddit OAuth2 not configured');
@@ -62,25 +64,35 @@ export const useRedditAuth = () => {
         }
 
         if (event.data.type === 'REDDIT_OAUTH_SUCCESS' && event.data.code) {
-          await servicesApi.linkService(serviceId, event.data.code);
-          setIsConnected(true);
-
           try {
-            const profile = await servicesApi.getRedditProfile();
-            setRedditUser(profile);
-          } catch {
-            setRedditUser({
-              id: 'connected',
-              name: 'Reddit User',
-            });
-          }
+            await servicesApi.linkService(serviceId, event.data.code);
+            setIsConnected(true);
 
-          if (popup && !popup.closed) {
-            popup.close();
+            try {
+              const profile = await servicesApi.getRedditProfile();
+              setRedditUser(profile);
+            } catch {
+              setRedditUser({
+                id: 'connected',
+                name: 'Reddit User',
+              });
+            }
+
+            if (popup && !popup.closed) {
+              popup.close();
+            }
+            clearInterval(checkClosed);
+            window.removeEventListener('message', messageListener);
+            setIsConnecting(false);
+          } catch (error) {
+            if (popup && !popup.closed) {
+              popup.close();
+            }
+            clearInterval(checkClosed);
+            window.removeEventListener('message', messageListener);
+            setIsConnecting(false);
+            throw error;
           }
-          clearInterval(checkClosed);
-          window.removeEventListener('message', messageListener);
-          setIsConnecting(false);
         } else if (event.data.type === 'REDDIT_OAUTH_ERROR') {
           if (popup && !popup.closed) {
             popup.close();
@@ -122,7 +134,8 @@ export const useRedditAuth = () => {
     }
   };
 
-  const disconnectFromReddit = () => {
+  const disconnectFromReddit = async () => {
+    await servicesApi.disconnectService('reddit');
     setIsConnected(false);
     setRedditUser(null);
   };

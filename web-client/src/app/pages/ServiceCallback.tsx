@@ -6,6 +6,7 @@ import { githubOAuth } from '../../lib/githubOAuth';
 import { discordOAuth } from '../../lib/discordOAuth';
 import { twitchOAuth } from '../../lib/twitchOAuth';
 import { gmailOAuth } from '../../lib/gmailOAuth';
+import { redditOAuth } from '../../lib/redditOAuth';
 import { trelloOAuth } from '../../lib/trelloOAuth';
 
 function ServiceCallback() {
@@ -96,7 +97,13 @@ function ServiceCallback() {
           throw new Error(`OAuth error: ${error}`);
         }
 
-        let provider: 'google' | 'github' | 'discord' | 'twitch' | 'gmail';
+        let provider:
+          | 'google'
+          | 'github'
+          | 'discord'
+          | 'twitch'
+          | 'gmail'
+          | 'reddit';
         let intent: 'login' | 'register';
         let redirectUri: string;
 
@@ -120,6 +127,10 @@ function ServiceCallback() {
           provider = 'twitch';
           intent = twitchOAuth.extractIntentFromUrl();
           redirectUri = twitchOAuth.redirectUri;
+        } else if (state?.startsWith('reddit:')) {
+          provider = 'reddit';
+          intent = 'login';
+          redirectUri = redditOAuth.redirectUri;
         } else {
           throw new Error(`Unknown OAuth provider from state: ${state}`);
         }
