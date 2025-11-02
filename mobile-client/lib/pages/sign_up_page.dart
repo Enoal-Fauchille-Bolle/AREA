@@ -8,6 +8,7 @@ import '../widgets/custom_text_field.dart';
 import '../widgets/password_field.dart';
 import '../widgets/custom_button.dart';
 import 'home_page.dart';
+import 'verify_email_page.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -50,11 +51,15 @@ class _SignUpPageState extends State<SignUpPage> {
 
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Account created successfully!')),
+          const SnackBar(
+              content: Text('Account created! Please verify your email.')),
         );
-        // Navigate to home page after successful registration
+        // Navigate to email verification page
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const HomePage()),
+          MaterialPageRoute(
+            builder: (context) =>
+                VerifyEmailPage(email: _emailController.text.trim()),
+          ),
         );
       } else if (mounted) {
         _showErrorDialog('Failed to create account. Please try again.');
