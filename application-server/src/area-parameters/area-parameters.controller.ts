@@ -11,6 +11,7 @@ import {
   ParseIntPipe,
   Query,
 } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { AreaParametersService } from './area-parameters.service';
 import {
   CreateAreaParameterDto,
@@ -18,10 +19,24 @@ import {
   AreaParameterResponseDto,
 } from './dto';
 
+@ApiTags('Area Parameters')
 @Controller('area-parameters')
 export class AreaParametersController {
   constructor(private readonly areaParametersService: AreaParametersService) {}
 
+  @ApiOperation({
+    summary: 'Create area parameter',
+    description: 'Creates a new parameter for an AREA component',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Parameter successfully created',
+    type: AreaParameterResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad Request - Invalid input data',
+  })
   @Post()
   @HttpCode(HttpStatus.CREATED)
   create(
@@ -30,6 +45,34 @@ export class AreaParametersController {
     return this.areaParametersService.create(createAreaParameterDto);
   }
 
+  @ApiOperation({
+    summary: 'Get all area parameters',
+    description:
+      'Retrieves all area parameters. Supports filtering by area ID, variable ID, or templates',
+  })
+  @ApiQuery({
+    name: 'area_id',
+    required: false,
+    type: 'integer',
+    description: 'Filter by AREA ID',
+  })
+  @ApiQuery({
+    name: 'variable_id',
+    required: false,
+    type: 'integer',
+    description: 'Filter by variable ID',
+  })
+  @ApiQuery({
+    name: 'templates',
+    required: false,
+    type: 'boolean',
+    description: 'Filter template parameters',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of area parameters',
+    type: [AreaParameterResponseDto],
+  })
   @Get()
   findAll(
     @Query('area_id') areaId?: string,
