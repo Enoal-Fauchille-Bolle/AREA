@@ -227,6 +227,7 @@ describe('oauth-providers.dto', () => {
         id: '123',
         username: 'testuser',
         discriminator: '1234',
+        global_name: 'Test User',
       };
 
       expect(createUsernameFromProviderInfo(discordUser)).toBe('testuser#1234');
@@ -237,6 +238,7 @@ describe('oauth-providers.dto', () => {
         id: '123',
         username: 'testuser',
         discriminator: '0',
+        global_name: 'Test User',
       };
 
       expect(createUsernameFromProviderInfo(discordUser)).toBe('testuser');
@@ -247,6 +249,7 @@ describe('oauth-providers.dto', () => {
         id: '123',
         username: '',
         discriminator: '0',
+        global_name: null,
       };
 
       expect(createUsernameFromProviderInfo(discordUser)).toBe(
@@ -258,7 +261,7 @@ describe('oauth-providers.dto', () => {
       const googleUser: GoogleUserInfo = {
         sub: '123',
         name: 'Test User',
-        email: 'test@example.com',
+        given_name: 'Test',
       };
 
       expect(createUsernameFromProviderInfo(googleUser)).toBe('Test User');
@@ -267,6 +270,7 @@ describe('oauth-providers.dto', () => {
     it('should create username from Google info with fallback', () => {
       const googleUser: GoogleUserInfo = {
         sub: '123',
+        given_name: 'Test',
       };
 
       expect(createUsernameFromProviderInfo(googleUser)).toBe(
