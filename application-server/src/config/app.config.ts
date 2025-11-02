@@ -14,7 +14,7 @@ export const appConfig = registerAs('app', () => {
 
   return {
     // Server Configuration
-    serverUrl: process.env.SERVER_URL || 'http://127.0.0.1:8080',
+    serverUrl: process.env.SERVER_URL || 'http://localhost:8080',
     port: parseInt(process.env.PORT || '8080', 10),
     nodeEnv: process.env.NODE_ENV || 'development',
 
@@ -81,6 +81,14 @@ export const appConfig = registerAs('app', () => {
       github: {
         clientId: process.env.GITHUB_CLIENT_ID,
         clientSecret: process.env.GITHUB_CLIENT_SECRET,
+      },
+      reddit: {
+        devUserAgent: process.env.REDDIT_DEV_USER_AGENT,
+        clientIdDev: process.env.REDDIT_DEV_CLIENT_ID,
+        clientSecretDev: process.env.REDDIT_DEV_CLIENT_SECRET,
+        prodUserAgent: process.env.REDDIT_PROD_USER_AGENT,
+        clientIdProd: process.env.REDDIT_PROD_CLIENT_ID,
+        clientSecretProd: process.env.REDDIT_PROD_CLIENT_SECRET,
       },
       twitch: {
         clientId: process.env.TWITCH_CLIENT_ID,

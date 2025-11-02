@@ -1151,7 +1151,7 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       }),
     ]);
 
-    console.log(
+    this.logger.log(
       'Gmail service with new_email_received action and send_gmail reaction created successfully',
     );
   }
@@ -1353,10 +1353,10 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
   private async createRedditService(): Promise<void> {
     try {
       await this.servicesService.findByName('Reddit');
-      console.log('Reddit service already exists, skipping creation');
+      this.logger.log('Reddit service already exists, skipping creation');
       return;
     } catch {
-      console.log('Creating Reddit service...');
+      this.logger.log('Creating Reddit service...');
     }
 
     const redditService = await this.servicesService.create({
@@ -1364,7 +1364,7 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       description: 'Monitor Reddit posts and create posts in subreddits',
       icon_path:
         'https://www.redditstatic.com/desktop2x/img/favicon/favicon-32x32.png',
-      requires_auth: false,
+      requires_auth: true,
       is_active: true,
     });
 
@@ -1375,7 +1375,7 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       name: 'hot_post_in_subreddit',
       description: 'Triggers when a new hot post appears in a subreddit',
       is_active: true,
-      polling_interval: 60000, // Check every minute
+      polling_interval: 60000,
     });
 
     await Promise.all([
@@ -1529,7 +1529,7 @@ export class ServicesInitializerService implements OnApplicationBootstrap {
       }),
     ]);
 
-    console.log(
+    this.logger.log(
       'Reddit service with hot_post_in_subreddit action and create_reddit_post reaction created successfully',
     );
   }

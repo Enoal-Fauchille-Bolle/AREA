@@ -47,7 +47,6 @@ describe('App (Landing Page)', () => {
 
   it('renders navigation buttons', () => {
     renderWithRouter(<App />);
-    expect(screen.getByText('Explore')).toBeInTheDocument();
     expect(screen.getByText('Log in')).toBeInTheDocument();
   });
 

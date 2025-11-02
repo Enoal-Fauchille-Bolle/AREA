@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { Logger } from '@nestjs/common';
 import { ConfigurationException } from '../common/exceptions/configuration.exception';
 
 export const envValidationSchema = z.object({
@@ -30,6 +31,12 @@ export const envValidationSchema = z.object({
   SPOTIFY_CLIENT_SECRET: z.string().optional(),
   TWITCH_CLIENT_ID: z.string().optional(),
   TWITCH_CLIENT_SECRET: z.string().optional(),
+  REDDIT_DEV_USER_AGENT: z.string().optional(),
+  REDDIT_DEV_CLIENT_ID: z.string().optional(),
+  REDDIT_DEV_CLIENT_SECRET: z.string().optional(),
+  REDDIT_PROD_USER_AGENT: z.string().optional(),
+  REDDIT_PROD_CLIENT_ID: z.string().optional(),
+  REDDIT_PROD_CLIENT_SECRET: z.string().optional(),
   TRELLO_API_KEY: z.string().optional(),
   TRELLO_API_SECRET: z.string().optional(),
   SMTP_USER: z.string().optional(),
@@ -55,6 +62,7 @@ export const envValidationSchema = z.object({
 });
 
 export function validateEnv(config: Record<string, unknown>) {
+  const logger = new Logger('EnvValidation');
   const parsed = envValidationSchema.safeParse(config);
   if (!parsed.success) {
     throw new ConfigurationException(
@@ -108,6 +116,15 @@ export function validateEnv(config: Record<string, unknown>) {
         'Twitch OAuth2 must be set in production.',
       );
     }
+    if (
+      !env.REDDIT_PROD_USER_AGENT ||
+      !env.REDDIT_PROD_CLIENT_ID ||
+      !env.REDDIT_PROD_CLIENT_SECRET
+    ) {
+      throw new ConfigurationException(
+        'Reddit OAuth2 must be set in production.',
+      );
+    }
     if (!env.TRELLO_API_KEY || !env.TRELLO_API_SECRET) {
       throw new ConfigurationException(
         'Trello API credentials must be set in production.',
@@ -130,53 +147,56 @@ export function validateEnv(config: Record<string, unknown>) {
     }
   } else {
     if (!env.JWT_SECRET) {
-      console.warn('WARNING: Using default JWT secret for development.');
+      logger.warn('Using default JWT secret for development.');
     }
     if (!env.DISCORD_CLIENT_ID || !env.DISCORD_CLIENT_SECRET) {
-      console.warn('WARNING: Discord OAuth2 not set; server may crash.');
+      logger.warn('Discord OAuth2 not set; server may crash.');
     }
     if (!env.DISCORD_BOT_TOKEN) {
-      console.warn(
-        'WARNING: Discord Bot Token not set; Discord REActions will not work.',
+      logger.warn(
+        'Discord Bot Token not set; Discord REActions will not work.',
       );
     }
     if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) {
-      console.warn('WARNING: Google OAuth2 not set; server may crash.');
+      logger.warn('Google OAuth2 not set; server may crash.');
     }
     if (env.GMAIL_CLIENT_ID && !env.GMAIL_CLIENT_SECRET) {
-      console.warn(
-        'WARNING: Gmail Client Secret not set; Gmail integration may not work.',
+      logger.warn(
+        'Gmail Client Secret not set; Gmail integration may not work.',
       );
     }
     if (!env.YOUTUBE_CLIENT_ID || !env.YOUTUBE_CLIENT_SECRET) {
-      console.warn('WARNING: YouTube OAuth2 not set; server may crash.');
+      logger.warn('YouTube OAuth2 not set; server may crash.');
     }
     if (!env.GITHUB_CLIENT_ID || !env.GITHUB_CLIENT_SECRET) {
-      console.warn('WARNING: GitHub OAuth2 not set; server may crash.');
+      logger.warn('GitHub OAuth2 not set; server may crash.');
     }
     if (!env.SPOTIFY_CLIENT_ID || !env.SPOTIFY_CLIENT_SECRET) {
-      console.warn('WARNING: Spotify OAuth2 not set; server may crash.');
+      logger.warn('Spotify OAuth2 not set; server may crash.');
     }
     if (!env.TWITCH_CLIENT_ID || !env.TWITCH_CLIENT_SECRET) {
-      console.warn('WARNING: Twitch OAuth2 not set; server may crash.');
+      logger.warn('Twitch OAuth2 not set; server may crash.');
+    }
+    if (
+      !env.REDDIT_DEV_USER_AGENT ||
+      !env.REDDIT_DEV_CLIENT_ID ||
+      !env.REDDIT_DEV_CLIENT_SECRET
+    ) {
+      logger.warn('Reddit OAuth2 not set; server may crash.');
     }
     if (!env.TRELLO_API_KEY || !env.TRELLO_API_SECRET) {
-      console.warn(
+      logger.warn(
         'WARNING: Trello API credentials not set; Trello integration will not work.',
       );
     }
     if (!env.SMTP_USER || !env.SMTP_PASS) {
-      console.warn('WARNING: SMTP credentials not set; email may not work.');
+      logger.warn('SMTP credentials not set; email may not work.');
     }
     if (!env.ANDROID_PACKAGE_NAME || !env.ANDROID_SHA256_FINGERPRINT) {
-      console.warn(
-        'WARNING: Android config not set; some mobile features may not work.',
-      );
+      logger.warn('Android config not set; some mobile features may not work.');
     }
     if (!env.IOS_TEAM_ID || !env.IOS_BUNDLE_ID) {
-      console.warn(
-        'WARNING: iOS config not set; some mobile features may not work.',
-      );
+      logger.warn('iOS config not set; some mobile features may not work.');
     }
   }
   return env;

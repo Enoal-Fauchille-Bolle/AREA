@@ -1,59 +1,62 @@
 import { useState, useEffect } from 'react';
 import { servicesApi } from '../services/api';
 
-interface DiscordUser {
+interface TrelloUser {
   id: string;
   username: string;
-  discriminator: string;
-  avatar: string | null;
+  fullName: string;
+  avatarUrl: string | null;
   email?: string;
 }
 
-export const useDiscordAuth = () => {
+export const useTrelloAuth = () => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
-  const [discordUser, setDiscordUser] = useState<DiscordUser | null>(null);
+  const [trelloUser, setTrelloUser] = useState<TrelloUser | null>(null);
 
   useEffect(() => {
     const checkConnection = async () => {
       try {
         const userServices = await servicesApi.getUserServices();
-        const discordService = userServices.find(
-          (s) => s.name.toLowerCase() === 'discord',
+        const trelloService = userServices.find(
+          (s) => s.name.toLowerCase() === 'trello',
         );
 
-        if (discordService) {
-          const profile = await servicesApi.getDiscordProfile();
-          setDiscordUser(profile);
+        if (trelloService) {
+          const profile = await servicesApi.getTrelloProfile();
+          setTrelloUser(profile);
           setIsConnected(true);
         } else {
           setIsConnected(false);
-          setDiscordUser(null);
+          setTrelloUser(null);
         }
       } catch {
         setIsConnected(false);
-        setDiscordUser(null);
+        setTrelloUser(null);
       }
     };
 
     checkConnection();
   }, []);
 
-  const connectToDiscord = async (serviceId: number) => {
+  const connectToTrello = async (_serviceId: number) => {
+    // Note: serviceId is not used for Trello as the backend uses a special endpoint
+    // that doesn't require the serviceId, but we keep it for consistency with other OAuth hooks
+    void _serviceId;
     try {
       setIsConnecting(true);
 
-      const clientId = import.meta.env.VITE_DISCORD_CLIENT_ID;
-      const redirectUri = `${window.location.origin}/service/callback`;
+      const apiKey = import.meta.env.VITE_TRELLO_API_KEY;
+      const redirectUri = `${window.location.origin}/service/callback?state=trello:service_link`;
       const encodedRedirectUri = encodeURIComponent(redirectUri);
-      const scope = encodeURIComponent('identify email guilds');
-      const state = encodeURIComponent('discord:service_link');
+      const scope = encodeURIComponent('read,write');
+      const appName = encodeURIComponent('AREA App Integration');
 
-      if (!clientId) {
-        throw new Error('Discord OAuth2 not configured');
+      if (!apiKey) {
+        throw new Error('Trello API key not configured');
       }
 
-      const discordAuthUrl = `https://discord.com/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodedRedirectUri}&response_type=code&scope=${scope}&state=${state}`;
+      const trelloAuthUrl = `https://trello.com/1/authorize?expiration=never&name=${appName}&scope=${scope}&response_type=token&key=${apiKey}&return_url=${encodedRedirectUri}`;
 
       let popup: Window | null = null;
 
@@ -62,22 +65,24 @@ export const useDiscordAuth = () => {
           return;
         }
 
-        if (event.data.type === 'DISCORD_OAUTH_SUCCESS' && event.data.code) {
+        if (event.data.type === 'TRELLO_OAUTH_SUCCESS' && event.data.token) {
           try {
-            await servicesApi.linkService(serviceId, event.data.code);
+            await servicesApi.linkTrelloService(event.data.token);
             setIsConnected(true);
+
             try {
-              const profile = await servicesApi.getDiscordProfile();
-              setDiscordUser(profile);
+              const profile = await servicesApi.getTrelloProfile();
+              setTrelloUser(profile);
             } catch {
-              setDiscordUser({
+              setTrelloUser({
                 id: 'connected',
-                username: 'Discord User',
-                discriminator: '0000',
-                avatar: null,
+                username: 'Trello User',
+                fullName: 'Trello User (Connected)',
+                avatarUrl: null,
                 email: undefined,
               });
             }
+
             if (popup && !popup.closed) {
               popup.close();
             }
@@ -93,29 +98,34 @@ export const useDiscordAuth = () => {
             setIsConnecting(false);
             throw error;
           }
-        } else if (event.data.type === 'DISCORD_OAUTH_ERROR') {
+        } else if (event.data.type === 'TRELLO_OAUTH_ERROR') {
           if (popup && !popup.closed) {
             popup.close();
           }
           clearInterval(checkClosed);
           window.removeEventListener('message', messageListener);
           setIsConnecting(false);
-          throw new Error(event.data.error || 'Discord OAuth2 failed');
+          throw new Error(event.data.error || 'Trello OAuth failed');
         }
       };
 
       window.addEventListener('message', messageListener);
 
+      const width = 600;
+      const height = 700;
+      const left = window.screen.width / 2 - width / 2;
+      const top = window.screen.height / 2 - height / 2;
+
       popup = window.open(
-        discordAuthUrl,
-        'discord-oauth',
-        'width=500,height=600,scrollbars=yes,resizable=yes',
+        trelloAuthUrl,
+        'TrelloAuth',
+        `width=${width},height=${height},left=${left},top=${top}`,
       );
 
       if (!popup) {
         window.removeEventListener('message', messageListener);
         setIsConnecting(false);
-        throw new Error('Failed to open Discord OAuth2 popup');
+        throw new Error('Failed to open Trello OAuth popup');
       }
 
       const checkClosed = setInterval(() => {
@@ -133,24 +143,24 @@ export const useDiscordAuth = () => {
         clearInterval(checkClosed);
         window.removeEventListener('message', messageListener);
         setIsConnecting(false);
-      }, 300000);
+      }, 300000); // 5 minutes timeout
     } catch (error) {
       setIsConnecting(false);
       throw error;
     }
   };
 
-  const disconnectFromDiscord = async () => {
-    await servicesApi.disconnectService('discord');
+  const disconnectTrello = async () => {
+    await servicesApi.disconnectService('trello');
     setIsConnected(false);
-    setDiscordUser(null);
+    setTrelloUser(null);
   };
 
   return {
     isConnecting,
     isConnected,
-    discordUser,
-    connectToDiscord,
-    disconnectFromDiscord,
+    trelloUser,
+    connectToTrello,
+    disconnectTrello,
   };
 };

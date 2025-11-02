@@ -50,10 +50,6 @@ function UserProfile() {
     navigate(`/edit/${id}`);
   };
 
-  const handleExplore = () => {
-    navigate('/');
-  };
-
   const handleLogout = () => {
     logout();
     navigate('/');
@@ -114,26 +110,19 @@ function UserProfile() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
-      <header className="p-6">
-        <div className="flex justify-between items-center">
+      <header className="p-4 sm:p-6 lg:p-8">
+        <div className="flex justify-between items-center max-w-7xl mx-auto">
           <div className="flex items-center">
-            <h1 className="text-4xl font-bold">AREA</h1>
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold">AREA</h1>
           </div>
 
-          <div className="flex items-center space-x-6">
-            <button
-              onClick={handleExplore}
-              className="text-xl font-semibold text-gray-300 hover:text-white hover:scale-105 transform transition-all duration-300"
-              aria-label="Explore services"
-            >
-              Explore
-            </button>
-            <span className="text-xl font-semibold text-gray-300 hover:text-white hover:scale-105 transform transition-all duration-300 cursor-pointer">
+          <div className="flex items-center gap-3 sm:gap-4 md:gap-6 lg:gap-8">
+            <span className="hidden sm:inline-block text-base sm:text-lg lg:text-xl font-semibold text-gray-300 hover:text-white hover:scale-105 transform transition-all duration-300 cursor-pointer">
               My Areas
             </span>
             <button
               onClick={handleCreateArea}
-              className="bg-white text-black hover:bg-gray-200 px-4 py-2 rounded-lg text-xl font-semibold hover:scale-105 transform transition-all duration-300"
+              className="bg-white text-black hover:bg-gray-200 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-sm sm:text-base lg:text-xl font-semibold hover:scale-105 transform transition-all duration-300"
               aria-label="Create new area"
             >
               Create

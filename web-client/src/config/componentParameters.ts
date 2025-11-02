@@ -316,6 +316,230 @@ export const twitchComponentsConfig: ComponentConfig[] = [
   },
 ];
 
+export const gmailComponentsConfig: ComponentConfig[] = [
+  {
+    componentName: 'new_email_received',
+    parameters: [
+      {
+        name: 'from',
+        description:
+          'Filter emails by sender address (optional, leave empty to monitor all emails)',
+        type: 'email',
+        required: false,
+        placeholder: 'sender@example.com',
+        validation: '^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$',
+      },
+      {
+        name: 'subject_contains',
+        description:
+          'Filter emails by subject keywords (optional, case-insensitive)',
+        type: 'string',
+        required: false,
+        placeholder: 'Important',
+      },
+    ],
+  },
+  {
+    componentName: 'send_gmail',
+    parameters: [
+      {
+        name: 'to',
+        description: 'Recipient email address',
+        type: 'email',
+        required: true,
+        placeholder: 'recipient@example.com',
+        validation: '^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$',
+      },
+      {
+        name: 'subject',
+        description: 'Email subject line',
+        type: 'string',
+        required: true,
+        placeholder: 'AREA Notification',
+      },
+      {
+        name: 'body',
+        description: 'Email message body (plain text)',
+        type: 'string',
+        required: true,
+        placeholder: 'Your AREA was triggered successfully.',
+      },
+      {
+        name: 'cc',
+        description:
+          'Carbon copy recipients (optional, comma-separated for multiple)',
+        type: 'email',
+        required: false,
+        placeholder: 'cc@example.com',
+      },
+      {
+        name: 'bcc',
+        description:
+          'Blind carbon copy recipients (optional, comma-separated for multiple)',
+        type: 'email',
+        required: false,
+        placeholder: 'bcc@example.com',
+      },
+    ],
+  },
+];
+
+export const redditComponentsConfig: ComponentConfig[] = [
+  {
+    componentName: 'hot_post_in_subreddit',
+    parameters: [
+      {
+        name: 'subreddit',
+        description: 'Subreddit name to monitor (without r/)',
+        type: 'string',
+        required: true,
+        placeholder: 'programming',
+      },
+    ],
+  },
+  {
+    componentName: 'create_reddit_post',
+    parameters: [
+      {
+        name: 'subreddit',
+        description: 'Subreddit name to post in (without r/)',
+        type: 'string',
+        required: true,
+        placeholder: 'test',
+      },
+      {
+        name: 'title',
+        description: 'Post title',
+        type: 'string',
+        required: true,
+        placeholder: 'My automated post from AREA',
+      },
+      {
+        name: 'text',
+        description: 'Post text content (optional for link posts)',
+        type: 'string',
+        required: false,
+        placeholder: 'This post was created automatically',
+      },
+    ],
+  },
+];
+
+export const spotifyComponentsConfig: ComponentConfig[] = [
+  {
+    componentName: 'add_to_playlist',
+    parameters: [
+      {
+        name: 'playlist_id',
+        description: 'Spotify ID of the playlist to add the track to',
+        type: 'string',
+        required: true,
+        placeholder: '37i9dQZF1DXcBWIGoYBM5M',
+      },
+      {
+        name: 'track_uri',
+        description:
+          'Spotify URI of the track to add (e.g., spotify:track:...)',
+        type: 'string',
+        required: true,
+        placeholder: 'spotify:track:6rqhFgbbKwnb9MLmUQDhG6',
+      },
+    ],
+  },
+  {
+    componentName: 'add_to_queue',
+    parameters: [
+      {
+        name: 'track_uri',
+        description:
+          'Spotify URI of the track to add to the queue (e.g., spotify:track:...)',
+        type: 'string',
+        required: true,
+        placeholder: 'spotify:track:6rqhFgbbKwnb9MLmUQDhG6',
+      },
+    ],
+  },
+];
+
+export const trelloComponentsConfig: ComponentConfig[] = [
+  {
+    componentName: 'new_card_in_list',
+    parameters: [
+      {
+        name: 'list_id',
+        description: 'Trello list ID to monitor for new cards',
+        type: 'string',
+        required: true,
+        placeholder: '5e9a1234567890abcdef1234',
+      },
+    ],
+  },
+  {
+    componentName: 'card_moved_to_list',
+    parameters: [
+      {
+        name: 'board_id',
+        description: 'Trello board ID where the list is located',
+        type: 'string',
+        required: true,
+        placeholder: '5e9a1234567890abcdef1234',
+      },
+      {
+        name: 'target_list_id',
+        description: 'Trello list ID to monitor for moved cards',
+        type: 'string',
+        required: true,
+        placeholder: '5e9a1234567890abcdef5678',
+      },
+    ],
+  },
+  {
+    componentName: 'create_card',
+    parameters: [
+      {
+        name: 'list_id',
+        description: 'Trello list ID where the card will be created',
+        type: 'string',
+        required: true,
+        placeholder: '5e9a1234567890abcdef1234',
+      },
+      {
+        name: 'card_name',
+        description: 'Name/title of the card',
+        type: 'string',
+        required: true,
+        placeholder: 'New Task',
+      },
+      {
+        name: 'card_description',
+        description: 'Description of the card (optional)',
+        type: 'string',
+        required: false,
+        placeholder: 'Task description here',
+      },
+    ],
+  },
+  {
+    componentName: 'move_card',
+    parameters: [
+      {
+        name: 'card_id',
+        description: 'Trello card ID to move',
+        type: 'string',
+        required: true,
+        placeholder: '5e9a1234567890abcdef1234',
+      },
+      {
+        name: 'target_list_id',
+        description: 'Trello list ID to move the card to',
+        type: 'string',
+        required: true,
+        placeholder: '5e9a1234567890abcdef5678',
+      },
+    ],
+  },
+];
+
 export function getComponentParameters(
   componentName: string,
 ): ComponentParameter[] {
@@ -325,6 +549,10 @@ export function getComponentParameters(
     ...discordComponentsConfig,
     ...githubComponentsConfig,
     ...twitchComponentsConfig,
+    ...gmailComponentsConfig,
+    ...redditComponentsConfig,
+    ...spotifyComponentsConfig,
+    ...trelloComponentsConfig,
   ];
   const config = allConfigs.find((c) => c.componentName === componentName);
   return config ? config.parameters : [];

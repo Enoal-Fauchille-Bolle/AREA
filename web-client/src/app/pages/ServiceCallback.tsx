@@ -5,6 +5,9 @@ import { googleOAuth } from '../../lib/googleOAuth';
 import { githubOAuth } from '../../lib/githubOAuth';
 import { discordOAuth } from '../../lib/discordOAuth';
 import { twitchOAuth } from '../../lib/twitchOAuth';
+import { gmailOAuth } from '../../lib/gmailOAuth';
+import { redditOAuth } from '../../lib/redditOAuth';
+import { trelloOAuth } from '../../lib/trelloOAuth';
 
 function ServiceCallback() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>(
@@ -27,6 +30,12 @@ function ServiceCallback() {
       const error = urlParams.get('error');
       const state = urlParams.get('state');
 
+      // Handle Trello OAuth1 token in URL fragment
+      let trelloToken: string | null = null;
+      if (state?.includes('trello')) {
+        trelloToken = trelloOAuth.extractTokenFromUrl(window.location.href);
+      }
+
       if (window.opener) {
         let service = 'UNKNOWN';
         if (state?.includes('discord')) {
@@ -35,6 +44,14 @@ function ServiceCallback() {
           service = 'GITHUB';
         } else if (state?.includes('twitch')) {
           service = 'TWITCH';
+        } else if (state?.includes('gmail')) {
+          service = 'GMAIL';
+        } else if (state?.includes('reddit')) {
+          service = 'REDDIT';
+        } else if (state?.includes('spotify')) {
+          service = 'SPOTIFY';
+        } else if (state?.includes('trello')) {
+          service = 'TRELLO';
         } else if (state?.includes('google')) {
           service = 'GOOGLE';
         } else {
@@ -47,6 +64,11 @@ function ServiceCallback() {
             type: `${service}_OAUTH_ERROR`,
             error: error,
           };
+        } else if (trelloToken && service === 'TRELLO') {
+          message = {
+            type: `${service}_OAUTH_SUCCESS`,
+            token: trelloToken,
+          };
         } else if (code) {
           message = {
             type: `${service}_OAUTH_SUCCESS`,
@@ -55,11 +77,11 @@ function ServiceCallback() {
         } else {
           message = {
             type: `${service}_OAUTH_ERROR`,
-            error: 'No authorization code received',
+            error: 'No authorization code or token received',
           };
         }
 
-        window.opener.postMessage(message, window.location.origin);
+        window.opener.postMessage(message, '*');
         setTimeout(() => {
           window.close();
         }, 1000);
@@ -75,7 +97,13 @@ function ServiceCallback() {
           throw new Error(`OAuth error: ${error}`);
         }
 
-        let provider: 'google' | 'github' | 'discord' | 'twitch';
+        let provider:
+          | 'google'
+          | 'github'
+          | 'discord'
+          | 'twitch'
+          | 'gmail'
+          | 'reddit';
         let intent: 'login' | 'register';
         let redirectUri: string;
 
@@ -83,6 +111,10 @@ function ServiceCallback() {
           provider = 'google';
           intent = googleOAuth.extractIntentFromUrl();
           redirectUri = googleOAuth.redirectUri;
+        } else if (state?.startsWith('gmail:')) {
+          provider = 'gmail';
+          intent = 'login';
+          redirectUri = gmailOAuth.redirectUri;
         } else if (state?.startsWith('github:')) {
           provider = 'github';
           intent = githubOAuth.extractIntentFromUrl();
@@ -95,6 +127,10 @@ function ServiceCallback() {
           provider = 'twitch';
           intent = twitchOAuth.extractIntentFromUrl();
           redirectUri = twitchOAuth.redirectUri;
+        } else if (state?.startsWith('reddit:')) {
+          provider = 'reddit';
+          intent = 'login';
+          redirectUri = redditOAuth.redirectUri;
         } else {
           throw new Error(`Unknown OAuth provider from state: ${state}`);
         }

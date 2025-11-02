@@ -18,6 +18,7 @@ import {
   GoogleUserInfo,
   GitHubUserInfo,
   GitHubEmailInfo,
+  RedditUserInfo,
   SpotifyUserInfo,
   TwitchUserInfo,
   ProviderUserInfo,
@@ -30,11 +31,13 @@ export class OAuth2Service {
     [OAuthProvider.GOOGLE]: 'https://oauth2.googleapis.com/token',
     [OAuthProvider.GMAIL]: 'https://oauth2.googleapis.com/token',
     [OAuthProvider.GITHUB]: 'https://github.com/login/oauth/access_token',
+    [OAuthProvider.REDDIT]: 'https://www.reddit.com/api/v1/access_token',
     [OAuthProvider.SPOTIFY]: 'https://accounts.spotify.com/api/token',
     [OAuthProvider.TWITCH]: 'https://id.twitch.tv/oauth2/token',
   };
   private readonly CLIENT_IDS: Record<OAuthProvider, string | undefined>;
   private readonly CLIENT_SECRETS: Record<OAuthProvider, string | undefined>;
+  private readonly REDDIT_USER_AGENT: string | undefined;
 
   constructor(
     private readonly httpService: HttpService,
@@ -47,6 +50,10 @@ export class OAuth2Service {
       [OAuthProvider.GOOGLE]: appConfig.oauth2.google.clientId,
       [OAuthProvider.GMAIL]: appConfig.oauth2.gmail.clientId,
       [OAuthProvider.GITHUB]: appConfig.oauth2.github.clientId,
+      [OAuthProvider.REDDIT]:
+        appConfig.nodeEnv === 'production'
+          ? appConfig.oauth2.reddit.clientIdProd
+          : appConfig.oauth2.reddit.clientIdDev,
       [OAuthProvider.SPOTIFY]: appConfig.oauth2.spotify.clientId,
       [OAuthProvider.TWITCH]: appConfig.oauth2.twitch.clientId,
     };
@@ -56,9 +63,18 @@ export class OAuth2Service {
       [OAuthProvider.GOOGLE]: appConfig.oauth2.google.clientSecret,
       [OAuthProvider.GMAIL]: appConfig.oauth2.gmail.clientSecret,
       [OAuthProvider.GITHUB]: appConfig.oauth2.github.clientSecret,
+      [OAuthProvider.REDDIT]:
+        appConfig.nodeEnv === 'production'
+          ? appConfig.oauth2.reddit.clientSecretProd
+          : appConfig.oauth2.reddit.clientSecretDev,
       [OAuthProvider.SPOTIFY]: appConfig.oauth2.spotify.clientSecret,
       [OAuthProvider.TWITCH]: appConfig.oauth2.twitch.clientSecret,
     };
+
+    this.REDDIT_USER_AGENT =
+      appConfig.nodeEnv === 'production'
+        ? appConfig.oauth2.reddit.prodUserAgent
+        : appConfig.oauth2.reddit.devUserAgent;
   }
 
   async exchangeCodeForTokens(
@@ -74,20 +90,43 @@ export class OAuth2Service {
     }
 
     try {
+      // Reddit requires Basic Auth instead of client_id/client_secret in body
+      const isReddit = dto.provider === OAuthProvider.REDDIT;
+
       const params = new URLSearchParams({
-        client_id: clientId,
-        client_secret: clientSecret,
         grant_type: 'authorization_code',
         code: dto.code,
         redirect_uri: dto.redirect_uri,
       });
 
+      // For non-Reddit providers, include client_id and client_secret in body
+      if (!isReddit) {
+        params.append('client_id', clientId);
+        params.append('client_secret', clientSecret);
+      }
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Accept: 'application/json',
+      };
+
+      // Reddit requires Basic Auth header and User-Agent
+      if (isReddit) {
+        if (!this.REDDIT_USER_AGENT) {
+          throw new InternalServerErrorException(
+            'Reddit User-Agent is not configured properly.',
+          );
+        }
+        const auth = Buffer.from(`${clientId}:${clientSecret}`).toString(
+          'base64',
+        );
+        headers['Authorization'] = `Basic ${auth}`;
+        headers['User-Agent'] = this.REDDIT_USER_AGENT;
+      }
+
       const response = await firstValueFrom(
         this.httpService.post(tokenUrl, params, {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            Accept: 'application/json',
-          },
+          headers,
         }),
       );
       return response.data as ProviderTokenResponse;
@@ -119,19 +158,42 @@ export class OAuth2Service {
     }
 
     try {
+      // Reddit requires Basic Auth instead of client_id/client_secret in body
+      const isReddit = dto.provider === OAuthProvider.REDDIT;
+
       const params = new URLSearchParams({
-        client_id: clientId,
-        client_secret: clientSecret,
         grant_type: 'refresh_token',
         refresh_token: dto.refresh_token,
       });
 
+      // For non-Reddit providers, include client_id and client_secret in body
+      if (!isReddit) {
+        params.append('client_id', clientId);
+        params.append('client_secret', clientSecret);
+      }
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Accept: 'application/json',
+      };
+
+      // Reddit requires Basic Auth header and User-Agent
+      if (isReddit) {
+        if (!this.REDDIT_USER_AGENT) {
+          throw new InternalServerErrorException(
+            'Reddit User-Agent is not configured properly.',
+          );
+        }
+        const auth = Buffer.from(`${clientId}:${clientSecret}`).toString(
+          'base64',
+        );
+        headers['Authorization'] = `Basic ${auth}`;
+        headers['User-Agent'] = this.REDDIT_USER_AGENT;
+      }
+
       const response = await firstValueFrom(
         this.httpService.post(tokenUrl, params, {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            Accept: 'application/json',
-          },
+          headers,
         }),
       );
       return response.data as ProviderTokenResponse;
@@ -162,6 +224,8 @@ export class OAuth2Service {
         return this.getGoogleUserInfo(accessToken);
       case OAuthProvider.GITHUB:
         return this.getGithubUserInfo(accessToken);
+      case OAuthProvider.REDDIT:
+        return this.getRedditUserInfo(accessToken);
       case OAuthProvider.SPOTIFY:
         return this.getSpotifyUserInfo(accessToken);
       case OAuthProvider.TWITCH:
@@ -343,6 +407,32 @@ export class OAuth2Service {
       return response.data.data[0];
     } catch (error) {
       this.handleProviderError(error, 'Twitch');
+    }
+  }
+
+  private async getRedditUserInfo(
+    accessToken: string,
+  ): Promise<RedditUserInfo> {
+    try {
+      if (!this.REDDIT_USER_AGENT) {
+        throw new InternalServerErrorException(
+          'Reddit User-Agent is not configured properly.',
+        );
+      }
+      const response = await firstValueFrom(
+        this.httpService.get<RedditUserInfo>(
+          'https://oauth.reddit.com/api/v1/me',
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'User-Agent': this.REDDIT_USER_AGENT,
+            },
+          },
+        ),
+      );
+      return response.data;
+    } catch (error) {
+      this.handleProviderError(error, 'Reddit');
     }
   }
 

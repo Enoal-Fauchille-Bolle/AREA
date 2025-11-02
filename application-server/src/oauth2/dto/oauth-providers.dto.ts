@@ -6,6 +6,7 @@ export enum OAuthProvider {
   GOOGLE = 'google',
   GMAIL = 'gmail',
   GITHUB = 'github',
+  REDDIT = 'reddit',
   SPOTIFY = 'spotify',
   TWITCH = 'twitch',
 }
@@ -29,6 +30,7 @@ export const OAuthProviderServiceNameMap: Record<OAuthProvider, string> = {
   [OAuthProvider.GOOGLE]: 'Google',
   [OAuthProvider.GMAIL]: 'Gmail',
   [OAuthProvider.GITHUB]: 'GitHub',
+  [OAuthProvider.REDDIT]: 'Reddit',
   [OAuthProvider.SPOTIFY]: 'Spotify',
   [OAuthProvider.TWITCH]: 'Twitch',
 };
@@ -103,6 +105,8 @@ export class GoogleTokenResponse extends OAuthTokenResponse {
 
 export class GithubTokenResponse extends OAuthTokenResponse {}
 
+export class RedditTokenResponse extends OAuthTokenResponse {}
+
 export class SpotifyTokenResponse extends OAuthTokenResponse {}
 
 export class TwitchTokenResponse extends OAuthTokenResponse {}
@@ -111,6 +115,7 @@ export type ProviderTokenResponse =
   | DiscordTokenResponse
   | GoogleTokenResponse
   | GithubTokenResponse
+  | RedditTokenResponse
   | SpotifyTokenResponse
   | TwitchTokenResponse;
 
@@ -169,6 +174,21 @@ export class GitHubEmailInfo {
   visibility: 'public' | 'private' | null;
 }
 
+export class RedditUserInfo {
+  id: string;
+  name: string; // Username
+  icon_img?: string;
+  created?: number;
+  created_utc?: number;
+  link_karma?: number;
+  comment_karma?: number;
+  total_karma?: number;
+  is_gold?: boolean;
+  is_mod?: boolean;
+  has_verified_email?: boolean;
+  verified?: boolean;
+}
+
 export class SpotifyUserInfo {
   id: string;
   display_name?: string | null;
@@ -212,6 +232,7 @@ export type ProviderUserInfo =
   | DiscordUserInfo
   | GoogleUserInfo
   | GitHubUserInfo
+  | RedditUserInfo
   | SpotifyUserInfo
   | TwitchUserInfo;
 
@@ -231,6 +252,12 @@ export function isGitHubUserInfo(
   data: ProviderUserInfo,
 ): data is GitHubUserInfo {
   return 'avatar_url' in data && 'public_repos' in data;
+}
+
+export function isRedditUserInfo(
+  data: ProviderUserInfo,
+): data is RedditUserInfo {
+  return 'name' in data && 'link_karma' in data && 'comment_karma' in data;
 }
 
 export function isSpotifyUserInfo(
@@ -258,6 +285,8 @@ export function createUsernameFromProviderInfo(
     return data.name || 'google_user_' + data.sub;
   } else if (isGitHubUserInfo(data)) {
     return data.login || 'github_user_' + data.id;
+  } else if (isRedditUserInfo(data)) {
+    return data.name || 'reddit_user_' + data.id;
   } else if (isSpotifyUserInfo(data)) {
     return data.display_name || 'spotify_user_' + data.id;
   } else if (isTwitchUserInfo(data)) {

@@ -16,9 +16,19 @@ export const useGitHubAuth = () => {
   useEffect(() => {
     const checkConnection = async () => {
       try {
-        const profile = await servicesApi.getGitHubProfile();
-        setGitHubUser(profile);
-        setIsConnected(true);
+        const userServices = await servicesApi.getUserServices();
+        const githubService = userServices.find(
+          (s) => s.name.toLowerCase() === 'github',
+        );
+
+        if (githubService) {
+          const profile = await servicesApi.getGitHubProfile();
+          setGitHubUser(profile);
+          setIsConnected(true);
+        } else {
+          setIsConnected(false);
+          setGitHubUser(null);
+        }
       } catch {
         setIsConnected(false);
         setGitHubUser(null);
@@ -74,6 +84,86 @@ export const useGitHubAuth = () => {
             clearInterval(checkClosed);
             window.removeEventListener('message', messageListener);
             setIsConnecting(false);
+
+            const githubAppInstalled = localStorage.getItem(
+              'github_app_installed',
+            );
+
+            if (githubAppInstalled === 'true') {
+              console.log(
+                'GitHub App already installed, skipping installation popup',
+              );
+              return;
+            }
+
+            let installAppUrl =
+              'https://github.com/apps/area-app-epitech/installations/new';
+
+            const setupCallbackUrl = `${window.location.origin}/auth/callback`;
+            installAppUrl += `?setup_url=${encodeURIComponent(setupCallbackUrl)}`;
+
+            try {
+              const profile = await servicesApi.getGitHubProfile();
+              if (profile && profile.id) {
+                installAppUrl += `&suggested_target_id=${profile.id}`;
+              }
+            } catch {
+              // Failed to get profile, continue without suggested_target_id
+            }
+
+            setTimeout(() => {
+              const installPopup = window.open(
+                installAppUrl,
+                'github-app-install',
+                'width=800,height=700,scrollbars=yes,resizable=yes',
+              );
+
+              if (installPopup) {
+                const installMessageListener = (event: MessageEvent) => {
+                  if (event.origin !== window.location.origin) {
+                    return;
+                  }
+
+                  if (event.data.type === 'GITHUB_APP_INSTALLED') {
+                    console.log(
+                      'GitHub App installed with installation_id:',
+                      event.data.installationId,
+                    );
+                    localStorage.setItem('github_app_installed', 'true');
+                    clearInterval(installCheckInterval);
+                    window.removeEventListener(
+                      'message',
+                      installMessageListener,
+                    );
+                  }
+                };
+
+                window.addEventListener('message', installMessageListener);
+
+                const installCheckInterval = setInterval(() => {
+                  try {
+                    if (installPopup.closed) {
+                      clearInterval(installCheckInterval);
+                      window.removeEventListener(
+                        'message',
+                        installMessageListener,
+                      );
+                      console.log('GitHub App installation popup closed');
+                    }
+                  } catch {
+                    // Popup closed or access denied
+                  }
+                }, 1000);
+
+                setTimeout(() => {
+                  clearInterval(installCheckInterval);
+                  window.removeEventListener('message', installMessageListener);
+                  if (installPopup && !installPopup.closed) {
+                    installPopup.close();
+                  }
+                }, 300000);
+              }
+            }, 500);
           } catch (error) {
             if (popup && !popup.closed) {
               popup.close();
@@ -130,10 +220,17 @@ export const useGitHubAuth = () => {
     }
   };
 
+  const disconnectFromGitHub = async () => {
+    await servicesApi.disconnectService('github');
+    setIsConnected(false);
+    setGitHubUser(null);
+  };
+
   return {
     isConnecting,
     isConnected,
     githubUser,
     connectToGitHub,
+    disconnectFromGitHub,
   };
 };

@@ -1,4 +1,11 @@
-import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  Inject,
+  forwardRef,
+  InternalServerErrorException,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -34,7 +41,8 @@ interface RedditApiResponse {
 @Injectable()
 export class RedditService {
   private readonly logger = new Logger(RedditService.name);
-  private readonly redditApiUrl = 'https://www.reddit.com';
+  private readonly redditApiUrl = 'https://oauth.reddit.com';
+  private readonly redditUserAgent: string | undefined;
 
   constructor(
     @InjectRepository(Area)
@@ -47,7 +55,14 @@ export class RedditService {
     private readonly areasService: AreasService,
     @Inject(forwardRef(() => ReactionProcessorService))
     private readonly reactionProcessorService: ReactionProcessorService,
-  ) {}
+    private readonly configService: ConfigService,
+  ) {
+    const appConfig = this.configService.get('app');
+    this.redditUserAgent =
+      appConfig.nodeEnv === 'production'
+        ? appConfig.oauth2.reddit.prodUserAgent
+        : appConfig.oauth2.reddit.devUserAgent;
+  }
 
   /**
    * Cron job to check for hot posts every minute
@@ -80,6 +95,9 @@ export class RedditService {
     try {
       const userId = area.user_id;
 
+      // Get user's Reddit OAuth token
+      const accessToken = await this.getUserRedditToken(userId);
+
       // Get subreddit parameter
       const subreddit = await this.getSubredditParameter(area.id);
       if (!subreddit) {
@@ -96,12 +114,12 @@ export class RedditService {
       // Get last checked post ID from hook state
       const hookStateKey = `reddit_hot_post_${area.id}_${subreddit}`;
       const lastPostId = await this.hookStatesService.getState(
-        userId,
+        area.id,
         hookStateKey,
       );
 
-      // Fetch hot posts from subreddit
-      const posts = await this.fetchHotPosts(subreddit);
+      // Fetch hot posts from subreddit using OAuth
+      const posts = await this.fetchHotPosts(subreddit, accessToken);
 
       if (posts.length === 0) {
         this.logger.debug(`No posts found in r/${subreddit}`);
@@ -141,7 +159,7 @@ export class RedditService {
 
       // Update hook state with the latest post ID
       await this.hookStatesService.setState(
-        userId,
+        area.id,
         hookStateKey,
         latestPost.id,
       );
@@ -179,19 +197,33 @@ export class RedditService {
     }
   }
 
-  private async fetchHotPosts(subreddit: string): Promise<RedditPost[]> {
+  private async fetchHotPosts(
+    subreddit: string,
+    accessToken: string,
+  ): Promise<RedditPost[]> {
+    if (!this.redditUserAgent) {
+      throw new InternalServerErrorException(
+        'Reddit User-Agent is not configured properly.',
+      );
+    }
     try {
-      const url = `${this.redditApiUrl}/r/${subreddit}/hot.json?limit=1`;
+      // Use OAuth API endpoint instead of public JSON
+      const url = `${this.redditApiUrl}/r/${subreddit}/hot?limit=1`;
 
       this.logger.debug(`Fetching hot posts from: ${url}`);
 
       const response = await fetch(url, {
         headers: {
-          'User-Agent': 'AREA-Application/1.0',
+          'User-Agent': this.redditUserAgent,
+          Authorization: `Bearer ${accessToken}`,
         },
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        this.logger.error(
+          `Reddit API error: ${response.status} ${response.statusText}. Response: ${errorText}`,
+        );
         throw new Error(
           `Reddit API error: ${response.status} ${response.statusText}`,
         );
@@ -203,9 +235,100 @@ export class RedditService {
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      this.logger.error(
-        `Failed to fetch hot posts from r/${subreddit}: ${errorMessage}`,
+
+      // Log more details about the error
+      if (error instanceof Error) {
+        this.logger.error(
+          `Failed to fetch hot posts from r/${subreddit}: ${errorMessage}`,
+        );
+        this.logger.debug(`Error details: ${JSON.stringify(error)}`);
+        if ('cause' in error) {
+          this.logger.debug(`Error cause: ${JSON.stringify(error.cause)}`);
+        }
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Get user's Reddit OAuth access token
+   */
+  private async getUserRedditToken(userId: number): Promise<string> {
+    try {
+      // Find Reddit service
+      const services = await this.servicesService.findAll();
+      const redditService = services.find(
+        (s) => s.name.toLowerCase() === 'reddit',
       );
+
+      if (!redditService) {
+        throw new Error('Reddit service not found');
+      }
+
+      // Get user's Reddit service connection
+      const userService = await this.userServicesService.findOne(
+        userId,
+        redditService.id,
+      );
+
+      if (!userService || !userService.oauth_token) {
+        throw new Error(
+          'User has not connected their Reddit account or token is missing',
+        );
+      }
+
+      // Log token info (without exposing the full token)
+      const tokenPreview = userService.oauth_token.substring(0, 10) + '...';
+      this.logger.debug(
+        `Retrieved Reddit token for user ${userId}: ${tokenPreview}`,
+      );
+      const tokenExpiry = userService.token_expires_at
+        ? userService.token_expires_at.toISOString()
+        : 'unknown';
+      this.logger.debug(`Token expires at: ${tokenExpiry}`);
+
+      // Check if token is expired and refresh if needed
+      if (
+        userService.token_expires_at &&
+        new Date(userService.token_expires_at) <= new Date()
+      ) {
+        this.logger.log(
+          `Reddit token expired for user ${userId}, refreshing...`,
+        );
+
+        try {
+          await this.servicesService.refreshServiceToken(
+            userId,
+            redditService.id,
+          );
+
+          // Fetch the updated token
+          const updatedUserService = await this.userServicesService.findOne(
+            userId,
+            redditService.id,
+          );
+
+          if (!updatedUserService || !updatedUserService.oauth_token) {
+            throw new Error('Failed to refresh Reddit token');
+          }
+
+          this.logger.log(
+            `Reddit token refreshed successfully for user ${userId}`,
+          );
+          return updatedUserService.oauth_token;
+        } catch (refreshError) {
+          this.logger.error(
+            `Failed to refresh Reddit token: ${refreshError instanceof Error ? refreshError.message : String(refreshError)}`,
+          );
+          throw refreshError;
+        }
+      }
+
+      return userService.oauth_token;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.error(`Failed to get Reddit access token: ${errorMessage}`);
       throw error;
     }
   }

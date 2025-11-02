@@ -27,6 +27,7 @@ import { getOAuthProviderFromString } from '../oauth2/dto';
 export class ServicesService {
   private readonly webRedirectUri: string;
   private readonly mobileRedirectUri: string;
+  private readonly redditRedirectUri: string;
 
   constructor(
     @InjectRepository(Service)
@@ -40,6 +41,7 @@ export class ServicesService {
     const appConfig = this.configService.get('app');
     this.webRedirectUri = appConfig.oauth2.service.web_redirect_uri;
     this.mobileRedirectUri = appConfig.oauth2.service.mobile_redirect_uri;
+    this.redditRedirectUri = `${appConfig.serverUrl}/reddit/callback`;
   }
 
   async findAll(): Promise<ServiceResponseDto[]> {
@@ -190,12 +192,11 @@ export class ServicesService {
     );
 
     if (userService) {
-      if (!userService.service.require_auth) {
+      if (!userService.service.requires_auth) {
         return;
       }
       if (userService.refresh_token) {
         const provider = getOAuthProviderFromString(userService.service.name);
-        // Unreachable code check
         if (!provider) {
           throw new InternalServerErrorException(
             `OAuth provider for service "${userService.service.name}" should exist`,
@@ -243,6 +244,14 @@ export class ServicesService {
       body.platform === LinkPlatform.WEB
         ? this.webRedirectUri
         : this.mobileRedirectUri;
+
+    if (service.name === 'Spotify') {
+      redirectUri = redirectUri.replace('localhost', '127.0.0.1');
+    }
+
+    if (service.name === 'Reddit') {
+      redirectUri = this.redditRedirectUri;
+    }
 
     const provider = getOAuthProviderFromString(service.name);
     if (!provider) {
@@ -299,7 +308,6 @@ export class ServicesService {
   async getDiscordProfile(
     userId: number,
   ): Promise<{ username: string; avatar: string | null; id: string }> {
-    // Find Discord service
     const discordService = await this.serviceRepository.findOne({
       where: { name: 'Discord' },
     });
@@ -307,7 +315,6 @@ export class ServicesService {
       throw new NotFoundException('Discord service not found');
     }
 
-    // Find user's Discord connection
     const userService = await this.userServiceService.findOne(
       userId,
       discordService.id,
@@ -465,6 +472,242 @@ export class ServicesService {
     } catch (error) {
       console.error('Failed to retrieve Twitch profile:', error);
       throw new BadRequestException('Failed to retrieve Twitch profile');
+    }
+  }
+
+  async getGmailProfile(userId: number): Promise<{
+    id: string;
+    email: string;
+    name?: string;
+    picture?: string;
+  }> {
+    const gmailService = await this.serviceRepository.findOne({
+      where: { name: 'Gmail' },
+    });
+    if (!gmailService) {
+      throw new NotFoundException('Gmail service not found');
+    }
+
+    let userService = await this.userServiceService.findOne(
+      userId,
+      gmailService.id,
+    );
+
+    if (!userService || !userService.oauth_token) {
+      throw new NotFoundException('Gmail account not connected');
+    }
+
+    if (
+      userService.token_expires_at &&
+      new Date(userService.token_expires_at) <= new Date()
+    ) {
+      console.log(`Gmail token expired for user ${userId}, refreshing...`);
+      try {
+        await this.refreshServiceToken(userId, gmailService.id);
+        userService = await this.userServiceService.findOne(
+          userId,
+          gmailService.id,
+        );
+        if (!userService || !userService.oauth_token) {
+          throw new Error('Failed to refresh Gmail token');
+        }
+      } catch (error) {
+        console.error('Failed to refresh Gmail token:', error);
+        throw new NotFoundException(
+          'Gmail token expired and refresh failed. Please reconnect your account.',
+        );
+      }
+    }
+
+    try {
+      const response = await fetch(
+        'https://www.googleapis.com/oauth2/v2/userinfo',
+        {
+          headers: {
+            Authorization: `Bearer ${userService.oauth_token}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Gmail profile fetch failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText,
+        });
+        throw new Error(
+          `Failed to fetch Gmail profile: ${response.status} ${response.statusText}`,
+        );
+      }
+
+      const profile = (await response.json()) as {
+        id: string;
+        email: string;
+        name?: string;
+        picture?: string;
+      };
+
+      return {
+        id: profile.id,
+        email: profile.email,
+        name: profile.name,
+        picture: profile.picture,
+      };
+    } catch (error) {
+      console.error('Failed to retrieve Gmail profile:', error);
+      throw new BadRequestException('Failed to retrieve Gmail profile');
+    }
+  }
+
+  async getRedditProfile(userId: number): Promise<{
+    id: string;
+    name: string;
+    icon_img?: string;
+    created?: number;
+  }> {
+    const redditService = await this.serviceRepository.findOne({
+      where: { name: 'Reddit' },
+    });
+    if (!redditService) {
+      throw new NotFoundException('Reddit service not found');
+    }
+
+    const userService = await this.userServiceService.findOne(
+      userId,
+      redditService.id,
+    );
+
+    if (!userService || !userService.oauth_token) {
+      throw new NotFoundException('Reddit account not connected');
+    }
+
+    try {
+      const response = await fetch('https://oauth.reddit.com/api/v1/me', {
+        headers: {
+          Authorization: `Bearer ${userService.oauth_token}`,
+          'User-Agent': 'AREA:v1.0.0 (by /u/area_app)',
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Reddit profile fetch failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText,
+        });
+        throw new Error(
+          `Failed to fetch Reddit profile: ${response.status} ${response.statusText}`,
+        );
+      }
+
+      const profile = (await response.json()) as {
+        id: string;
+        name: string;
+        icon_img?: string;
+        created?: number;
+      };
+
+      return {
+        id: profile.id,
+        name: profile.name,
+        icon_img: profile.icon_img,
+        created: profile.created,
+      };
+    } catch (error) {
+      console.error('Failed to retrieve Reddit profile:', error);
+      throw new BadRequestException('Failed to retrieve Reddit profile');
+    }
+  }
+
+  async getSpotifyProfile(userId: number): Promise<{
+    id: string;
+    display_name?: string | null;
+    email?: string | null;
+    images?: Array<{
+      url: string;
+      height: number | null;
+      width: number | null;
+    }>;
+  }> {
+    const spotifyService = await this.serviceRepository.findOne({
+      where: { name: 'Spotify' },
+    });
+    if (!spotifyService) {
+      throw new NotFoundException('Spotify service not found');
+    }
+
+    let userService = await this.userServiceService.findOne(
+      userId,
+      spotifyService.id,
+    );
+
+    if (!userService || !userService.oauth_token) {
+      throw new NotFoundException('Spotify account not connected');
+    }
+
+    if (
+      userService.token_expires_at &&
+      new Date(userService.token_expires_at) <= new Date()
+    ) {
+      console.log(`Spotify token expired for user ${userId}, refreshing...`);
+      try {
+        await this.refreshServiceToken(userId, spotifyService.id);
+        userService = await this.userServiceService.findOne(
+          userId,
+          spotifyService.id,
+        );
+        if (!userService || !userService.oauth_token) {
+          throw new Error('Failed to refresh Spotify token');
+        }
+      } catch (error) {
+        console.error('Failed to refresh Spotify token:', error);
+        throw new NotFoundException(
+          'Spotify token expired and refresh failed. Please reconnect your account.',
+        );
+      }
+    }
+
+    try {
+      const response = await fetch('https://api.spotify.com/v1/me', {
+        headers: {
+          Authorization: `Bearer ${userService.oauth_token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Spotify profile fetch failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText,
+        });
+        throw new Error(
+          `Failed to fetch Spotify profile: ${response.status} ${response.statusText}`,
+        );
+      }
+
+      const profile = (await response.json()) as {
+        id: string;
+        display_name?: string | null;
+        email?: string | null;
+        images?: Array<{
+          url: string;
+          height: number | null;
+          width: number | null;
+        }>;
+      };
+
+      return {
+        id: profile.id,
+        display_name: profile.display_name,
+        email: profile.email,
+        images: profile.images,
+      };
+    } catch (error) {
+      console.error('Failed to retrieve Spotify profile:', error);
+      throw new BadRequestException('Failed to retrieve Spotify profile');
     }
   }
 

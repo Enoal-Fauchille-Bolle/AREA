@@ -1,59 +1,60 @@
 import { useState, useEffect } from 'react';
 import { servicesApi } from '../services/api';
 
-interface DiscordUser {
+interface RedditUser {
   id: string;
-  username: string;
-  discriminator: string;
-  avatar: string | null;
-  email?: string;
+  name: string;
+  icon_img?: string;
+  created?: number;
 }
 
-export const useDiscordAuth = () => {
+export const useRedditAuth = () => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
-  const [discordUser, setDiscordUser] = useState<DiscordUser | null>(null);
+  const [redditUser, setRedditUser] = useState<RedditUser | null>(null);
 
   useEffect(() => {
     const checkConnection = async () => {
       try {
         const userServices = await servicesApi.getUserServices();
-        const discordService = userServices.find(
-          (s) => s.name.toLowerCase() === 'discord',
+        const redditService = userServices.find(
+          (s) => s.name.toLowerCase() === 'reddit',
         );
 
-        if (discordService) {
-          const profile = await servicesApi.getDiscordProfile();
-          setDiscordUser(profile);
+        if (redditService) {
+          const profile = await servicesApi.getRedditProfile();
+          setRedditUser(profile);
           setIsConnected(true);
         } else {
           setIsConnected(false);
-          setDiscordUser(null);
+          setRedditUser(null);
         }
       } catch {
         setIsConnected(false);
-        setDiscordUser(null);
+        setRedditUser(null);
       }
     };
 
     checkConnection();
   }, []);
 
-  const connectToDiscord = async (serviceId: number) => {
+  const connectToReddit = async (serviceId: number) => {
     try {
       setIsConnecting(true);
 
-      const clientId = import.meta.env.VITE_DISCORD_CLIENT_ID;
-      const redirectUri = `${window.location.origin}/service/callback`;
+      const clientId = import.meta.env.VITE_REDDIT_CLIENT_ID;
+      const redirectUri =
+        import.meta.env.VITE_REDDIT_REDIRECT_URI ||
+        'http://localhost:8080/reddit/callback';
       const encodedRedirectUri = encodeURIComponent(redirectUri);
-      const scope = encodeURIComponent('identify email guilds');
-      const state = encodeURIComponent('discord:service_link');
+      const scope = encodeURIComponent('identity submit read');
+      const state = encodeURIComponent('web:service');
 
       if (!clientId) {
-        throw new Error('Discord OAuth2 not configured');
+        throw new Error('Reddit OAuth2 not configured');
       }
 
-      const discordAuthUrl = `https://discord.com/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodedRedirectUri}&response_type=code&scope=${scope}&state=${state}`;
+      const redditAuthUrl = `https://www.reddit.com/api/v1/authorize?client_id=${clientId}&response_type=code&state=${state}&redirect_uri=${encodedRedirectUri}&duration=permanent&scope=${scope}`;
 
       let popup: Window | null = null;
 
@@ -62,22 +63,21 @@ export const useDiscordAuth = () => {
           return;
         }
 
-        if (event.data.type === 'DISCORD_OAUTH_SUCCESS' && event.data.code) {
+        if (event.data.type === 'REDDIT_OAUTH_SUCCESS' && event.data.code) {
           try {
             await servicesApi.linkService(serviceId, event.data.code);
             setIsConnected(true);
+
             try {
-              const profile = await servicesApi.getDiscordProfile();
-              setDiscordUser(profile);
+              const profile = await servicesApi.getRedditProfile();
+              setRedditUser(profile);
             } catch {
-              setDiscordUser({
+              setRedditUser({
                 id: 'connected',
-                username: 'Discord User',
-                discriminator: '0000',
-                avatar: null,
-                email: undefined,
+                name: 'Reddit User',
               });
             }
+
             if (popup && !popup.closed) {
               popup.close();
             }
@@ -93,29 +93,32 @@ export const useDiscordAuth = () => {
             setIsConnecting(false);
             throw error;
           }
-        } else if (event.data.type === 'DISCORD_OAUTH_ERROR') {
+        } else if (event.data.type === 'REDDIT_OAUTH_ERROR') {
           if (popup && !popup.closed) {
             popup.close();
           }
           clearInterval(checkClosed);
           window.removeEventListener('message', messageListener);
           setIsConnecting(false);
-          throw new Error(event.data.error || 'Discord OAuth2 failed');
+          throw new Error(event.data.error || 'Failed to connect Reddit');
         }
       };
 
       window.addEventListener('message', messageListener);
 
+      const width = 600;
+      const height = 700;
+      const left = window.screen.width / 2 - width / 2;
+      const top = window.screen.height / 2 - height / 2;
+
       popup = window.open(
-        discordAuthUrl,
-        'discord-oauth',
-        'width=500,height=600,scrollbars=yes,resizable=yes',
+        redditAuthUrl,
+        'RedditAuth',
+        `width=${width},height=${height},left=${left},top=${top}`,
       );
 
       if (!popup) {
-        window.removeEventListener('message', messageListener);
-        setIsConnecting(false);
-        throw new Error('Failed to open Discord OAuth2 popup');
+        throw new Error('Failed to open popup window');
       }
 
       const checkClosed = setInterval(() => {
@@ -124,33 +127,24 @@ export const useDiscordAuth = () => {
           window.removeEventListener('message', messageListener);
           setIsConnecting(false);
         }
-      }, 1000);
-
-      setTimeout(() => {
-        if (popup && !popup.closed) {
-          popup.close();
-        }
-        clearInterval(checkClosed);
-        window.removeEventListener('message', messageListener);
-        setIsConnecting(false);
-      }, 300000);
+      }, 500);
     } catch (error) {
       setIsConnecting(false);
       throw error;
     }
   };
 
-  const disconnectFromDiscord = async () => {
-    await servicesApi.disconnectService('discord');
+  const disconnectFromReddit = async () => {
+    await servicesApi.disconnectService('reddit');
     setIsConnected(false);
-    setDiscordUser(null);
+    setRedditUser(null);
   };
 
   return {
     isConnecting,
     isConnected,
-    discordUser,
-    connectToDiscord,
-    disconnectFromDiscord,
+    redditUser,
+    connectToReddit,
+    disconnectFromReddit,
   };
 };

@@ -539,6 +539,43 @@ export class ServicesController {
     description: 'Trello account not linked',
   })
   @UseGuards(JwtAuthGuard)
+  @Get('gmail/profile')
+  async getGmailProfile(@Request() req: { user: { id: number } }): Promise<{
+    id: string;
+    email: string;
+    name?: string;
+    picture?: string;
+  }> {
+    return this.servicesService.getGmailProfile(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('reddit/profile')
+  async getRedditProfile(@Request() req: { user: { id: number } }): Promise<{
+    id: string;
+    name: string;
+    icon_img?: string;
+    created?: number;
+  }> {
+    return this.servicesService.getRedditProfile(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('spotify/profile')
+  async getSpotifyProfile(@Request() req: { user: { id: number } }): Promise<{
+    id: string;
+    display_name?: string | null;
+    email?: string | null;
+    images?: Array<{
+      url: string;
+      height: number | null;
+      width: number | null;
+    }>;
+  }> {
+    return this.servicesService.getSpotifyProfile(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get('trello/profile')
   async getTrelloProfile(@Request() req: { user: { id: number } }): Promise<{
     id: string;

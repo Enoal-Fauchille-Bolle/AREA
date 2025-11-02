@@ -4,6 +4,10 @@ import { useAuth } from '../../hooks/useAuth';
 import { useDiscordAuth } from '../../hooks/useDiscordAuth';
 import { useGitHubAuth } from '../../hooks/useGitHubAuth';
 import { useTwitchAuth } from '../../hooks/useTwitchAuth';
+import { useGmailAuth } from '../../hooks/useGmailAuth';
+import { useRedditAuth } from '../../hooks/useRedditAuth';
+import { useSpotifyAuth } from '../../hooks/useSpotifyAuth';
+import { useTrelloAuth } from '../../hooks/useTrelloAuth';
 import { servicesApi, componentsApi, areasApi } from '../../services/api';
 import type { Service, Component, ComponentType } from '../../services/api';
 import {
@@ -41,6 +45,30 @@ const CreateArea: React.FC = () => {
     twitchUser,
     connectToTwitch,
   } = useTwitchAuth();
+  const {
+    isConnecting: isConnectingGmail,
+    isConnected: isConnectedGmail,
+    gmailUser,
+    connectToGmail,
+  } = useGmailAuth();
+  const {
+    isConnecting: isConnectingReddit,
+    isConnected: isConnectedReddit,
+    redditUser,
+    connectToReddit,
+  } = useRedditAuth();
+  const {
+    isConnecting: isConnectingSpotify,
+    isConnected: isConnectedSpotify,
+    spotifyUser,
+    connectToSpotify,
+  } = useSpotifyAuth();
+  const {
+    isConnecting: isConnectingTrello,
+    isConnected: isConnectedTrello,
+    trelloUser,
+    connectToTrello,
+  } = useTrelloAuth();
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] =
     useState<CreateAreaStep['step']>('action');
@@ -65,10 +93,6 @@ const CreateArea: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
-
-  const handleExplore = () => {
-    navigate('/explore');
-  };
 
   const handleMyAreas = () => {
     navigate('/profile');
@@ -254,6 +278,22 @@ const CreateArea: React.FC = () => {
     return service?.name.toLowerCase() === 'twitch';
   };
 
+  const isGmailService = (service?: Service) => {
+    return service?.name.toLowerCase() === 'gmail';
+  };
+
+  const isRedditService = (service?: Service) => {
+    return service?.name.toLowerCase() === 'reddit';
+  };
+
+  const isSpotifyService = (service?: Service) => {
+    return service?.name.toLowerCase() === 'spotify';
+  };
+
+  const isTrelloService = (service?: Service) => {
+    return service?.name.toLowerCase() === 'trello';
+  };
+
   const requiresAuth = (service?: Service) => {
     return service?.requires_auth === true;
   };
@@ -306,6 +346,66 @@ const CreateArea: React.FC = () => {
     const reactionIsTwitch =
       reactionNeedsAuth && isTwitchService(formData.reactionService);
     return actionIsTwitch || reactionIsTwitch;
+  };
+
+  const needsGmailAuth = () => {
+    if (isConnectedGmail) return false;
+    const actionNeedsAuth =
+      requiresAuth(formData.actionService) &&
+      !isServiceConnected(formData.actionService);
+    const reactionNeedsAuth =
+      requiresAuth(formData.reactionService) &&
+      !isServiceConnected(formData.reactionService);
+    const actionIsGmail =
+      actionNeedsAuth && isGmailService(formData.actionService);
+    const reactionIsGmail =
+      reactionNeedsAuth && isGmailService(formData.reactionService);
+    return actionIsGmail || reactionIsGmail;
+  };
+
+  const needsRedditAuth = () => {
+    if (isConnectedReddit) return false;
+    const actionNeedsAuth =
+      requiresAuth(formData.actionService) &&
+      !isServiceConnected(formData.actionService);
+    const reactionNeedsAuth =
+      requiresAuth(formData.reactionService) &&
+      !isServiceConnected(formData.reactionService);
+    const actionIsReddit =
+      actionNeedsAuth && isRedditService(formData.actionService);
+    const reactionIsReddit =
+      reactionNeedsAuth && isRedditService(formData.reactionService);
+    return actionIsReddit || reactionIsReddit;
+  };
+
+  const needsSpotifyAuth = () => {
+    if (isConnectedSpotify) return false;
+    const actionNeedsAuth =
+      requiresAuth(formData.actionService) &&
+      !isServiceConnected(formData.actionService);
+    const reactionNeedsAuth =
+      requiresAuth(formData.reactionService) &&
+      !isServiceConnected(formData.reactionService);
+    const actionIsSpotify =
+      actionNeedsAuth && isSpotifyService(formData.actionService);
+    const reactionIsSpotify =
+      reactionNeedsAuth && isSpotifyService(formData.reactionService);
+    return actionIsSpotify || reactionIsSpotify;
+  };
+
+  const needsTrelloAuth = () => {
+    if (isConnectedTrello) return false;
+    const actionNeedsAuth =
+      requiresAuth(formData.actionService) &&
+      !isServiceConnected(formData.actionService);
+    const reactionNeedsAuth =
+      requiresAuth(formData.reactionService) &&
+      !isServiceConnected(formData.reactionService);
+    const actionIsTrello =
+      actionNeedsAuth && isTrelloService(formData.actionService);
+    const reactionIsTrello =
+      reactionNeedsAuth && isTrelloService(formData.reactionService);
+    return actionIsTrello || reactionIsTrello;
   };
 
   const handleConnectDiscord = async () => {
@@ -364,6 +464,86 @@ const CreateArea: React.FC = () => {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to connect to Twitch';
+      setError(errorMessage);
+    }
+  };
+
+  const handleConnectGmail = async () => {
+    try {
+      setError(null);
+      const gmailService = isGmailService(formData.actionService)
+        ? formData.actionService
+        : formData.reactionService;
+
+      if (!gmailService) return;
+
+      await connectToGmail(gmailService.id);
+
+      const userServicesData = await servicesApi.getUserServices();
+      setUserServices(userServicesData);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to connect to Gmail';
+      setError(errorMessage);
+    }
+  };
+
+  const handleConnectReddit = async () => {
+    try {
+      setError(null);
+      const redditService = isRedditService(formData.actionService)
+        ? formData.actionService
+        : formData.reactionService;
+
+      if (!redditService) return;
+
+      await connectToReddit(redditService.id);
+
+      const userServicesData = await servicesApi.getUserServices();
+      setUserServices(userServicesData);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to connect to Reddit';
+      setError(errorMessage);
+    }
+  };
+
+  const handleConnectSpotify = async () => {
+    try {
+      setError(null);
+      const spotifyService = isSpotifyService(formData.actionService)
+        ? formData.actionService
+        : formData.reactionService;
+
+      if (!spotifyService) return;
+
+      await connectToSpotify(spotifyService.id);
+
+      const userServicesData = await servicesApi.getUserServices();
+      setUserServices(userServicesData);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to connect to Spotify';
+      setError(errorMessage);
+    }
+  };
+
+  const handleConnectTrello = async () => {
+    try {
+      setError(null);
+      const trelloService = isTrelloService(formData.actionService)
+        ? formData.actionService
+        : formData.reactionService;
+
+      if (!trelloService) return;
+
+      await connectToTrello(trelloService.id);
+
+      const userServicesData = await servicesApi.getUserServices();
+      setUserServices(userServicesData);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to connect to Trello';
       setError(errorMessage);
     }
   };
@@ -746,14 +926,9 @@ const CreateArea: React.FC = () => {
                         <div className="flex-1">
                           <p className="text-green-100 font-medium">
                             {discordUser.discriminator !== '0' &&
-                            discordUser.discriminator !== '0000' ? (
-                              <>
-                                #{discordUser.discriminator}{' '}
-                                {discordUser.username}
-                              </>
-                            ) : (
-                              discordUser.username
-                            )}
+                            discordUser.discriminator !== '0000'
+                              ? `${discordUser.username}#${discordUser.discriminator}`
+                              : discordUser.username}
                           </p>
                           <p className="text-green-300 text-sm">
                             Connected Account
@@ -873,7 +1048,7 @@ const CreateArea: React.FC = () => {
                               fill="currentColor"
                               viewBox="0 0 24 24"
                             >
-                              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                              <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.840 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.430.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
                             </svg>
                           )}
                         </div>
@@ -907,7 +1082,7 @@ const CreateArea: React.FC = () => {
               )}
 
             {needsTwitchAuth() && !isConnectedTwitch ? (
-              <div className="bg-gray-800 bg-opacity-50 border border-gray-600 rounded-lg p-6 mb-6">
+              <div className="bg-purple-950 bg-opacity-60 border border-purple-800 rounded-lg p-6 mb-6">
                 <div className="flex items-center space-x-3 mb-4">
                   <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
                     <svg
@@ -922,7 +1097,7 @@ const CreateArea: React.FC = () => {
                     <h3 className="text-white font-semibold">
                       Twitch Authentication Required
                     </h3>
-                    <p className="text-gray-300 text-sm">
+                    <p className="text-purple-200 text-sm">
                       Connect your Twitch account to use Twitch actions or
                       reactions
                     </p>
@@ -1011,6 +1186,527 @@ const CreateArea: React.FC = () => {
                             @{twitchUser.login}
                             {twitchUser.email && ` • ${twitchUser.email}`}
                           </p>
+                        </div>
+                        <div className="text-green-400">
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+            {needsGmailAuth() && !isConnectedGmail ? (
+              <div className="bg-red-950 bg-opacity-60 border border-red-800 rounded-lg p-6 mb-6">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
+                    <svg
+                      className="w-5 h-5 text-white"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.910 1.528-1.145C21.69 2.28 24 3.434 24 5.457z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-white font-semibold">
+                      Gmail Authentication Required
+                    </h3>
+                    <p className="text-red-200 text-sm">
+                      Connect your Gmail account to use Gmail actions or
+                      reactions
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleConnectGmail}
+                  disabled={isConnectingGmail}
+                  className="w-full bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                >
+                  {isConnectingGmail ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Connecting to Gmail...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg
+                        className="w-5 h-5"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.910 1.528-1.145C21.69 2.28 24 3.434 24 5.457z" />
+                      </svg>
+                      <span>Connect to Gmail</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            ) : null}
+
+            {isConnectedGmail &&
+              (isGmailService(formData.actionService) ||
+                isGmailService(formData.reactionService)) && (
+                <div className="bg-green-900 bg-opacity-50 border border-green-500 rounded-lg p-6 mb-6">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                      <svg
+                        className="w-5 h-5 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-white font-semibold">
+                        Gmail Connected Successfully
+                      </h3>
+                      <p className="text-green-200 text-sm">
+                        Your Gmail account is connected and ready to use
+                      </p>
+                    </div>
+                  </div>
+                  {gmailUser && (
+                    <div className="bg-green-800 bg-opacity-30 rounded-lg p-4 mb-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center overflow-hidden">
+                          {gmailUser.picture ? (
+                            <img
+                              src={gmailUser.picture}
+                              alt="Gmail Avatar"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <svg
+                              className="w-6 h-6 text-white"
+                              fill="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.910 1.528-1.145C21.69 2.28 24 3.434 24 5.457z" />
+                            </svg>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-white font-medium">
+                            {gmailUser.name || gmailUser.email}
+                          </p>
+                          {gmailUser.name && (
+                            <p className="text-green-200 text-sm">
+                              {gmailUser.email}
+                            </p>
+                          )}
+                          {!gmailUser.name && (
+                            <p className="text-green-200 text-sm">
+                              Connected Account
+                            </p>
+                          )}
+                        </div>
+                        <div className="text-green-400">
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+            {needsRedditAuth() && !isConnectedReddit ? (
+              <div className="bg-orange-950 bg-opacity-60 border border-orange-800 rounded-lg p-6 mb-6">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-8 h-8 bg-orange-600 rounded-full flex items-center justify-center">
+                    <svg
+                      className="w-5 h-5 text-white"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-white font-semibold">
+                      Reddit Authentication Required
+                    </h3>
+                    <p className="text-orange-200 text-sm">
+                      Connect your Reddit account to use Reddit actions or
+                      reactions
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleConnectReddit}
+                  disabled={isConnectingReddit}
+                  className="w-full bg-orange-600 hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                >
+                  {isConnectingReddit ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Connecting to Reddit...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg
+                        className="w-5 h-5"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z" />
+                      </svg>
+                      <span>Connect to Reddit</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            ) : null}
+
+            {isConnectedReddit &&
+              (isRedditService(formData.actionService) ||
+                isRedditService(formData.reactionService)) && (
+                <div className="bg-green-900 bg-opacity-50 border border-green-500 rounded-lg p-6 mb-6">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                      <svg
+                        className="w-5 h-5 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-white font-semibold">
+                        Reddit Connected Successfully
+                      </h3>
+                      <p className="text-green-200 text-sm">
+                        Your Reddit account is connected and ready to use
+                      </p>
+                    </div>
+                  </div>
+                  {redditUser && (
+                    <div className="bg-green-800 bg-opacity-30 rounded-lg p-4 mb-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-orange-600 rounded-full flex items-center justify-center overflow-hidden">
+                          {redditUser.icon_img ? (
+                            <img
+                              src={redditUser.icon_img}
+                              alt={redditUser.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <svg
+                              className="w-6 h-6 text-white"
+                              fill="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754  1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z" />
+                            </svg>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-white font-medium">
+                            u/{redditUser.name}
+                          </p>
+                          <p className="text-green-200 text-sm">
+                            Reddit Account Connected
+                          </p>
+                        </div>
+                        <div className="text-green-400">
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+            {needsSpotifyAuth() && !isConnectedSpotify ? (
+              <div className="bg-green-950 bg-opacity-60 border border-green-800 rounded-lg p-6 mb-6">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                    <svg
+                      className="w-5 h-5 text-white"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-white font-semibold">
+                      Spotify Authentication Required
+                    </h3>
+                    <p className="text-green-200 text-sm">
+                      Connect your Spotify account to use Spotify actions or
+                      reactions
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleConnectSpotify}
+                  disabled={isConnectingSpotify}
+                  className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                >
+                  {isConnectingSpotify ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Connecting to Spotify...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg
+                        className="w-5 h-5"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z" />
+                      </svg>
+                      <span>Connect to Spotify</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            ) : null}
+
+            {isConnectedSpotify &&
+              (isSpotifyService(formData.actionService) ||
+                isSpotifyService(formData.reactionService)) && (
+                <div className="bg-green-900 bg-opacity-50 border border-green-500 rounded-lg p-6 mb-6">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                      <svg
+                        className="w-5 h-5 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-white font-semibold">
+                        Spotify Connected Successfully
+                      </h3>
+                      <p className="text-green-200 text-sm">
+                        Your Spotify account is connected and ready to use
+                      </p>
+                    </div>
+                  </div>
+                  {spotifyUser && (
+                    <div className="bg-green-800 bg-opacity-30 rounded-lg p-4 mb-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center overflow-hidden">
+                          {spotifyUser.images &&
+                          spotifyUser.images.length > 0 ? (
+                            <img
+                              src={spotifyUser.images[0].url}
+                              alt={spotifyUser.display_name || 'Spotify User'}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <svg
+                              className="w-6 h-6 text-white"
+                              fill="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z" />
+                            </svg>
+                          )}
+                        </div>
+                        <div className="text-left">
+                          <p className="text-white font-medium text-sm">
+                            {spotifyUser.display_name || 'Spotify User'}
+                          </p>
+                          {spotifyUser.email && (
+                            <p className="text-green-300 text-xs">
+                              {spotifyUser.email}
+                            </p>
+                          )}
+                        </div>
+                        <div className="ml-auto">
+                          <svg
+                            className="w-5 h-5 text-green-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+            {needsTrelloAuth() && !isConnectedTrello ? (
+              <div className="bg-blue-950 bg-opacity-60 border border-blue-800 rounded-lg p-6 mb-6">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                    <svg
+                      className="w-5 h-5 text-white"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M21 0H3C1.343 0 0 1.343 0 3v18c0 1.656 1.343 3 3 3h18c1.656 0 3-1.344 3-3V3c0-1.657-1.344-3-3-3zM10.44 18.18c0 .795-.645 1.44-1.44 1.44H6.36c-.795 0-1.44-.646-1.44-1.44V6.36c0-.795.645-1.44 1.44-1.44H9c.795 0 1.44.645 1.44 1.44v11.82zm8.64-6.84c0 .795-.645 1.44-1.44 1.44h-2.64c-.795 0-1.44-.645-1.44-1.44V6.36c0-.795.646-1.44 1.44-1.44h2.64c.795 0 1.44.645 1.44 1.44v4.98z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-white font-semibold">
+                      Trello Authentication Required
+                    </h3>
+                    <p className="text-blue-200 text-sm">
+                      Connect your Trello account to use Trello actions or
+                      reactions
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleConnectTrello}
+                  disabled={isConnectingTrello}
+                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                >
+                  {isConnectingTrello ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Connecting to Trello...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg
+                        className="w-5 h-5"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M21 0H3C1.343 0 0 1.343 0 3v18c0 1.656 1.343 3 3 3h18c1.656 0 3-1.344 3-3V3c0-1.657-1.344-3-3-3zM10.44 18.18c0 .795-.645 1.44-1.44 1.44H6.36c-.795 0-1.44-.646-1.44-1.44V6.36c0-.795.645-1.44 1.44-1.44H9c.795 0 1.44.645 1.44 1.44v11.82zm8.64-6.84c0 .795-.645 1.44-1.44 1.44h-2.64c-.795 0-1.44-.645-1.44-1.44V6.36c0-.795.646-1.44 1.44-1.44h2.64c.795 0 1.44.645 1.44 1.44v4.98z" />
+                      </svg>
+                      <span>Connect to Trello</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            ) : null}
+
+            {isConnectedTrello &&
+              (isTrelloService(formData.actionService) ||
+                isTrelloService(formData.reactionService)) && (
+                <div className="bg-green-900 bg-opacity-50 border border-green-500 rounded-lg p-6 mb-6">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                      <svg
+                        className="w-5 h-5 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-white font-semibold">
+                        Trello Connected Successfully
+                      </h3>
+                      <p className="text-green-200 text-sm">
+                        Your Trello account is connected and ready to use
+                      </p>
+                    </div>
+                  </div>
+                  {trelloUser && (
+                    <div className="bg-green-800 bg-opacity-30 rounded-lg p-4 mb-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center overflow-hidden">
+                          {trelloUser.avatarUrl ? (
+                            <img
+                              src={`${trelloUser.avatarUrl}/50.png`}
+                              alt={trelloUser.fullName || trelloUser.username}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <svg
+                              className="w-6 h-6 text-white"
+                              fill="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path d="M21 0H3C1.343 0 0 1.343 0 3v18c0 1.656 1.343 3 3 3h18c1.656 0 3-1.344 3-3V3c0-1.657-1.344-3-3-3zM10.44 18.18c0 .795-.645 1.44-1.44 1.44H6.36c-.795 0-1.44-.646-1.44-1.44V6.36c0-.795.645-1.44 1.44-1.44H9c.795 0 1.44.645 1.44 1.44v11.82zm8.64-6.84c0 .795-.645 1.44-1.44 1.44h-2.64c-.795 0-1.44-.645-1.44-1.44V6.36c0-.795.646-1.44 1.44-1.44h2.64c.795 0 1.44.645 1.44 1.44v4.98z" />
+                            </svg>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-white font-medium">
+                            {trelloUser.fullName || trelloUser.username}
+                          </p>
+                          {trelloUser.fullName && (
+                            <p className="text-green-200 text-sm">
+                              @{trelloUser.username}
+                            </p>
+                          )}
+                          {trelloUser.email && (
+                            <p className="text-green-300 text-xs">
+                              {trelloUser.email}
+                            </p>
+                          )}
                         </div>
                         <div className="text-green-400">
                           <svg
@@ -1180,16 +1876,6 @@ const CreateArea: React.FC = () => {
                   placeholder="Describe what your AREA does"
                 />
               </div>
-
-              <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center">
-                <p className="text-gray-400">
-                  Advanced configuration coming soon...
-                  <br />
-                  <span className="text-sm">
-                    (Specific parameters for the selected action/reaction)
-                  </span>
-                </p>
-              </div>
             </div>
 
             <div className="flex justify-between">
@@ -1265,12 +1951,6 @@ const CreateArea: React.FC = () => {
           </div>
 
           <div className="flex items-center space-x-6">
-            <button
-              onClick={handleExplore}
-              className="text-xl font-semibold text-gray-300 hover:text-white hover:scale-105 transform transition-all duration-300"
-            >
-              Explore
-            </button>
             <button
               onClick={handleMyAreas}
               className="text-xl font-semibold text-gray-300 hover:text-white hover:scale-105 transform transition-all duration-300"
